@@ -1,0 +1,3019 @@
+/* ==========================================================================
+   OFFLINE BILINGUAL TRANSLATOR ENGINE (100% Client-Side, No Internet Required)
+   Motor de traducción autónomo y offline para portafolio de autor
+   ========================================================================== */
+
+const OfflineTranslator = (function() {
+  // 1. Specific Multi-word Expressions & Idiomatic Phrases (Checked First)
+  const PHRASE_PAIRS = [
+    ["Obras Seleccionadas & Proyectos", "Selected Works & Projects"],
+    ["Obras Seleccionadas y Proyectos", "Selected Works & Projects"],
+    ["Obras Seleccionadas", "Selected Works"],
+    ["Proyectos Seleccionados", "Selected Projects"],
+    ["Diez Obras Seleccionadas", "Ten Selected Works"],
+    ["Diez Obras", "Ten Works"],
+    ["Colección 2024–2026", "2024–2026 Collection"],
+    ["Colección 2024-2026", "2024-2026 Collection"],
+    ["Catálogo Completo · Archivo", "Complete Catalog · Archive"],
+    ["Catálogo Completo", "Complete Catalog"],
+    ["Índice de 10 Obras", "10 Works Index"],
+    ["10 Obras Seleccionadas", "10 Selected Works"],
+    ["Manifiesto de Autor", "Author's Manifesto"],
+    ["Filosofía Visual", "Visual Philosophy"],
+    ["Archivo Visual", "Visual Archive"],
+    ["Capacidades de Estudio", "Studio Capabilities"],
+    ["Pilares Creativos", "Creative Pillars"],
+    ["Iniciar Diálogo", "Start a Dialogue"],
+    ["Iniciar Colaboración", "Start Collaboration"],
+    ["Enviar Propuesta", "Submit Proposal"],
+    ["Propuesta de Proyecto", "Project Proposal"],
+    ["Disponible para proyectos", "Available for projects"],
+    ["Atención remota internacional", "International remote service"],
+    ["Presencial bajo agenda", "In-person by appointment"],
+    ["Dirección de Arte", "Art Direction"],
+    ["Diseño Editorial & Tipografía", "Editorial Design & Typography"],
+    ["Diseño Editorial", "Editorial Design"],
+    ["Diseño Gráfico & Editorial", "Graphic & Editorial Design"],
+    ["Diseño Gráfico", "Graphic Design"],
+    ["Arte Gráfico & Portadas", "Graphic Art & Covers"],
+    ["Arte Gráfico", "Graphic Art"],
+    ["Concepto de Portada de Álbum", "Album Cover Concept"],
+    ["Portada Conceptual", "Conceptual Cover"],
+    ["Arte Sacro Contemporáneo", "Contemporary Sacred Art"],
+    ["Arte Sacro", "Sacred Art"],
+    ["Fotografía Conceptual & Retrato", "Conceptual Photography & Portraiture"],
+    ["Fotografía Conceptual", "Conceptual Photography"],
+    ["Fotografía Callejera · Retrato en Terreno", "Street Photography · Field Portrait"],
+    ["Fotografía Callejera", "Street Photography"],
+    ["Fotografía Urbana", "Urban Photography"],
+    ["Retrato de Estudio · Sesión Editorial", "Studio Portrait · Editorial Session"],
+    ["Retrato de Estudio", "Studio Portrait"],
+    ["Sesión Editorial", "Editorial Session"],
+    ["Identidad de Marca & Tipografía", "Brand Identity & Typography"],
+    ["Identidad de Marca", "Brand Identity"],
+    ["Identidad Visual", "Visual Identity"],
+    ["Tipografía de Autor", "Bespoke Typography"],
+    ["Tipografía Y2K", "Y2K Typography"],
+    ["Tipografía Gótica", "Gothic Typography"],
+    ["Diseño de Cartel · Archivo Heráldico 2024", "Poster Design · Heraldic Archive 2024"],
+    ["Diseño de Cartel", "Poster Design"],
+    ["Archivo Heráldico", "Heraldic Archive"],
+    ["Ensayo Visual · Diseño Editorial", "Visual Essay · Editorial Design"],
+    ["Ensayo Visual", "Visual Essay"],
+    ["Libro de Artista", "Artist Book"],
+    ["Serie Devocional", "Devotional Series"],
+    ["Instante Decisivo", "Decisive Moment"],
+    ["Luz Natural", "Natural Light"],
+    ["Alto Contraste", "High Contrast"],
+    ["Blanco y Negro", "Black & White"],
+    ["Espacio Negativo", "Negative Space"],
+    ["Espacio en Blanco", "White Space"],
+    ["Semiótica Visual", "Visual Semiotics"],
+    ["Orla Dorada", "Golden Halo Border"],
+    ["Iluminación Volumétrica", "Volumetric Lighting"],
+    ["Inevitable Ocaso", "Inevitable Sunset"],
+    ["Conflicto en la Mente", "Conflict in the Mind"],
+    ["Vuelo Urbano", "Urban Flight"],
+    ["Conexión Íntima", "Intimate Connection"],
+    ["Divino Angel", "Divine Angel"],
+    ["Divino Ángel", "Divine Angel"],
+    ["Prisión Interior", "Inner Prison"],
+    ["Monster / Prisión Interior", "Monster / Inner Prison"],
+    ["El Camino", "The Way"],
+    ["Journey / El Camino", "Journey / The Way"],
+    ["Amor Verdadero", "True Love"],
+    ["Catedral de Silencio", "Cathedral of Silence"],
+    ["Formas de la Ausencia", "Shapes of Absence"],
+    ["Nocturno Urbano", "Urban Nocturne"],
+    ["Monolito Tipográfico", "Typographic Monolith"],
+    ["Salmo 23", "Psalm 23"],
+    ["Retrato en Penumbra", "Portrait in Penumbra"],
+    ["Geometría de la Fe", "Geometry of Faith"],
+    ["Réquiem Visual", "Visual Requiem"],
+    ["Retorno a la Esencia", "Return to Essence"],
+    ["Trascendencia Sacra", "Sacred Transcendence"],
+    ["Catedral Iluminada", "Illuminated Cathedral"],
+    ["Dualidad Cromática", "Chromatic Duality"],
+    ["El Reino", "The Kingdom"],
+    ["a través de", "through"],
+    ["frente al", "in front of the"],
+    ["frente a", "in front of"]
+  ];
+
+  // 2. Domain-Specific Dictionary (Spanish -> English)
+  const DICT_ES_EN = {
+    // Curatorial / Art & Design
+    "obra": "work", "obras": "works", "proyecto": "project", "proyectos": "projects",
+    "arte": "art", "artista": "artist", "artistas": "artists", "autor": "author", "autores": "authors",
+    "diseño": "design", "diseñador": "designer", "diseñadores": "designers",
+    "editorial": "editorial", "gráfico": "graphic", "gráfica": "graphic", "gráficos": "graphics",
+    "sacro": "sacred", "sacra": "sacred", "sacros": "sacred", "sacras": "sacred",
+    "fotografía": "photography", "fotográfico": "photographic", "fotográfica": "photographic",
+    "retrato": "portrait", "retratos": "portraits", "sesión": "session", "sesiones": "sessions",
+    "cartel": "poster", "carteles": "posters", "afiche": "poster", "afiches": "posters",
+    "portada": "cover", "portadas": "covers", "álbum": "album", "concepto": "concept",
+    "tipografía": "typography", "tipográfico": "typographic", "tipográfica": "typographic",
+    "retícula": "grid", "sistema": "system", "sistemas": "systems", "publicación": "publication",
+    "catálogo": "catalog", "catálogos": "catalogs", "libro": "book", "libros": "books",
+    "fanzine": "fanzine", "archivo": "archive", "archivos": "archives", "colección": "collection",
+    "índice": "index", "selección": "selection", "seleccionado": "selected", "seleccionada": "selected",
+    "seleccionados": "selected", "seleccionadas": "selected", "curaduría": "curation",
+    "curatorial": "curatorial", "manifiesto": "manifesto", "filosofía": "philosophy",
+    "declaración": "statement", "memoria": "memory", "visión": "vision", "misticismo": "mysticism",
+    "místico": "mystical", "mística": "mystical", "fe": "faith", "devoción": "devotion",
+    "devocional": "devotional", "sagrado": "sacred", "sagrada": "sacred", "celestial": "celestial",
+    "ángel": "angel", "ángeles": "angels", "divino": "divine", "divina": "divine",
+    "cielo": "sky", "cielos": "skies", "nube": "cloud", "nubes": "clouds", "estrella": "star",
+    "estrellas": "stars", "estelar": "stellar", "horizonte": "horizon", "infinito": "infinite",
+    "luz": "light", "luces": "lights", "sombra": "shadow", "sombras": "shadows", "penumbra": "penumbra",
+    "claroscuro": "chiaroscuro", "zenital": "zenithal", "cenital": "zenithal", "volumétrico": "volumetric",
+    "volumétrica": "volumetric", "iluminación": "lighting", "resplandor": "glow",
+    "color": "color", "colores": "colors", "cromático": "chromatic", "cromática": "chromatic",
+    "monocromático": "monochromatic", "monocromo": "monochrome", "tonalidad": "tonality",
+    "textura": "texture", "texturas": "textures", "grano": "grain", "analógico": "analog",
+    "analógica": "analog", "digital": "digital", "composición": "composition", "estructura": "structure",
+    "forma": "form", "formas": "forms", "espacio": "space", "vacío": "void", "tensión": "tension",
+    "armonía": "harmony", "dualidad": "duality", "equilibrio": "balance", "rigor": "rigor",
+    "profundidad": "depth", "emotivo": "emotional", "emotiva": "emotional", "crudo": "raw",
+    "cruda": "raw", "intimidad": "intimacy", "cómplice": "accomplice", "complicidad": "complicity",
+    "pareja": "couple", "sujeto": "subject", "instante": "moment", "momento": "moment",
+    "decisivo": "decisive", "decisiva": "decisive", "espontáneo": "spontaneous", "espontánea": "spontaneous",
+    "encuadre": "framing", "enfoque": "focus", "focal": "focal", "circular": "circular",
+    "fondo": "backdrop", "degradado": "gradient", "paloma": "pigeon", "palomas": "pigeons",
+    "vuelo": "flight", "despegue": "takeoff", "sincronizado": "synchronized", "sincronizada": "synchronized",
+    "tiempo": "time", "ocaso": "sunset", "caída": "fall", "poder": "power", "reino": "kingdom",
+    "imperio": "empire", "escultura": "sculpture", "esculturas": "sculptures", "vegetación": "vegetation",
+    "renacentista": "renaissance", "gótico": "gothic", "gótica": "gothic", "heráldico": "heraldic",
+    "heráldica": "heraldic", "serpiente": "serpent", "sabiduría": "wisdom", "misterio": "mystery",
+    "arcano": "arcane", "arcana": "arcane", "orla": "halo", "monstruo": "monster",
+    "prisión": "prison", "interior": "inner", "encierro": "confinement", "mente": "mind",
+    "mental": "mental", "camino": "way", "viaje": "journey", "recorrido": "journey",
+    "solitario": "solitary", "solitaria": "solitary", "narrativa": "narrative", "viñeta": "panel",
+    "viñetas": "panels", "amor": "love", "verdadero": "true", "verdadera": "true",
+    "ensayo": "essay", "futurista": "futuristic", "trascendencia": "transcendence",
+    "humano": "human", "humana": "human", "cinético": "kinetic", "cinética": "kinetic",
+    "acento": "accent", "acentos": "accents",
+    "surrealismo": "surrealism", "oscuro": "dark", "oscura": "dark", "experimental": "experimental",
+    "modelado": "modeling", "escultórico": "sculptural", "escultórica": "sculptural",
+    "inexorable": "inexorable", "paso": "passage", "reflexión": "reflection",
+    "callejero": "street", "callejera": "street", "terreno": "field", "entorno": "environment",
+    "centrado": "centered", "centrada": "centered", "puntos": "points", "punto": "point",
+    "neutro": "neutral", "neutra": "neutral", "yuxtaponiendo": "juxtaposing",
+    "enroscado": "coiled", "enroscada": "coiled", "complementado": "complemented", "complementada": "complemented",
+    "marco": "frame", "autoexigencia": "perfectionism", "semitono": "halftone",
+    "inspirado": "inspired", "inspirada": "inspired", "desglosan": "break down",
+    "espacio-tiempo": "spacetime", "retratística": "portraiture",
+    "título": "title", "subtítulo": "subtitle", "descripción": "description", "resumen": "summary",
+    "nuevo": "new", "nueva": "new", "nuevos": "new", "nuevas": "new", "mi": "my",
+
+    // Connectors, prepositions & common words
+    "de": "of", "del": "of the", "en": "in", "sobre": "on", "con": "with", "sin": "without",
+    "y": "and", "e": "and", "o": "or", "u": "or", "a": "to", "al": "to the", "por": "by",
+    "para": "for", "hacia": "toward", "desde": "from", "entre": "between", "que": "that",
+    "el": "the", "la": "the", "los": "the", "las": "the", "un": "a", "una": "a", "unos": "some", "unas": "some",
+    "su": "its", "sus": "their", "este": "this", "esta": "this", "estos": "these", "estas": "these",
+    "combina": "combines", "fusiona": "fuses", "fusionando": "fusing", "explora": "explores",
+    "exploración": "exploration", "evoca": "evokes", "evocando": "evoking", "captura": "captures",
+    "capturando": "capturing", "desafía": "challenges", "dialoga": "dialogues", "diálogo": "dialogue",
+    "representa": "represents", "aborda": "addresses",
+
+    // Numbers
+    "uno": "one", "dos": "two", "tres": "three", "cuatro": "four", "cinco": "five",
+    "seis": "six", "siete": "seven", "ocho": "eight", "nueve": "nine", "diez": "ten",
+    "primer": "first", "primero": "first", "primera": "first", "segundo": "second", "segunda": "second"
+  };
+
+  function preserveCase(original, replacement) {
+    if (!original || !replacement) return replacement;
+    if (original === original.toUpperCase() && original.length > 1) {
+      return replacement.toUpperCase();
+    }
+    if (original[0] === original[0].toUpperCase()) {
+      return replacement.charAt(0).toUpperCase() + replacement.slice(1);
+    }
+    return replacement.toLowerCase();
+  }
+
+  function toEn(text) {
+    if (!text || typeof text !== 'string') return '';
+    let res = text.trim();
+    if (!res) return '';
+
+    // Step 1: Replace multi-word known phrases
+    for (const [esPhrase, enPhrase] of PHRASE_PAIRS) {
+      const regex = new RegExp('\\b' + esPhrase.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&') + '\\b', 'gi');
+      res = res.replace(regex, (match) => {
+        if (match === match.toUpperCase()) return enPhrase.toUpperCase();
+        return enPhrase;
+      });
+    }
+
+    // Step 2: Replace individual vocabulary words
+    res = res.replace(/[a-záéíóúñüÁÉÍÓÚÑÜ]+/gi, (word) => {
+      const lower = word.toLowerCase();
+      if (Object.prototype.hasOwnProperty.call(DICT_ES_EN, lower)) {
+        return preserveCase(word, DICT_ES_EN[lower]);
+      }
+      return word;
+    });
+
+    // Cleanup double spaces if any
+    res = res.replace(/\s{2,}/g, ' ').trim();
+    return res;
+  }
+
+  function toEs(text) {
+    if (!text || typeof text !== 'string') return '';
+    let res = text.trim();
+    if (!res) return '';
+
+    for (const [esPhrase, enPhrase] of PHRASE_PAIRS) {
+      const regex = new RegExp('\\b' + enPhrase.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&') + '\\b', 'gi');
+      res = res.replace(regex, esPhrase);
+    }
+    return res;
+  }
+
+  return {
+    toEn,
+    toEs
+  };
+})();
+
+// Export for node or browser
+
+
+
+/* ==========================================================================
+   BILINGUAL TRANSLATION SYSTEM (ES / EN)
+   ========================================================================== */
+const I18N = {
+  es: {
+    lang: "ES",
+    viewGrid: "Cuadrícula",
+    viewSphere: "Esfera 3D",
+    console: "Consola",
+    close: "Cerrar",
+    videoBrand: "WILMAR MACHADO · ARCHIVO VISUAL",
+    videoBadge: "PRÓLOGO INTERACTIVO",
+    videoGreeting: "Hola, Soy Wilmar",
+    videoHint: "Gira la rueda del ratón o desliza para hacer zoom · Scroll to explore",
+    videoPlay: "Reproducir",
+    videoPause: "Pausar",
+    videoSkip: "Omitir",
+    stages: {
+      overview: "Vista General",
+      zoom: "Acercamiento",
+      gaze: "Mirada",
+      iris: "Iris",
+      archive: "Hacia el Archivo"
+    },
+    headlineTitle: "Obras Seleccionadas & Proyectos",
+    headlineSubtitle: "Diez Obras Seleccionadas · Colección 2024–2026",
+    menuSphere: "Esfera 3D · The Archive",
+    menuGrid: "Índice · Grid View",
+    menuReplay: "◉ Ver Video Inicial · Replay Video",
+    menuStatement: "Manifiesto · Statement",
+    menuContact: "Contacto · Contacto Directo",
+    menuMaster: "⚙ Consola Maestra · Studio Control",
+    menuFooterLeft: "Valledupar · Colombia · Alcance Global",
+    menuFooterRight: "Dirección de Arte · Diseño Editorial · Arte Sacro",
+    gridTitle: "Catálogo Completo · Archivo",
+    gridSubtitle: "Diez Obras Seleccionadas · 10 Works Index",
+    gridClose: "← Esfera 3D",
+    lbClose: "× Cerrar",
+    modeFinal: "Obra Final",
+    modeProcess: "Boceto & Proceso",
+    modeTexture: "Macro Textura",
+    specRole: "Rol Creativo:",
+    specMedium: "Técnica / Soporte:",
+    specTypo: "Tipografía de Autor:",
+    specClient: "Cliente / Editorial:",
+    lbDrive: "Ver en Google Drive ➚",
+    inquireSimilar: "Encargar Proyecto Similar",
+    statementTag: "FILOSOFÍA VISUAL · STUDIO ARCHIVE",
+    statementTitle: "Manifiesto de Autor",
+    statementSubtitle: "La tensión entre el misticismo sacro, la disciplina editorial y el claroscuro",
+    statementQuote: "“El diseño no es ornamento superficial; es la arquitectura visual de la memoria y la tensión plástica de la forma.”",
+    bioP1: "Mi trabajo como creador visual y diseñador se sitúa en el umbral donde el rigor conceptual se encuentra con la profundidad emotiva. Cada obra parte del respeto por el espacio en blanco, la contundencia tipográfica y una narrativa que desafía la superficialidad de la inmediatez digital.",
+    bioP2: "Desde Valledupar hacia el panorama visual contemporáneo, concibo el arte sacro, las publicaciones editoriales y la fotografía de estudio no como elementos aislados, sino como un diálogo continuo sobre la identidad, la fe, la soledad y la trascendencia estética.",
+    capHeading: "CAPACIDADES DE ESTUDIO · PILARES CREATIVOS",
+    cap1Title: "Arte Gráfico & Portadas",
+    cap1Desc: "Identidad visual y cartelería conceptual para proyectos musicales, lanzamientos discográficos, fanzines de autor y portadas de gran impacto estético.",
+    cap2Title: "Diseño Editorial & Tipografía",
+    cap2Desc: "Sistemas reticulares suizos, composiciones volumétricas Y2K, tipografía gótica y renacentista aplicada a publicaciones, catlogos de arte y libros de autor.",
+    cap3Title: "Arte Sacro Contemporáneo",
+    cap3Desc: "Reinterpretación de la iconografía celestial y mística mediante técnicas digitales, orlas doradas, iluminación cenital volumétrica y simbolismo trascendente.",
+    cap4Title: "Fotografía Conceptual & Retrato",
+    cap4Desc: "Captura del instante urbano decisivo, sesiones editoriales de estudio con esquemas de luz suave y exploración de la psique mediante grano analógico.",
+    stmtCtaText: "Iniciar Colaboración con Wilmar",
+    contactTag: "CONTRATACIONES · COMISIONES 2026",
+    contactHeading: "Iniciar Diálogo",
+    contactSubtitle: "Dirección de Arte · Diseño Editorial · Arte Sacro Contemporáneo",
+    availBadge: "DISPONIBLE PARA PROYECTOS · Q4 2026 / 2027",
+    clockLabel: "Hora en Valledupar (UTC-5):",
+    chEmailLabel: "Correo Electrónico Oficial",
+    btnCopy: "Copiar",
+    btnWrite: "Escribir",
+    chWaLabel: "WhatsApp Directo",
+    btnOpenChat: "Abrir Chat",
+    chIgLabel: "Instagram / Archivo Visual",
+    btnViewProfile: "Ver Perfil",
+    chBeLabel: "Behance Portfolio",
+    btnPortfolio: "Portafolio",
+    chLocLabel: "Ubicación & Modalidad",
+    locSub: "Atención remota internacional · Presencial bajo agenda",
+    formTitle: "Enviar Propuesta de Proyecto",
+    labelName: "Nombre / Estudio o Marca *",
+    phName: "Ej: Elena Torres o Galería Meridiano",
+    labelEmail: "Correo Electrónico *",
+    phEmail: "contacto@estudio.com",
+    labelService: "Tipo de Obra / Disciplina *",
+    services: [
+      "Arte Gráfico & Portada de Autor",
+      "Diseño Editorial & Maquetación",
+      "Arte Sacro Contemporáneo",
+      "Identidad de Marca & Tipografía",
+      "Fotografía Conceptual & Retrato",
+      "Dirección de Arte & Asesoría",
+      "Otro Proyecto Personalizado"
+    ],
+    labelBudget: "Presupuesto / Cronograma",
+    phBudget: "Ej: $500 - $1,500 USD · Entrega en 3 semanas",
+    labelMessage: "Descripción del Proyecto & Visión *",
+    phMessage: "Cuéntame sobre el concepto, objetivos, referencias y alcance...",
+    btnSubmitText: "Enviar Propuesta · Iniciar Diálogo",
+    feedbackTitle: "¡Propuesta preparada correctamente!",
+    feedbackSub: "Haz clic para abrir tu cliente de correo automáticamente o copia el texto si prefieres WhatsApp.",
+    btnOpenMail: "Abrir en Correo",
+    btnCopySummary: "Copiar Mensaje",
+    toastCopied: "¡Correo copiado al portapapeles!",
+    toastMsgCopied: "¡Mensaje copiado al portapapeles!",
+    toastProposalReady: "¡Propuesta preparada correctamente!",
+    authTitle: "Consola Maestra",
+    authDesc: "Acceso exclusivo para el autor (Wilmar Machado) para gestionar contenidos, proyectos y estilos del portafolio.",
+    authPlaceholder: "Introduce la clave maestra...",
+    authLoginBtn: "Acceder a Consola",
+    authCancelBtn: "Cancelar"
+  },
+  en: {
+    lang: "EN",
+    viewGrid: "Grid View",
+    viewSphere: "3D Sphere",
+    console: "Console",
+    close: "Close",
+    videoBrand: "WILMAR MACHADO · VISUAL ARCHIVE",
+    videoBadge: "INTERACTIVE PROLOGUE",
+    videoGreeting: "Hello, I'm Wilmar",
+    videoHint: "Scroll wheel or swipe to explore · Zoom to enter",
+    videoPlay: "Play",
+    videoPause: "Pause",
+    videoSkip: "Skip",
+    stages: {
+      overview: "Overview",
+      zoom: "Zooming In",
+      gaze: "Gaze",
+      iris: "Iris",
+      archive: "Into Archive"
+    },
+    headlineTitle: "Selected Works & Projects",
+    headlineSubtitle: "Ten Selected Works · 2024–2026 Collection",
+    menuSphere: "3D Sphere · The Archive",
+    menuGrid: "Index · Grid View",
+    menuReplay: "◉ Play Intro Video · Replay Video",
+    menuStatement: "Manifesto · Statement",
+    menuContact: "Contact · Direct Inquiry",
+    menuMaster: "⚙ Master Console · Studio Control",
+    menuFooterLeft: "Valledupar · Colombia · Global Reach",
+    menuFooterRight: "Art Direction · Editorial Design · Sacred Art",
+    gridTitle: "Complete Catalog · Archive",
+    gridSubtitle: "Ten Selected Works · 10 Works Index",
+    gridClose: "← 3D Sphere",
+    lbClose: "× Close",
+    modeFinal: "Final Work",
+    modeProcess: "Sketch & Process",
+    modeTexture: "Macro Texture",
+    specRole: "Creative Role:",
+    specMedium: "Medium / Substrate:",
+    specTypo: "Typography:",
+    specClient: "Client / Publisher:",
+    lbDrive: "View on Google Drive ➚",
+    inquireSimilar: "Commission Similar Project",
+    statementTag: "VISUAL PHILOSOPHY · STUDIO ARCHIVE",
+    statementTitle: "Author's Manifesto",
+    statementSubtitle: "The tension between sacred mysticism, editorial discipline, and chiaroscuro",
+    statementQuote: "“Design is not superficial ornament; it is the visual architecture of memory and the sculptural tension of form.”",
+    bioP1: "My work as a visual creator and designer is situated on the threshold where conceptual rigor meets emotional depth. Each piece stems from reverence for negative space, typographic conviction, and a narrative that defies the superficiality of digital immediacy.",
+    bioP2: "From Valledupar to the contemporary visual sphere, I conceive sacred art, editorial publications, and studio photography not as isolated disciplines, but as a continuous dialogue on identity, faith, solitude, and aesthetic transcendence.",
+    capHeading: "STUDIO CAPABILITIES · CREATIVE PILLARS",
+    cap1Title: "Graphic Art & Cover Design",
+    cap1Desc: "Visual identity and conceptual poster design for music projects, record releases, art fanzines, and high-impact covers.",
+    cap2Title: "Editorial Design & Typography",
+    cap2Desc: "Swiss grid systems, Y2K volumetric compositions, gothic and renaissance typography applied to publications, art catalogs, and author books.",
+    cap3Title: "Contemporary Sacred Art",
+    cap3Desc: "Reinterpretation of celestial and mystical iconography through digital techniques, golden halos, volumetric zenithal lighting, and transcendent symbolism.",
+    cap4Title: "Conceptual Photography & Portraiture",
+    cap4Desc: "Capturing the decisive urban moment, studio editorial sessions with soft lighting schemes, and psychic exploration through analog grain.",
+    stmtCtaText: "Start Collaboration with Wilmar",
+    contactTag: "BOOKINGS & COMMISSIONS 2026",
+    contactHeading: "Start a Dialogue",
+    contactSubtitle: "Art Direction · Editorial Design · Contemporary Sacred Art",
+    availBadge: "AVAILABLE FOR PROJECTS · Q4 2026 / 2027",
+    clockLabel: "Valledupar Time (UTC-5):",
+    chEmailLabel: "Official Email Address",
+    btnCopy: "Copy",
+    btnWrite: "Compose",
+    chWaLabel: "Direct WhatsApp",
+    btnOpenChat: "Open Chat",
+    chIgLabel: "Instagram / Visual Archive",
+    btnViewProfile: "View Profile",
+    chBeLabel: "Behance Portfolio",
+    btnPortfolio: "Portfolio",
+    chLocLabel: "Location & Scope",
+    locSub: "International remote service · In-person by appointment",
+    formTitle: "Submit Project Proposal",
+    labelName: "Name / Studio or Brand *",
+    phName: "e.g., Elena Torres or Meridian Gallery",
+    labelEmail: "Email Address *",
+    phEmail: "contact@studio.com",
+    labelService: "Work Type / Discipline *",
+    services: [
+      "Graphic Art & Author Cover",
+      "Editorial Design & Layout",
+      "Contemporary Sacred Art",
+      "Brand Identity & Typography",
+      "Conceptual Photography & Portrait",
+      "Art Direction & Consultation",
+      "Other Custom Project"
+    ],
+    labelBudget: "Budget / Timeline",
+    phBudget: "e.g., $500 - $1,500 USD · 3 weeks timeline",
+    labelMessage: "Project Description & Vision *",
+    phMessage: "Tell me about the concept, objectives, references, and scope...",
+    btnSubmitText: "Submit Proposal · Start Dialogue",
+    feedbackTitle: "Proposal prepared successfully!",
+    feedbackSub: "Click to open your email client automatically or copy the text if you prefer WhatsApp.",
+    btnOpenMail: "Open in Email",
+    btnCopySummary: "Copy Message",
+    toastCopied: "Email copied to clipboard!",
+    toastMsgCopied: "Message copied to clipboard!",
+    toastProposalReady: "Proposal prepared successfully!",
+    authTitle: "Master Console",
+    authDesc: "Exclusive author access (Wilmar Machado) to manage portfolio content, projects, and styling.",
+    authPlaceholder: "Enter master password...",
+    authLoginBtn: "Access Console",
+    authCancelBtn: "Cancel"
+  }
+};
+
+let currentLang = 'es';
+try {
+  const savedLang = localStorage.getItem('wilmar_portfolio_lang');
+  if (savedLang === 'en' || savedLang === 'es') currentLang = savedLang;
+} catch(e) {}
+
+// Dynamic cards language updater
+function updateCardsLanguage(lang) {
+  const isEn = (lang === 'en');
+  const cfg = STATE.config || DEFAULT_CONFIG;
+  const items = cfg.projects || [];
+
+  // Update sphere cards
+  const sphereCards = document.querySelectorAll('#world .card');
+  sphereCards.forEach((card) => {
+    const idx = parseInt(card.getAttribute('data-index'), 10);
+    if (isNaN(idx) || !items[idx]) return;
+    const item = items[idx];
+    const titleEl = card.querySelector('.card-title');
+    const placeEl = card.querySelector('.card-place');
+    if (titleEl) {
+      titleEl.textContent = isEn ? (item.title_en || OfflineTranslator.toEn(item.title)) : item.title;
+    }
+    if (placeEl) {
+      placeEl.textContent = isEn ? (item.place_en || OfflineTranslator.toEn(item.place)) : item.place;
+    }
+    card.setAttribute('aria-label', `${titleEl ? titleEl.textContent : item.title}, ${placeEl ? placeEl.textContent : item.place}`);
+  });
+
+  // Update grid items
+  const gridItems = document.querySelectorAll('#grid-container .grid-item');
+  gridItems.forEach((gridItem) => {
+    const idx = parseInt(gridItem.getAttribute('data-index'), 10);
+    if (isNaN(idx) || !items[idx]) return;
+    const item = items[idx];
+    const titleEl = gridItem.querySelector('.grid-title');
+    const placeEl = gridItem.querySelector('.grid-place');
+    if (titleEl) {
+      titleEl.textContent = isEn ? (item.title_en || OfflineTranslator.toEn(item.title)) : item.title;
+    }
+    if (placeEl) {
+      placeEl.textContent = isEn ? (item.place_en || OfflineTranslator.toEn(item.place)) : item.place;
+    }
+  });
+}
+
+// Lightbox language updater
+function updateLightboxLanguage(lang) {
+  const isEn = (lang === 'en');
+  const dict = I18N[lang] || I18N.es;
+  const cfg = STATE.config || DEFAULT_CONFIG;
+
+  const setT = (id, text) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+  };
+  const setHtml = (id, html) => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = html;
+  };
+
+  setT('ui-lb-close-label', dict.close);
+  setT('ui-mode-final-label', dict.modeFinal);
+  setT('ui-mode-process-label', dict.modeProcess);
+  setT('ui-mode-texture-label', dict.modeTexture);
+  setT('ui-spec-role-label', dict.specRole);
+  setT('ui-spec-medium-label', dict.specMedium);
+  setT('ui-spec-typo-label', dict.specTypo);
+  setT('ui-spec-client-label', dict.specClient);
+  setHtml('lightbox-drive-btn', dict.lbDrive);
+  setT('ui-lb-inquire-label', dict.inquireSimilar);
+
+  const lb = document.getElementById('lightbox');
+  if (lb && lb.classList.contains('active')) {
+    const idx = STATE.currentLightboxIndex !== undefined ? STATE.currentLightboxIndex : 0;
+    const item = cfg.projects && cfg.projects[idx];
+    if (item) {
+      const tEl = document.getElementById('lightbox-title');
+      const pEl = document.getElementById('lightbox-place');
+      const nEl = document.getElementById('lightbox-note');
+      const rEl = document.getElementById('lightbox-role');
+      const mEl = document.getElementById('lightbox-medium');
+      const cEl = document.getElementById('lightbox-client');
+
+      if (tEl) tEl.textContent = isEn ? (item.title_en || OfflineTranslator.toEn(item.title)) : item.title;
+      if (pEl) pEl.textContent = isEn ? (item.place_en || OfflineTranslator.toEn(item.place)) : item.place;
+      if (nEl) nEl.textContent = isEn ? (item.note_en || OfflineTranslator.toEn(item.note)) : item.note;
+      if (rEl) rEl.textContent = isEn ? (item.role_en || OfflineTranslator.toEn(item.role || 'Art Direction & Composition')) : (item.role || 'Dirección de Arte & Composición');
+      if (mEl) mEl.textContent = isEn ? (item.medium_en || OfflineTranslator.toEn(item.medium || 'Digital Composition & Fine Art Print')) : (item.medium || 'Composición Digital & Impresión Fine Art');
+      if (cEl) cEl.textContent = isEn ? (item.client_en || OfflineTranslator.toEn(item.client || "Author's Collection")) : (item.client || 'Colección Autoral');
+    }
+  }
+}
+
+// Master Language Switcher function
+function applyLanguage(lang) {
+  currentLang = (lang === 'en') ? 'en' : 'es';
+  try { localStorage.setItem('wilmar_portfolio_lang', currentLang); } catch(e) {}
+  const dict = I18N[currentLang];
+  const isEn = (currentLang === 'en');
+  const cfg = STATE.config || DEFAULT_CONFIG;
+
+  // Active pills in nav
+  const optEs = document.getElementById('lang-opt-es');
+  const optEn = document.getElementById('lang-opt-en');
+  if (optEs && optEn) {
+    optEs.classList.toggle('active', currentLang === 'es');
+    optEn.classList.toggle('active', currentLang === 'en');
+  }
+
+  const setT = (id, text) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+  };
+  const setHtml = (id, html) => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = html;
+  };
+  const setPh = (id, ph) => {
+    const el = document.getElementById(id);
+    if (el) el.placeholder = ph;
+  };
+
+  // Nav
+  setT('ui-console-nav-label', dict.console);
+  const viewLabel = document.getElementById('view-label');
+  const gridView = document.getElementById('grid-view');
+  const isGrid = gridView && gridView.classList.contains('active');
+  if (viewLabel) viewLabel.textContent = isGrid ? dict.viewSphere : dict.viewGrid;
+
+  // Video Stage
+  setT('ui-video-brand', dict.videoBrand);
+  setT('ui-video-badge', dict.videoBadge);
+  setT('ui-video-greeting', dict.videoGreeting);
+  setT('ui-video-hint-text', dict.videoHint);
+  setT('ui-video-play-label', dict.videoPlay);
+  setT('ui-video-skip-label', dict.videoSkip);
+
+  // Sync lightbox language pills if present
+  const lbOptEs = document.getElementById('lb-lang-opt-es');
+  const lbOptEn = document.getElementById('lb-lang-opt-en');
+  if (lbOptEs && lbOptEn) {
+    lbOptEs.classList.toggle('active', currentLang === 'es');
+    lbOptEn.classList.toggle('active', currentLang === 'en');
+  }
+
+  // Main 3D Sphere Headline & Subtitle (Guaranteed bilingual translation)
+  const hTitle = document.getElementById('ui-headline-title');
+  const hSub = document.getElementById('ui-headline-subtitle');
+  if (hTitle) {
+    if (isEn) {
+      let t = cfg.profile.headlineTitle_en;
+      if (!t || t.trim() === '' || t === cfg.profile.headlineTitle) {
+        t = OfflineTranslator.toEn(cfg.profile.headlineTitle) || dict.headlineTitle || 'Selected Works & Projects';
+      }
+      hTitle.textContent = t;
+    } else {
+      let t = cfg.profile.headlineTitle;
+      if (!t || t.trim() === '' || t === 'Selected Works & Projects') {
+        t = dict.headlineTitle || 'Obras Seleccionadas & Proyectos';
+      }
+      hTitle.textContent = t;
+    }
+  }
+  if (hSub) {
+    if (isEn) {
+      let s = cfg.profile.headlineSubtitle_en;
+      if (!s || s.trim() === '' || s === cfg.profile.headlineSubtitle) {
+        s = OfflineTranslator.toEn(cfg.profile.headlineSubtitle) || dict.headlineSubtitle || 'Ten Selected Works · 2024–2026 Collection';
+      }
+      hSub.textContent = s;
+    } else {
+      let s = cfg.profile.headlineSubtitle;
+      if (!s || s.trim() === '' || s.includes('Ten Selected Works')) {
+        s = dict.headlineSubtitle || 'Diez Obras Seleccionadas · Colección 2024–2026';
+      }
+      hSub.textContent = s;
+    }
+  }
+
+  // Update sphere & grid cards
+  updateCardsLanguage(currentLang);
+
+  // Menu
+  setT('menu-link-sphere', dict.menuSphere);
+  setT('menu-link-grid', dict.menuGrid);
+  setT('menu-link-replay', dict.menuReplay);
+  setT('menu-link-statement', dict.menuStatement);
+  setT('menu-link-contact', dict.menuContact);
+  setHtml('menu-link-master', '&#9881; ' + dict.menuMaster);
+  setT('ui-menu-footer-left', dict.menuFooterLeft);
+  setT('ui-menu-footer-right', dict.menuFooterRight);
+  setHtml('menu-close-btn', '&times; ' + dict.close);
+
+  // Grid View Header
+  const gTitle = document.getElementById('ui-grid-title');
+  const gSub = document.getElementById('ui-grid-subtitle');
+  if (gTitle) {
+    gTitle.textContent = isEn
+      ? (cfg.profile.gridTitle_en || OfflineTranslator.toEn(cfg.profile.gridTitle) || dict.gridTitle)
+      : (cfg.profile.gridTitle || 'Catálogo Completo · Archivo');
+  }
+  if (gSub) {
+    gSub.textContent = isEn
+      ? (cfg.profile.gridSubtitle_en || OfflineTranslator.toEn(cfg.profile.gridSubtitle) || dict.gridSubtitle)
+      : (cfg.profile.gridSubtitle || 'Diez Obras Seleccionadas · 10 Works Index');
+  }
+  setT('grid-close-btn', dict.gridClose);
+
+  // Lightbox
+  updateLightboxLanguage(currentLang);
+
+  // Statement
+  setT('ui-statement-tag', dict.statementTag);
+  const stTitle = document.getElementById('ui-statement-title');
+  if (stTitle) {
+    stTitle.textContent = isEn ? (cfg.profile.statementTitle_en || dict.statementTitle) : (cfg.profile.statementTitle || dict.statementTitle);
+  }
+  const stSub = document.getElementById('ui-statement-subtitle');
+  if (stSub) {
+    stSub.textContent = isEn ? (cfg.profile.statementSubtitle_en || dict.statementSubtitle) : (cfg.profile.statementSubtitle || dict.statementSubtitle);
+  }
+  const stQuote = document.getElementById('ui-statement-quote');
+  if (stQuote) {
+    const qText = isEn ? (cfg.profile.statementQuote_en || dict.statementQuote) : (cfg.profile.statementQuote || dict.statementQuote);
+    stQuote.innerHTML = qText.startsWith('“') ? qText : `&ldquo;${qText}&rdquo;`;
+  }
+  setHtml('statement-close-btn', '&times; ' + dict.close);
+  const stBio = document.getElementById('ui-statement-bio');
+  if (stBio) {
+    if (isEn && cfg.profile.statementBio_en) {
+      stBio.innerHTML = cfg.profile.statementBio_en.includes('<p>') ? cfg.profile.statementBio_en : `<p>${cfg.profile.statementBio_en.replace(/\n\n/g, '</p><p>')}</p>`;
+    } else if (!isEn && cfg.profile.statementBio) {
+      stBio.innerHTML = cfg.profile.statementBio.includes('<p>') ? cfg.profile.statementBio : `<p>${cfg.profile.statementBio.replace(/\n\n/g, '</p><p>')}</p>`;
+    } else {
+      stBio.innerHTML = '<p>' + dict.bioP1 + '</p><p>' + dict.bioP2 + '</p>';
+    }
+  }
+  setT('ui-cap-heading', dict.capHeading);
+  setT('ui-cap1-title', dict.cap1Title);
+  setT('ui-cap1-desc', dict.cap1Desc);
+  setT('ui-cap2-title', dict.cap2Title);
+  setT('ui-cap2-desc', dict.cap2Desc);
+  setT('ui-cap3-title', dict.cap3Title);
+  setT('ui-cap3-desc', dict.cap3Desc);
+  setT('ui-cap4-title', dict.cap4Title);
+  setT('ui-cap4-desc', dict.cap4Desc);
+  setT('ui-stmt-cta-text', dict.stmtCtaText);
+
+  // Contact Section
+  setT('ui-contact-tag', dict.contactTag);
+  setT('ui-contact-heading', dict.contactHeading);
+  setT('ui-contact-subtitle', dict.contactSubtitle);
+  setHtml('contact-close-btn', '&times; ' + dict.close);
+  setT('ui-availability-badge', dict.availBadge);
+  setT('ui-clock-label', dict.clockLabel);
+  setT('ui-ch-email-label', dict.chEmailLabel);
+  setT('copy-email-btn', dict.btnCopy);
+  setT('mail-email-btn', dict.btnWrite);
+  setT('ui-ch-wa-label', dict.chWaLabel);
+  setT('whatsapp-link-btn', dict.btnOpenChat);
+  setT('ui-ch-ig-label', dict.chIgLabel);
+  setT('instagram-link-btn', dict.btnViewProfile);
+  setT('ui-ch-be-label', dict.chBeLabel);
+  setT('behance-link-btn', dict.btnPortfolio);
+  setT('ui-ch-loc-label', dict.chLocLabel);
+  setT('ui-loc-sub', dict.locSub);
+
+  // Contact Form
+  setT('ui-form-title', dict.formTitle);
+  setT('ui-label-name', dict.labelName);
+  setPh('form-name', dict.phName);
+  setT('ui-label-email', dict.labelEmail);
+  setPh('form-email', dict.phEmail);
+  setT('ui-label-service', dict.labelService);
+  const serviceSelect = document.getElementById('form-service');
+  if (serviceSelect && dict.services) {
+    const selIdx = serviceSelect.selectedIndex >= 0 ? serviceSelect.selectedIndex : 0;
+    serviceSelect.innerHTML = dict.services.map((s, idx) => '<option value="' + s + '" ' + (idx === selIdx ? 'selected' : '') + '>' + s + '</option>').join('');
+  }
+  setT('ui-label-budget', dict.labelBudget);
+  setPh('form-budget', dict.phBudget);
+  setT('ui-label-message', dict.labelMessage);
+  setPh('form-message', dict.phMessage);
+  setT('ui-submit-btn-text', dict.btnSubmitText);
+  setT('ui-feedback-title', dict.feedbackTitle);
+  setT('ui-feedback-sub', dict.feedbackSub);
+  setT('ui-btn-open-mail', dict.btnOpenMail);
+  setT('ui-btn-copy-summary', dict.btnCopySummary);
+
+  // Master Auth Modal
+  const authTitle = document.querySelector('#master-auth-modal .auth-title');
+  if (authTitle) authTitle.textContent = dict.authTitle;
+  const authDesc = document.querySelector('#master-auth-modal .auth-desc');
+  if (authDesc) authDesc.textContent = dict.authDesc;
+  setPh('master-password-input', dict.authPlaceholder);
+  setT('master-login-btn', dict.authLoginBtn);
+  setT('auth-cancel-btn', dict.authCancelBtn);
+}
+
+
+
+/* ==========================================================================
+   DEFAULT CONFIGURATION & DATA REPOSITORY
+   ========================================================================== */
+const DEFAULT_CONFIG = {
+  "profile": {
+    "name": "Wilmar Machado",
+    "role": "Dirección de Arte · Diseño Gráfico & Editorial",
+    "role_en": "Art Direction · Graphic & Editorial Design",
+    "brandTitle": "Wilmar Machado · Archivo Visual",
+    "brandSubtitle": "Colección de Obras & Proyectos · 2024–2026",
+    "headlineTitle": "Obras Seleccionadas & Proyectos",
+    "headlineTitle_en": "Selected Works & Projects",
+    "headlineSubtitle": "Diez Obras Seleccionadas · Colección 2024–2026",
+    "headlineSubtitle_en": "Ten Selected Works · 2024–2026 Collection",
+    "gridTitle": "Catálogo Completo · Archivo",
+    "gridTitle_en": "Complete Catalog · Archive",
+    "gridSubtitle": "Diez Obras Seleccionadas · Índice de 10 Obras",
+    "gridSubtitle_en": "Ten Selected Works · 10 Works Index",
+    "videoBrand": "WILMAR MACHADO · ARCHIVO VISUAL",
+    "videoBadge": "PRÓLOGO INTERACTIVO",
+    "videoGreeting": "Hola, Soy Wilmar",
+    "videoSrc": "video.mp4",
+    "statementTitle": "Manifiesto de Autor",
+    "statementTitle_en": "Author's Manifesto",
+    "statementSubtitle": "La tensión entre el misticismo sacro, la disciplina editorial y el claroscuro",
+    "statementSubtitle_en": "The tension between sacred mysticism, editorial discipline, and chiaroscuro",
+    "statementQuote": "“El diseño no es ornamento superficial; es la arquitectura visual de la memoria y la tensión plástica de la forma.”",
+    "statementQuote_en": "“Design is not superficial ornament; it is the visual architecture of memory and the sculptural tension of form.”",
+    "statementBio": "<p>Mi trabajo como creador visual y diseñador se sitúa en el umbral donde el rigor conceptual se encuentra con la profundidad emotiva. Cada obra parte del respeto por el espacio en blanco, la contundencia tipográfica y una narrativa que desafía la superficialidad de la inmediatez digital.</p><p>Desde Valledupar hacia el panorama visual contemporáneo, concibo el arte sacro, las publicaciones editoriales y la fotografía de estudio no como elementos aislados, sino como un diálogo continuo sobre la identidad, la fe, la soledad y la trascendencia estética.</p>",
+    "statementBio_en": "<p>My work as a visual creator and designer is situated on the threshold where conceptual rigor meets emotional depth. Each piece stems from reverence for negative space, typographic conviction, and a narrative that defies the superficiality of digital immediacy.</p><p>From Valledupar to the contemporary visual sphere, I conceive sacred art, editorial publications, and studio photography not as isolated disciplines, but as a continuous dialogue on identity, faith, solitude, and aesthetic transcendence.</p>",
+    "location": "Valledupar, Cesar, Colombia",
+    "availability": "DISPONIBLE PARA PROYECTOS · Q4 2026 / 2027",
+    "email": "wamimcim2@gmail.com",
+    "whatsapp": "+573001234567",
+    "whatsappMsg": "Hola Wilmar, me gustaría conversar sobre un proyecto editorial / visual.",
+    "instagram": "@wilmar.machado",
+    "instagramUrl": "https://www.instagram.com/",
+    "behance": "behance.net/wilmarmachado",
+    "behanceUrl": "https://www.behance.net/",
+    "menuFooterLeft": "Valledupar · Colombia · Alcance Global",
+    "menuFooterRight": "Dirección de Arte · Diseño Editorial · Arte Sacro"
+  },
+  "projects": [
+    {
+      "id": "1kUdMl7BScjHoLJLuKhEM9zcM0SWR4BrU",
+      "image": "images/img1.webp",
+      "year": "2024",
+      "title": "Conflict in the Mind",
+      "title_en": "Conflict in the Mind",
+      "place": "Arte Gráfico · Concepto de Portada de Álbum",
+      "place_en": "Graphic Art · Album Cover Concept",
+      "note": "Surrealismo oscuro y composición tipográfica experimental. Exploración visual de la dualidad mental a través de texturas analógicas y modelado escultórico en alto contraste.",
+      "note_en": "Dark surrealism and experimental typographic composition. Visual exploration of mental duality through analog textures and sculptural modeling in high contrast.",
+      "role": "Dirección de Arte & Composición Tipográfica",
+      "role_en": "Art Direction & Typographic Composition",
+      "medium": "Técnica Mixta Digital · Impresión Fine Art 310g",
+      "medium_en": "Digital Mixed Media · 310g Fine Art Print",
+      "typography": "Neue Haas Grotesk & Fraktur Custom",
+      "client": "Sello Musical Independiente",
+      "client_en": "Independent Music Label",
+      "driveUrl": "https://drive.google.com/file/d/1kUdMl7BScjHoLJLuKhEM9zcM0SWR4BrU/view?usp=drivesdk"
+    },
+    {
+      "id": "1s6lwti7WrcAAWXN1FDCvncLIevFg2kgv",
+      "image": "images/img2.webp",
+      "year": "2025",
+      "title": "Inevitable Ocaso",
+      "title_en": "Inevitable Sunset",
+      "place": "El Reino · Wilmar Machado 2025",
+      "place_en": "The Kingdom · Wilmar Machado 2025",
+      "note": "Diseño editorial y portada conceptual que combina escultura renacentista, vegetación y tipografía gótica. Reflexión visual sobre la caída del poder y el paso inexorable del tiempo.",
+      "note_en": "Editorial design and conceptual cover combining renaissance sculpture, vegetation, and gothic typography. Visual reflection on the fall of power and the inexorable passage of time.",
+      "role": "Diseño Editorial & Conceptualización Gráfica",
+      "role_en": "Editorial Design & Graphic Conceptualization",
+      "medium": "Composición Digital · Papel Hahnemühle 308g",
+      "medium_en": "Digital Composition · Hahnemühle 308g Paper",
+      "typography": "Cinzel Decorative & Cloister Black",
+      "client": "Editorial The Kingdom",
+      "client_en": "The Kingdom Publishing",
+      "driveUrl": "https://drive.google.com/file/d/1s6lwti7WrcAAWXN1FDCvncLIevFg2kgv/view?usp=drivesdk"
+    },
+    {
+      "id": "1_f7I4HgQ7w51u2Kwo2yQ7S8itjpbozEZ",
+      "image": "images/img3.webp",
+      "year": "2024",
+      "title": "Vuelo Urbano",
+      "title_en": "Urban Flight",
+      "place": "Fotografía Callejera · Retrato en Terreno",
+      "place_en": "Street Photography · Field Portrait",
+      "note": "Fotografía urbana capturando un instante decisivo: el despegue sincronizado de las palomas frente al sujeto en un entorno de luz natural y encuadre espontáneo.",
+      "note_en": "Urban street photography capturing a decisive moment: synchronized pigeon takeoff in front of the subject in natural light and spontaneous framing.",
+      "role": "Fotografía Documental & Retrato en Terreno",
+      "role_en": "Documentary Photography & Field Portraiture",
+      "medium": "Fotografía Digital 35mm · Óptica 50mm f/1.4",
+      "medium_en": "35mm Digital Photography · 50mm f/1.4 Lens",
+      "typography": "Space Mono & Helvetica Neue",
+      "client": "Archivo Documental Urbano",
+      "client_en": "Urban Documentary Archive",
+      "driveUrl": "https://drive.google.com/file/d/1_f7I4HgQ7w51u2Kwo2yQ7S8itjpbozEZ/view?usp=drivesdk"
+    },
+    {
+      "id": "1nC_BG7yBIWBaNgvXPQ-g6JebPmVihbNc",
+      "image": "images/img4.webp",
+      "year": "2025",
+      "title": "Conexión Íntima",
+      "title_en": "Intimate Connection",
+      "place": "Retrato de Estudio · Sesión Editorial",
+      "place_en": "Studio Portrait · Editorial Session",
+      "note": "Sesión fotográfica de estudio centrada en la intimidad y la complicidad de pareja. Esquema de iluminación suave de tres puntos con fondo neutro de degradado suave.",
+      "note_en": "Studio portrait session centered on intimacy and couple complicity. Soft three-point lighting scheme with a neutral gradient backdrop.",
+      "role": "Fotografía de Estudio & Esquema de Iluminación",
+      "role_en": "Studio Photography & Lighting Design",
+      "medium": "Formato Medio Digital · Iluminación Continua",
+      "medium_en": "Digital Medium Format · Continuous Lighting",
+      "typography": "Playfair Display & Inter Light",
+      "client": "Sesión Editorial Privada",
+      "client_en": "Private Editorial Session",
+      "driveUrl": "https://drive.google.com/file/d/1nC_BG7yBIWBaNgvXPQ-g6JebPmVihbNc/view?usp=drivesdk"
+    },
+    {
+      "id": "1tErfd_njfYEoTHsJ3E90KcgJ9KI8OcfE",
+      "image": "images/img5.webp",
+      "year": "2025",
+      "title": "Complex Xpress",
+      "title_en": "Complex Xpress",
+      "place": "Diseño Editorial · Tipografía Y2K",
+      "place_en": "Editorial Design · Y2K Typography",
+      "note": "Retrato editorial de moda con estética Y2K, yuxtaponiendo fotografía en blanco y negro con tipografía volumétrica iridiscente y texturas cromáticas de alto impacto.",
+      "note_en": "Fashion editorial portrait with Y2K aesthetics, juxtaposing black-and-white photography with volumetric iridescent typography and high-impact chromatic textures.",
+      "role": "Dirección Creativa & Tipografía Volumétrica",
+      "role_en": "Creative Direction & Volumetric Typography",
+      "medium": "Render 3D & Retoque Editorial Avanzado",
+      "medium_en": "3D Render & Advanced Editorial Retouching",
+      "typography": "Futura Bold & Liquid Chrome Bespoke",
+      "client": "Revista Xpress Fashion",
+      "client_en": "Xpress Fashion Magazine",
+      "driveUrl": "https://drive.google.com/file/d/1tErfd_njfYEoTHsJ3E90KcgJ9KI8OcfE/view?usp=drivesdk"
+    },
+    {
+      "id": "1qdrQwLAgcDBnami8tUD-YsaOfW6fYwWu",
+      "image": "images/img6.webp",
+      "year": "2024",
+      "title": "Serpent",
+      "title_en": "Serpent",
+      "place": "Diseño de Cartel · Archivo Heráldico 2024",
+      "place_en": "Poster Design · Heraldic Archive 2024",
+      "note": "Póster de arte gráfico e iconografía heráldica moderna. La serpiente enroscada representa el misterio y la sabiduría arcana, complementada con retícula geométrica y tipografía gótica.",
+      "note_en": "Graphic art and modern heraldic iconography poster. The coiled serpent represents mystery and arcane wisdom, complemented by a geometric grid and gothic typography.",
+      "role": "Diseño de Cartel & Vectorización Heráldica",
+      "role_en": "Poster Design & Heraldic Vectorization",
+      "medium": "Serigrafía Digital 3 Tintas · Papel Fedrigoni 250g",
+      "medium_en": "3-Color Digital Serigraphy · Fedrigoni 250g Paper",
+      "typography": "Ogg Roman & Gothic Bastarda",
+      "client": "Colección Heráldica Wilmar Machado",
+      "client_en": "Wilmar Machado Heraldic Collection",
+      "driveUrl": "https://drive.google.com/file/d/1qdrQwLAgcDBnami8tUD-YsaOfW6fYwWu/view?usp=drivesdk"
+    },
+    {
+      "id": "1rPtZU7lpYOb1EnY-IPAfzicwce119xRq",
+      "image": "images/img7.webp",
+      "year": "2024",
+      "title": "Divino Angel",
+      "title_en": "Divine Angel",
+      "place": "Arte Sacro Contemporáneo · Cartel Digital 2024",
+      "place_en": "Contemporary Sacred Art · Digital Poster 2024",
+      "note": "Composición de arte sacro contemporáneo que evoca el misticismo celestial. Marco de orla dorada, iluminación volumétrica entre nubes y diagramación simbólica estelar.",
+      "note_en": "Contemporary sacred art composition evoking celestial mysticism. Golden halo border, volumetric lighting through clouds, and symbolic stellar diagramming.",
+      "role": "Arte Sacro Digital & Tratamiento Dorado",
+      "role_en": "Digital Sacred Art & Gold Leaf Finishing",
+      "medium": "Pintura Digital & Orlas en Pan de Oro",
+      "medium_en": "Digital Painting & Gold Leaf Accents",
+      "typography": "Cormorant Garamond & Trajan Serif",
+      "client": "Comisión Capilla Contemporánea",
+      "client_en": "Contemporary Chapel Commission",
+      "driveUrl": "https://drive.google.com/file/d/1rPtZU7lpYOb1EnY-IPAfzicwce119xRq/view?usp=drivesdk"
+    },
+    {
+      "id": "114uYCmwvhuasuLE6hxt1T00XsVsqpDY7",
+      "image": "images/img8.webp",
+      "year": "2024",
+      "title": "Monster / Prisión Interior",
+      "title_en": "Monster / Inner Prison",
+      "place": "Fotografía Conceptual · Narrativa Visual",
+      "place_en": "Conceptual Photography · Visual Narrative",
+      "note": "Obra de fotografía conceptual sobre el encierro mental y la autoexigencia. Encuadre circular focal con textura de semitono analógico y contraste emocional crudo.",
+      "note_en": "Conceptual photography work exploring mental confinement and perfectionism. Circular focal framing with analog halftone texture and raw emotional contrast.",
+      "role": "Fotografía Conceptual & Texturizado Analógico",
+      "role_en": "Conceptual Photography & Analog Texturing",
+      "medium": "Fotografía Analógica Forzada · Semitono Gráfico",
+      "medium_en": "Pushed Analog Photography · Graphic Halftone",
+      "typography": "GT America Mono & Editorial New",
+      "client": "Exposición Colectiva 'Interior'",
+      "client_en": "'Interior' Group Exhibition",
+      "driveUrl": "https://drive.google.com/file/d/114uYCmwvhuasuLE6hxt1T00XsVsqpDY7/view?usp=drivesdk"
+    },
+    {
+      "id": "1q2x-CI2n4NgZx6ozDmosiFNJazhQyN8s",
+      "image": "images/img9.webp",
+      "year": "2024",
+      "title": "Journey / El Camino",
+      "title_en": "Journey / The Way",
+      "place": "Estética Manga · Cartel Narrativo",
+      "place_en": "Manga Aesthetic · Storyboard Poster",
+      "note": "Diseño de cartel narrativo inspirado en la estética del cómic y manga japonés. Estructura de viñetas que desglosan un recorrido solitario hacia el horizonte.",
+      "note_en": "Narrative poster design inspired by comic and Japanese manga aesthetics. Panel layout breaking down a solitary journey toward the horizon.",
+      "role": "Composición Narrativa & Estética Gráfica",
+      "role_en": "Narrative Composition & Graphic Aesthetics",
+      "medium": "Entintado Digital & Retícula Cinematográfica",
+      "medium_en": "Digital Inking & Cinematic Grid Layout",
+      "typography": "Syne ExtraBold & Kanji Type",
+      "client": "Serie Narrativa Visual",
+      "client_en": "Visual Narrative Series",
+      "driveUrl": "https://drive.google.com/file/d/1q2x-CI2n4NgZx6ozDmosiFNJazhQyN8s/view?usp=drivesdk"
+    },
+    {
+      "id": "1jMfHQDqfKzhL9SYMTy4GKvI8nFcyX0E_",
+      "image": "images/img10.webp",
+      "year": "2025",
+      "title": "Amor Verdadero",
+      "title_en": "True Love",
+      "place": "Ensayo Visual · Diseño Editorial",
+      "place_en": "Visual Essay · Editorial Design",
+      "note": "Ensayo visual y diagramación editorial futurista que aborda la trascendencia del amor a través del espacio-tiempo, fusionando retratística humana con acentos cinéticos.",
+      "note_en": "Visual essay and futuristic editorial layout exploring the transcendence of love across spacetime, fusing human portraiture with kinetic accents.",
+      "role": "Ensayo Visual & Diagramación Editorial",
+      "role_en": "Visual Essay & Editorial Layout",
+      "medium": "Diseño Editorial Suizo · Acabado Barniz UVI",
+      "medium_en": "Swiss Editorial Layout · Spot UV Finish",
+      "typography": "Akzidenz-Grotesk & Bodoni Poster",
+      "client": "Edición Limitada de Autor",
+      "client_en": "Author's Limited Edition",
+      "driveUrl": "https://drive.google.com/file/d/1jMfHQDqfKzhL9SYMTy4GKvI8nFcyX0E_/view?usp=drivesdk"
+    }
+  ],
+  "categories": [
+    {
+      "id": "editorial",
+      "name": "Diseño Editorial"
+    },
+    {
+      "id": "sacro",
+      "name": "Arte Sacro Contemporáneo"
+    },
+    {
+      "id": "foto",
+      "name": "Fotografía & Retrato"
+    },
+    {
+      "id": "grafico",
+      "name": "Arte Gráfico & Portadas"
+    }
+  ],
+  "style": {
+    "accent": "#c8a96e",
+    "accentDim": "#9f824c",
+    "bgPrimary": "#050507",
+    "bgSurface": "#0e0e12",
+    "sphereRadius": 950,
+    "camZ": -180,
+    "rotationSpeed": 0.003,
+    "showVideoIntro": true
+  },
+  "styles": {
+    "fontSerif": "Playfair Display, Georgia, serif",
+    "fontSans": "Inter, -apple-system, sans-serif",
+    "fontMono": "Space Mono, monospace",
+    "accentColor": "#c8a96e",
+    "bgDark": "#050507",
+    "cardBg": "#0e0e12",
+    "sphereRadius": 950,
+    "cameraZ": -180,
+    "sphereFriction": 0.94,
+    "sphereRotateSpeed": 0.003
+  }
+};
+
+// Application State Store
+const STATE = {
+  config: null,
+  isAuthenticated: false,
+  cards: [],
+  spherePositions: [],
+  yaw: 0,
+  pitch: 0,
+  targetYaw: 0,
+  targetPitch: 0,
+  dollyZ: 0,
+  targetDollyZ: 0,
+  isDragging: false,
+  startX: 0,
+  startY: 0,
+  lastX: 0,
+  lastY: 0,
+  velX: 0,
+  velY: 0
+};
+
+// Storage manager
+function loadStoredConfig() {
+  try {
+    const raw = localStorage.getItem('wilmar_portfolio_config_v3');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.profile) {
+        if (!parsed.profile.headlineTitle_en || parsed.profile.headlineTitle_en === parsed.profile.headlineTitle) {
+          parsed.profile.headlineTitle_en = OfflineTranslator.toEn(parsed.profile.headlineTitle || DEFAULT_CONFIG.profile.headlineTitle) || 'Selected Works & Projects';
+        }
+        if (!parsed.profile.headlineSubtitle_en || parsed.profile.headlineSubtitle_en === parsed.profile.headlineSubtitle) {
+          parsed.profile.headlineSubtitle_en = OfflineTranslator.toEn(parsed.profile.headlineSubtitle || DEFAULT_CONFIG.profile.headlineSubtitle) || 'Ten Selected Works · 2024–2026 Collection';
+        }
+      }
+      // Merge with default to guarantee schema completeness
+      return {
+        profile: { ...DEFAULT_CONFIG.profile, ...(parsed.profile || {}) },
+        style: { ...DEFAULT_CONFIG.style, ...(parsed.style || {}) },
+        security: { ...DEFAULT_CONFIG.security, ...(parsed.security || {}) },
+        projects: Array.isArray(parsed.projects) && parsed.projects.length > 0 ? parsed.projects : DEFAULT_CONFIG.projects
+      };
+    }
+  } catch(e) {
+    console.warn('Could not read config from localStorage:', e);
+  }
+  return JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+}
+
+function saveConfigToStorage(cfg) {
+  try {
+    localStorage.setItem('wilmar_portfolio_config_v3', JSON.stringify(cfg));
+  } catch(e) {
+    console.warn('Could not save to localStorage:', e);
+  }
+}
+
+// Toast notification system
+function showToast(message) {
+  const toast = document.getElementById('toast-msg');
+  if (!toast) return;
+  toast.textContent = message;
+  toast.classList.add('show');
+  clearTimeout(toast._timeout);
+  toast._timeout = setTimeout(() => {
+    toast.classList.remove('show');
+  }, 3200);
+}
+
+// Helper: Resolve image src with fallback for Google Drive IDs or normal URLs
+// Helper: Resolve image src with fallback for local images, Google Drive IDs or normal URLs
+function getProjectImageSrc(item) {
+  if (item.image) return item.image;
+  if (item.file) return item.file;
+  if (item.url) return item.url;
+  if (item.id) {
+    if (item.id.startsWith('http://') || item.id.startsWith('https://') || item.id.startsWith('images/') || item.id.endsWith('.webp') || item.id.endsWith('.png') || item.id.endsWith('.jpg')) {
+      return item.id;
+    }
+    // Direct map for known Drive IDs to local images folder for offline & GitHub performance
+    const driveToLocalMap = {
+      '1kUdMl7BScjHoLJLuKhEM9zcM0SWR4BrU': 'images/img1.webp',
+      '1s6lwti7WrcAAWXN1FDCvncLIevFg2kgv': 'images/img2.webp',
+      '1_f7I4HgQ7w51u2Kwo2yQ7S8itjpbozEZ': 'images/img3.webp',
+      '1nC_BG7yBIWBaNgvXPQ-g6JebPmVihbNc': 'images/img4.webp',
+      '1tErfd_njfYEoTHsJ3E90KcgJ9KI8OcfE': 'images/img5.webp',
+      '1qdrQwLAgcDBnami8tUD-YsaOfW6fYwWu': 'images/img6.webp',
+      '1rPtZU7lpYOb1EnY-IPAfzicwce119xRq': 'images/img7.webp',
+      '114uYCmwvhuasuLE6hxt1T00XsVsqpDY7': 'images/img8.webp',
+      '1q2x-CI2n4NgZx6ozDmosiFNJazhQyN8s': 'images/img9.webp',
+      '1jMfHQDqfKzhL9SYMTy4GKvI8nFcyX0E_': 'images/img10.webp'
+    };
+    if (driveToLocalMap[item.id]) return driveToLocalMap[item.id];
+    return `https://lh3.googleusercontent.com/d/${item.id}`;
+  }
+  return '';
+}
+
+function attachImageErrorFallback(imgEl, itemId) {
+  if (!itemId || itemId.startsWith('http')) return;
+  imgEl.onerror = function() {
+    if (!this.dataset.retry) {
+      this.dataset.retry = '1';
+      this.src = `https://drive.google.com/thumbnail?id=${itemId}&sz=w1600`;
+    }
+  };
+}
+
+/* ==========================================================================
+   DOM BINDING & LIVE UI UPDATE ENGINE
+   ========================================================================== */
+function applyConfigToUI(cfg) {
+  // Document title
+  document.title = `${cfg.profile.name} — Portafolio de Proyectos & Archivo Visual`;
+
+  // Logos & Brands
+  const logo = document.getElementById('ui-brand-logo');
+  if (logo) logo.textContent = cfg.profile.name;
+  const menuBrand = document.getElementById('ui-menu-brand');
+  if (menuBrand) menuBrand.textContent = cfg.profile.name;
+  const videoBrand = document.getElementById('ui-video-brand');
+  if (videoBrand) videoBrand.textContent = cfg.profile.videoBrand || `${cfg.profile.name.toUpperCase()} · ARCHIVO`;
+  const videoBadge = document.getElementById('ui-video-badge');
+  if (videoBadge) videoBadge.textContent = cfg.profile.videoBadge || 'PRÓLOGO INTERACTIVO';
+  const videoGreetingEl = document.getElementById('ui-video-greeting');
+  if (videoGreetingEl) videoGreetingEl.textContent = cfg.profile.videoGreeting || 'Hola, Soy Wilmar';
+
+  // Headlines (Bilingual Aware)
+  const isEn = (currentLang === 'en');
+  const dict = I18N[currentLang] || I18N.es;
+  const hTitle = document.getElementById('ui-headline-title');
+  if (hTitle) {
+    hTitle.textContent = isEn
+      ? (cfg.profile.headlineTitle_en || OfflineTranslator.toEn(cfg.profile.headlineTitle) || dict.headlineTitle)
+      : (cfg.profile.headlineTitle || dict.headlineTitle);
+  }
+  const hSub = document.getElementById('ui-headline-subtitle');
+  if (hSub) {
+    hSub.textContent = isEn
+      ? (cfg.profile.headlineSubtitle_en || OfflineTranslator.toEn(cfg.profile.headlineSubtitle) || dict.headlineSubtitle)
+      : (cfg.profile.headlineSubtitle || dict.headlineSubtitle);
+  }
+
+  const gTitle = document.getElementById('ui-grid-title');
+  if (gTitle) {
+    gTitle.textContent = isEn
+      ? (cfg.profile.gridTitle_en || OfflineTranslator.toEn(cfg.profile.gridTitle) || dict.gridTitle)
+      : (cfg.profile.gridTitle || dict.gridTitle);
+  }
+  const gSub = document.getElementById('ui-grid-subtitle');
+  if (gSub) {
+    gSub.textContent = isEn
+      ? (cfg.profile.gridSubtitle_en || OfflineTranslator.toEn(cfg.profile.gridSubtitle) || dict.gridSubtitle)
+      : (cfg.profile.gridSubtitle || dict.gridSubtitle);
+  }
+
+  // Menu footers
+  const mfLeft = document.getElementById('ui-menu-footer-left');
+  if (mfLeft) mfLeft.textContent = cfg.profile.menuFooterLeft;
+  const mfRight = document.getElementById('ui-menu-footer-right');
+  if (mfRight) mfRight.textContent = cfg.profile.menuFooterRight;
+
+  // Statement Section
+  const stTitle = document.getElementById('ui-statement-title');
+  if (stTitle) stTitle.textContent = cfg.profile.statementTitle || 'Manifiesto de Autor';
+  const stQuote = document.getElementById('ui-statement-quote');
+  if (stQuote) stQuote.innerHTML = `&ldquo;${cfg.profile.statementQuote}&rdquo;`;
+  const stBio = document.getElementById('ui-statement-bio');
+  if (stBio) {
+    stBio.innerHTML = cfg.profile.statementBio.includes('<p>') ? cfg.profile.statementBio : `<p>${cfg.profile.statementBio.replace(/\n\n/g, '</p><p>')}</p>`;
+  }
+
+  // Contact Section
+  const availBadge = document.getElementById('ui-availability-badge');
+  if (availBadge) availBadge.textContent = cfg.profile.availability.toUpperCase();
+
+  const emailLink = document.getElementById('ui-contact-email-link');
+  if (emailLink) {
+    emailLink.textContent = cfg.profile.email;
+    emailLink.href = `mailto:${cfg.profile.email}`;
+  }
+  const mailBtn = document.getElementById('mail-email-btn');
+  if (mailBtn) mailBtn.href = `mailto:${cfg.profile.email}`;
+
+  const waDisplay = document.getElementById('ui-whatsapp-display');
+  if (waDisplay) waDisplay.textContent = cfg.profile.whatsapp || '+57 (Colombia)';
+  const waBtn = document.getElementById('whatsapp-link-btn');
+  if (waBtn) {
+    const rawNumber = (cfg.profile.whatsapp || '').replace(/[^0-9]/g, '');
+    const encodedMsg = encodeURIComponent(cfg.profile.whatsappMsg || 'Hola Wilmar, me gustaría cotizar un proyecto.');
+    waBtn.href = rawNumber ? `https://wa.me/${rawNumber}?text=${encodedMsg}` : '#';
+  }
+
+  const igDisplay = document.getElementById('ui-instagram-display');
+  if (igDisplay) igDisplay.textContent = cfg.profile.instagram || '@wilmar.machado';
+  const igBtn = document.getElementById('instagram-link-btn');
+  if (igBtn) igBtn.href = cfg.profile.instagramUrl || 'https://www.instagram.com/';
+
+  const beDisplay = document.getElementById('ui-behance-display');
+  if (beDisplay) beDisplay.textContent = cfg.profile.behance || 'Portafolio Behance';
+  const beBtn = document.getElementById('behance-link-btn');
+  if (beBtn) beBtn.href = cfg.profile.behanceUrl || 'https://www.behance.net/';
+
+  const locDisplay = document.getElementById('ui-location-display');
+  if (locDisplay) locDisplay.textContent = cfg.profile.location;
+
+  // Apply Styles (CSS variables) with safe fallback
+  const root = document.documentElement;
+  const st = cfg.style || cfg.styles || {};
+  const accentVal = st.accent || st.accentColor || '#c8a96e';
+  const bgVal = st.bgPrimary || st.bgDark || '#050507';
+  const surfVal = st.bgSurface || st.cardBg || '#0e0e12';
+  const radVal = st.sphereRadius || 950;
+  const camVal = st.camZ !== undefined ? st.camZ : (st.cameraZ !== undefined ? st.cameraZ : -180);
+
+  root.style.setProperty('--accent', accentVal);
+  if (st.accentDim) root.style.setProperty('--accent-dim', st.accentDim);
+  root.style.setProperty('--bg-primary', bgVal);
+  root.style.setProperty('--bg-surface', surfVal);
+  root.style.setProperty('--sphere-radius', `${radVal}px`);
+  root.style.setProperty('--cam-z', `${camVal}px`);
+
+  // Regenerate Sphere & Grid
+  rebuildSphereAndGrid(cfg);
+}
+
+// Rebuild Sphere and Grid cards according to config
+function rebuildSphereAndGrid(cfg) {
+  const world = document.getElementById('world');
+  const gridContainer = document.getElementById('grid-container');
+  if (!world || !gridContainer) return;
+
+  // Remove existing cards
+  const existingCards = world.querySelectorAll('.card');
+  existingCards.forEach(c => c.remove());
+  gridContainer.innerHTML = '';
+
+  STATE.cards = [];
+  const items = cfg.projects;
+  const N = items.length;
+
+  items.forEach((item, i) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.setAttribute('data-index', i);
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('aria-label', `${item.title}, ${item.place}`);
+
+    const imageSrc = getProjectImageSrc(item);
+    card.innerHTML = `
+      <div class="card-inner">
+        <img class="card-img" src="${imageSrc}" alt="${item.title}" loading="lazy" referrerpolicy="no-referrer">
+        <div class="card-overlay"></div>
+        <div class="card-meta">
+          <div class="card-idx">${String(i + 1).padStart(2, '0')} / ${String(N).padStart(2, '0')}</div>
+          <div class="card-title">${item.title}</div>
+          <div class="card-place">${item.place}</div>
+        </div>
+      </div>
+    `;
+    const imgEl = card.querySelector('img');
+    attachImageErrorFallback(imgEl, item.id);
+
+    card.addEventListener('click', () => openLightbox(i));
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openLightbox(i);
+      }
+    });
+
+    world.appendChild(card);
+    STATE.cards.push(card);
+
+    // Grid Item
+    const gridItem = document.createElement('div');
+    gridItem.className = 'grid-item';
+    gridItem.setAttribute('role', 'button');
+    gridItem.setAttribute('tabindex', '0');
+    gridItem.innerHTML = `
+      <div class="grid-thumb">
+        <img src="${imageSrc}" alt="${item.title}" loading="lazy" referrerpolicy="no-referrer">
+      </div>
+      <div class="grid-info">
+        <div class="grid-idx">${String(i + 1).padStart(2, '0')} / ${String(N).padStart(2, '0')}</div>
+        <div class="grid-title">${item.title}</div>
+        <div class="grid-place">${item.place}</div>
+      </div>
+    `;
+    const gImgEl = gridItem.querySelector('img');
+    attachImageErrorFallback(gImgEl, item.id);
+
+    gridItem.addEventListener('click', () => openLightbox(i));
+    gridItem.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openLightbox(i);
+      }
+    });
+    gridContainer.appendChild(gridItem);
+  });
+
+  // Re-layout Fibonacci Sphere
+  layoutSphere();
+
+  // Attach hover cursor state
+  const customCursor = document.getElementById('custom-cursor');
+  document.querySelectorAll('button, a, .card, .grid-item, .project-admin-row').forEach(el => {
+    el.addEventListener('mouseenter', () => customCursor && customCursor.classList.add('hovered'));
+    el.addEventListener('mouseleave', () => customCursor && customCursor.classList.remove('hovered'));
+  });
+}
+
+function layoutSphere() {
+  const style = getComputedStyle(document.documentElement);
+  const radius = parseFloat(style.getPropertyValue('--sphere-radius')) || 950;
+  const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+  const N = STATE.cards.length;
+
+  STATE.spherePositions = [];
+
+  for (let i = 0; i < N; i++) {
+    const y = N === 1 ? 0 : 1 - (i / (N - 1)) * 2;
+    const radiusAtY = Math.sqrt(Math.max(0, 1 - y * y));
+    const theta = goldenAngle * i;
+
+    const x = Math.cos(theta) * radiusAtY;
+    const z = Math.sin(theta) * radiusAtY;
+
+    const px = x * radius;
+    const py = y * radius;
+    const pz = z * radius;
+
+    const rotY = Math.atan2(x, z) * (180 / Math.PI);
+    const rotX = -Math.asin(y) * (180 / Math.PI);
+
+    STATE.spherePositions.push({ px, py, pz, rotX, rotY });
+
+    if (STATE.cards[i]) {
+      STATE.cards[i].style.transform = `translate3d(${px}px, ${py}px, ${pz}px) rotateY(${rotY}deg) rotateX(${rotX}deg)`;
+    }
+  }
+}
+
+/* ==========================================================================
+   VIDEO PARALLAX INTRO CONTROLLER (HIGH FLUIDITY & ZERO LAG)
+   ========================================================================== */
+(function() {
+  const videoStage = document.getElementById('video-stage');
+  const videoFrame = document.getElementById('video-frame');
+  const introVideo = document.getElementById('intro-video');
+  const progressBar = document.getElementById('video-progress-bar');
+  const progressTrack = document.getElementById('video-progress-track');
+  const timeLabel = document.getElementById('video-time-label');
+  const playBtn = document.getElementById('video-play-btn');
+  const skipBtn = document.getElementById('video-skip-btn');
+  const videoGreeting = document.getElementById('video-greeting');
+
+  if (!introVideo || !videoStage) return;
+
+  // Primary source: Load the standalone high-quality original video directly
+  const vSrc = (STATE.config && STATE.config.profile && STATE.config.profile.videoSrc) || 'video.mp4';
+  if (!introVideo.src || !introVideo.src.includes('.mp4')) {
+    introVideo.src = vSrc;
+  }
+
+  let videoDuration = 13.07;
+  let targetProgress = 0.0;
+  let currentProgress = 0.0;
+  let videoEnded = false;
+  let queuedSeekTime = null;
+  let lastLabelText = '';
+  let playbackRateResetTimer = null;
+
+  let mouseX = 0;
+  let mouseY = 0;
+  let currentTiltX = 0;
+  let currentTiltY = 0;
+
+  function hideGreeting() {
+    if (videoGreeting) {
+      videoGreeting.classList.add('faded');
+      videoGreeting.setAttribute('data-hidden', 'true');
+      videoGreeting.style.opacity = '0';
+      videoGreeting.style.visibility = 'hidden';
+      videoGreeting.style.pointerEvents = 'none';
+    }
+  }
+
+  function showGreeting() {
+    if (videoGreeting && !videoEnded && introVideo.paused && currentProgress <= 0.008) {
+      videoGreeting.classList.remove('faded');
+      videoGreeting.removeAttribute('data-hidden');
+      videoGreeting.style.opacity = '1';
+      videoGreeting.style.visibility = 'visible';
+    }
+  }
+
+  introVideo.addEventListener('loadedmetadata', () => {
+    if (introVideo.duration && !isNaN(introVideo.duration)) {
+      videoDuration = introVideo.duration;
+    }
+    introVideo.currentTime = 0.001;
+  });
+
+  function applySeek(targetTime) {
+    if (introVideo.seeking) {
+      queuedSeekTime = targetTime;
+      return;
+    }
+    try {
+      if (typeof introVideo.fastSeek === 'function') {
+        introVideo.fastSeek(targetTime);
+      } else {
+        introVideo.currentTime = targetTime;
+      }
+    } catch (err) {
+      introVideo.currentTime = targetTime;
+    }
+  }
+
+  introVideo.addEventListener('seeked', () => {
+    if (queuedSeekTime !== null) {
+      const nextTime = queuedSeekTime;
+      queuedSeekTime = null;
+      applySeek(nextTime);
+    }
+  });
+
+  const TOTAL_SCROLL_PIXELS = 4800;
+
+  window.addEventListener('wheel', (e) => {
+    if (videoEnded || videoStage.style.display === 'none') return;
+    e.preventDefault();
+
+    let delta = e.deltaY;
+    if (e.deltaMode === 1) delta *= 32;
+    else if (e.deltaMode === 2) delta *= 600;
+
+    hideGreeting();
+
+    if (delta > 0) {
+      // User is scrolling forward / down: PLAY FLUIDLY!
+      if (introVideo.paused) {
+        introVideo.play().catch(err => console.warn('Play error:', err));
+      }
+      // Speed up video playback smoothly if scrolling vigorously
+      const dynamicRate = Math.min(2.5, Math.max(1.0, 1.0 + (delta / 120)));
+      introVideo.playbackRate = dynamicRate;
+      clearTimeout(playbackRateResetTimer);
+      playbackRateResetTimer = setTimeout(() => {
+        if (!introVideo.paused) introVideo.playbackRate = 1.0;
+      }, 300);
+    } else if (delta < 0) {
+      // User is scrolling backward / up: seek backwards smoothly!
+      if (!introVideo.paused) introVideo.pause();
+      targetProgress = Math.max(0, Math.min(1.0, currentProgress + delta / 3200));
+      currentProgress = targetProgress;
+      applySeek(Math.min(videoDuration - 0.05, targetProgress * videoDuration));
+      if (currentProgress <= 0.008) showGreeting();
+    }
+  }, { passive: false });
+
+  let touchStartY = 0;
+  let isTouching = false;
+
+  window.addEventListener('touchstart', (e) => {
+    if (videoEnded || videoStage.style.display === 'none') return;
+    if (e.touches.length === 1) {
+      touchStartY = e.touches[0].clientY;
+      isTouching = true;
+    }
+  }, { passive: true });
+
+  window.addEventListener('touchmove', (e) => {
+    if (videoEnded || !isTouching || videoStage.style.display === 'none') return;
+    if (e.touches.length === 1) {
+      const curY = e.touches[0].clientY;
+      const deltaY = touchStartY - curY;
+      touchStartY = curY;
+
+      hideGreeting();
+
+      if (deltaY > 0) {
+        // User swiped up / scrolled forward: PLAY FLUIDLY!
+        if (introVideo.paused) {
+          introVideo.play().catch(err => console.warn('Play error:', err));
+        }
+      } else if (deltaY < 0) {
+        // User swiped down / scrolled backward: seek backwards smoothly!
+        if (!introVideo.paused) introVideo.pause();
+        targetProgress = Math.max(0, Math.min(1.0, currentProgress - 0.03));
+        currentProgress = targetProgress;
+        applySeek(Math.min(videoDuration - 0.05, targetProgress * videoDuration));
+        if (currentProgress <= 0.008) showGreeting();
+      }
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  window.addEventListener('touchend', () => {
+    isTouching = false;
+  }, { passive: true });
+
+  window.addEventListener('mousemove', (e) => {
+    if (videoEnded || videoStage.style.display === 'none') return;
+    mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+    mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+  });
+
+  if (progressTrack) {
+    progressTrack.addEventListener('click', (e) => {
+      hideGreeting();
+      const rect = progressTrack.getBoundingClientRect();
+      targetProgress = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      currentProgress = targetProgress;
+      applySeek(Math.min(videoDuration - 0.05, targetProgress * videoDuration));
+    });
+  }
+
+  if (playBtn) {
+    playBtn.addEventListener('click', () => {
+      hideGreeting();
+      if (introVideo.paused) {
+        if (introVideo.currentTime >= videoDuration - 0.25) {
+          targetProgress = 0.0;
+          currentProgress = 0.0;
+          applySeek(0.001);
+        }
+        introVideo.play().catch(err => console.warn('Play error:', err));
+      } else {
+        introVideo.pause();
+      }
+    });
+  }
+
+  introVideo.addEventListener('play', () => {
+    if (playBtn) { const d = I18N[currentLang] || I18N.es; playBtn.innerHTML = '&#10074;&#10074; <span id="ui-video-play-label">' + d.videoPause + '</span>'; }
+    hideGreeting();
+  });
+
+  introVideo.addEventListener('pause', () => {
+    if (playBtn) { const d = I18N[currentLang] || I18N.es; playBtn.innerHTML = '&#9654; <span id="ui-video-play-label">' + d.videoPlay + '</span>'; }
+    if (currentProgress <= 0.008 && !videoEnded) showGreeting();
+  });
+
+  // Video click & error fallbacks
+  if (videoFrame) {
+    videoFrame.addEventListener('click', (e) => {
+      if (e.target.closest('.video-controls') || e.target.closest('.video-topbar')) return;
+      hideGreeting();
+      if (introVideo.paused) {
+        introVideo.play().catch(err => console.warn('Play error:', err));
+      } else {
+        introVideo.pause();
+      }
+    });
+  }
+
+  introVideo.addEventListener('error', (err) => {
+    console.warn('Video decoding or load notice:', err);
+  });
+
+  // Emergency keyboard pass: Escape or Enter skips intro
+  window.addEventListener('keydown', (e) => {
+    if (videoStage && videoStage.style.display !== 'none' && !videoEnded) {
+      if (e.key === 'Escape' || e.key === 'Enter') {
+        e.preventDefault();
+        completeVideoAndEnterArchive();
+      }
+    }
+  });
+
+  introVideo.addEventListener('ended', () => {
+    completeVideoAndEnterArchive();
+  });
+
+  if (skipBtn) {
+    skipBtn.addEventListener('click', () => {
+      completeVideoAndEnterArchive();
+    });
+  }
+
+  const replayLinks = document.querySelectorAll('[data-replay-video]');
+  replayLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      replayVideoIntro();
+    });
+  });
+
+  window.replayVideoIntro = function() {
+    videoEnded = false;
+    targetProgress = 0.0;
+    currentProgress = 0.0;
+    introVideo.pause();
+    applySeek(0.001);
+    showGreeting();
+
+    const menu = document.getElementById('menu');
+    const burger = document.getElementById('burger-btn');
+    if (menu && menu.classList.contains('open')) {
+      menu.classList.remove('open');
+      if (burger) burger.setAttribute('aria-expanded', 'false');
+    }
+
+    videoStage.style.display = 'flex';
+    videoStage.style.opacity = '1';
+    videoStage.style.pointerEvents = 'auto';
+
+    const veil = document.getElementById('veil');
+    if (veil) veil.style.opacity = '0';
+
+    requestAnimationFrame(renderVideoLoop);
+  };
+
+  window.completeVideoAndEnterArchive = function() {
+    if (videoEnded) return;
+    videoEnded = true;
+    introVideo.pause();
+
+    const veil = document.getElementById('veil');
+    if (veil) {
+      veil.style.transition = 'opacity 0.7s var(--ease-cinematic)';
+      veil.style.opacity = '1';
+    }
+
+    setTimeout(() => {
+      videoStage.style.opacity = '0';
+      videoStage.style.pointerEvents = 'none';
+
+      window.dispatchEvent(new CustomEvent('enter-archive'));
+
+      setTimeout(() => {
+        videoStage.style.display = 'none';
+        if (veil) {
+          veil.style.transition = 'opacity 0.9s var(--ease-cinematic)';
+          veil.style.opacity = '0';
+        }
+      }, 500);
+    }, 400);
+  };
+
+  function renderVideoLoop() {
+    if (videoEnded || videoStage.style.display === 'none') return;
+
+    if (!introVideo.paused) {
+      const p = Math.max(0, Math.min(1.0, introVideo.currentTime / videoDuration));
+      targetProgress = p;
+      currentProgress = p;
+
+      hideGreeting();
+
+      if (introVideo.currentTime >= videoDuration - 0.25 || p >= 0.985) {
+        window.completeVideoAndEnterArchive();
+        return;
+      }
+    } else {
+      currentProgress += (targetProgress - currentProgress) * 0.15;
+      if (Math.abs(targetProgress - currentProgress) < 0.0005) {
+        currentProgress = targetProgress;
+      }
+      const targetTime = Math.min(videoDuration - 0.05, currentProgress * videoDuration);
+      if (!introVideo.seeking && Math.abs(introVideo.currentTime - targetTime) > 0.03) {
+        applySeek(targetTime);
+      }
+      if (currentProgress > 0.008) {
+        hideGreeting();
+      } else if (!videoEnded) {
+        showGreeting();
+      }
+      if (currentProgress >= 0.985) {
+        window.completeVideoAndEnterArchive();
+        return;
+      }
+    }
+
+    currentTiltX += (mouseY - currentTiltX) * 0.06;
+    currentTiltY += (mouseX - currentTiltY) * 0.06;
+
+    const scale = 0.82 + Math.pow(currentProgress, 1.35) * 1.95;
+    const rotX = -currentTiltX * 4.0;
+    const rotY = currentTiltY * 4.5;
+    const transX = currentTiltY * 14;
+    const transY = currentTiltX * 14;
+
+    videoFrame.style.transform = `scale(${scale}) translate3d(${transX}px, ${transY}px, 0) rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+
+    if (progressBar) {
+      progressBar.style.transform = `scaleX(${currentProgress})`;
+    }
+
+    if (timeLabel) {
+      const displayTime = !introVideo.paused ? introVideo.currentTime : (currentProgress * videoDuration);
+      const curM = Math.floor(displayTime / 60);
+      const curS = Math.floor(displayTime % 60).toString().padStart(2, '0');
+      const totM = Math.floor(videoDuration / 60);
+      const totS = Math.floor(videoDuration % 60).toString().padStart(2, '0');
+      const percent = Math.round(currentProgress * 100);
+
+      const d = I18N[currentLang] || I18N.es;
+      let stageText = d.stages.overview;
+      if (percent > 20 && percent <= 50) stageText = d.stages.zoom;
+      else if (percent > 50 && percent <= 75) stageText = d.stages.gaze;
+      else if (percent > 75 && percent <= 90) stageText = d.stages.iris;
+      else if (percent > 90) stageText = d.stages.archive;
+
+      const newLabelText = `${curM}:${curS} / ${totM}:${totS} · ${stageText} (${percent}%)`;
+      if (newLabelText !== lastLabelText) {
+        lastLabelText = newLabelText;
+        timeLabel.textContent = newLabelText;
+      }
+    }
+
+    requestAnimationFrame(renderVideoLoop);
+  }
+
+  // Check if video intro is enabled in config
+  const initialCfg = loadStoredConfig();
+  if (initialCfg.style && initialCfg.style.showVideoIntro === false) {
+    videoStage.style.display = 'none';
+    window.dispatchEvent(new CustomEvent('enter-archive'));
+  } else {
+    requestAnimationFrame(renderVideoLoop);
+  }
+})();
+
+/* ==========================================================================
+   3D FIBONACCI PHOTO SPHERE SCENE ENGINE
+   ========================================================================== */
+(function() {
+  const world = document.getElementById('world');
+  const viewport = document.getElementById('viewport');
+  const headline = document.getElementById('headline');
+  const gridView = document.getElementById('grid-view');
+  const viewToggle = document.getElementById('view-toggle');
+  const viewLabel = document.getElementById('view-label');
+  const gridCloseBtn = document.getElementById('grid-close-btn');
+  const customCursor = document.getElementById('custom-cursor');
+
+  viewport.addEventListener('mousedown', (e) => {
+    if (e.target.closest('.card')) return;
+    STATE.isDragging = true;
+    STATE.startX = e.clientX;
+    STATE.startY = e.clientY;
+    STATE.lastX = e.clientX;
+    STATE.lastY = e.clientY;
+    STATE.velX = 0;
+    STATE.velY = 0;
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (customCursor) {
+      customCursor.style.left = `${e.clientX}px`;
+      customCursor.style.top = `${e.clientY}px`;
+    }
+
+    if (!STATE.isDragging) return;
+    const dx = e.clientX - STATE.lastX;
+    const dy = e.clientY - STATE.lastY;
+    STATE.lastX = e.clientX;
+    STATE.lastY = e.clientY;
+
+    STATE.velX = dx * 0.25;
+    STATE.velY = dy * 0.25;
+
+    STATE.targetYaw += STATE.velX;
+    STATE.targetPitch = Math.max(-55, Math.min(55, STATE.targetPitch - STATE.velY));
+  });
+
+  window.addEventListener('mouseup', () => {
+    STATE.isDragging = false;
+  });
+
+  window.addEventListener('wheel', (e) => {
+    const videoStage = document.getElementById('video-stage');
+    if (videoStage && videoStage.style.display !== 'none') return;
+    if (gridView.classList.contains('active')) return;
+    const modals = document.querySelectorAll('.overlay-modal.active, #lightbox.active, #master-console.active');
+    if (modals.length > 0) return;
+
+    STATE.targetDollyZ = Math.max(-450, Math.min(300, STATE.targetDollyZ - e.deltaY * 0.45));
+  }, { passive: true });
+
+  function animateSphereLoop() {
+    const currentSpeed = (STATE.config && STATE.config.style && STATE.config.style.rotationSpeed !== undefined)
+      ? STATE.config.style.rotationSpeed
+      : 0.04;
+
+    if (!STATE.isDragging) {
+      STATE.velX *= 0.94;
+      STATE.velY *= 0.94;
+      STATE.targetYaw += STATE.velX;
+      STATE.targetPitch = Math.max(-55, Math.min(55, STATE.targetPitch - STATE.velY));
+      STATE.targetYaw += currentSpeed; // rotation velocity
+    }
+
+    STATE.yaw += (STATE.targetYaw - STATE.yaw) * 0.08;
+    STATE.pitch += (STATE.targetPitch - STATE.pitch) * 0.08;
+    STATE.dollyZ += (STATE.targetDollyZ - STATE.dollyZ) * 0.08;
+
+    const style = getComputedStyle(document.documentElement);
+    const baseCamZ = parseFloat(style.getPropertyValue('--cam-z')) || -180;
+    const currentCamZ = baseCamZ + STATE.dollyZ;
+
+    if (world) {
+      world.style.transform = `translateZ(${currentCamZ}px) rotateX(${STATE.pitch}deg) rotateY(${STATE.yaw}deg)`;
+    }
+
+    if (headline) {
+      headline.style.transform = `translate(-50%, -50%) rotateY(${-STATE.yaw}deg) rotateX(${-STATE.pitch}deg)`;
+    }
+
+    requestAnimationFrame(animateSphereLoop);
+  }
+
+  animateSphereLoop();
+
+  window.addEventListener('enter-archive', () => {
+    layoutSphere();
+    layoutSphere();
+    document.body.classList.add('revealed');
+  });
+
+  function toggleGrid() {
+    const isGrid = gridView.classList.toggle('active');
+    const dict = I18N[currentLang] || I18N.es;
+    viewLabel.textContent = isGrid ? dict.viewSphere : dict.viewGrid;
+    if (isGrid) {
+      document.body.style.overflowY = 'auto';
+    } else {
+      document.body.style.overflowY = 'hidden';
+      layoutSphere();
+    }
+  }
+
+  viewToggle.addEventListener('click', toggleGrid);
+
+  // Bilingual toggle button listener
+  const langToggleBtn = document.getElementById('lang-toggle-btn');
+  if (langToggleBtn) {
+    langToggleBtn.addEventListener('click', () => {
+      applyLanguage(currentLang === 'es' ? 'en' : 'es');
+      showToast(currentLang === 'es' ? 'Idioma: Español' : 'Language: English');
+    });
+  }
+
+
+  // Auto-translate buttons listeners (100% Offline)
+  const btnAutoTransProf = document.getElementById('btn-auto-translate-profile');
+  if (btnAutoTransProf) {
+    btnAutoTransProf.addEventListener('click', () => {
+      const h1Es = document.getElementById('cfg-sphere-h1')?.value || '';
+      const subEs = document.getElementById('cfg-sphere-sub')?.value || '';
+      const gtEs = document.getElementById('cfg-grid-title')?.value || '';
+      const gsEs = document.getElementById('cfg-grid-sub')?.value || '';
+
+      const h1EnEl = document.getElementById('cfg-sphere-h1-en');
+      const subEnEl = document.getElementById('cfg-sphere-sub-en');
+      const gtEnEl = document.getElementById('cfg-grid-title-en');
+      const gsEnEl = document.getElementById('cfg-grid-sub-en');
+
+      if (h1EnEl && h1Es) h1EnEl.value = OfflineTranslator.toEn(h1Es);
+      if (subEnEl && subEs) subEnEl.value = OfflineTranslator.toEn(subEs);
+      if (gtEnEl && gtEs) gtEnEl.value = OfflineTranslator.toEn(gtEs);
+      if (gsEnEl && gsEs) gsEnEl.value = OfflineTranslator.toEn(gsEs);
+
+      showToast('¡Titulares traducidos a inglés con el motor offline!');
+    });
+  }
+
+  const btnAutoTransProj = document.getElementById('btn-auto-translate-project');
+  if (btnAutoTransProj) {
+    btnAutoTransProj.addEventListener('click', () => {
+      const titleEs = document.getElementById('edit-project-title')?.value || '';
+      const placeEs = document.getElementById('edit-project-place')?.value || '';
+      const noteEs = document.getElementById('edit-project-note')?.value || '';
+
+      const titleEnEl = document.getElementById('edit-project-title-en');
+      const placeEnEl = document.getElementById('edit-project-place-en');
+      const noteEnEl = document.getElementById('edit-project-note-en');
+
+      if (titleEnEl && titleEs) titleEnEl.value = OfflineTranslator.toEn(titleEs);
+      if (placeEnEl && placeEs) placeEnEl.value = OfflineTranslator.toEn(placeEs);
+      if (noteEnEl && noteEs) noteEnEl.value = OfflineTranslator.toEn(noteEs);
+
+      showToast('¡Ficha de obra traducida a inglés en modo offline!');
+    });
+  }
+
+  gridCloseBtn.addEventListener('click', toggleGrid);
+  window.toggleGridView = toggleGrid;
+
+  window.addEventListener('resize', layoutSphere);
+})();
+
+/* ==========================================================================
+   LIGHTBOX CONTROLLER
+   ========================================================================== */
+/* ==========================================================================
+   ENHANCED LIGHTBOX CONTROLLER: BILINGUAL SPECS, PROCESS MODES & INQUIRE
+   ========================================================================== */
+
+let currentProcessMode = 'final';
+
+function setLightboxProcessMode(mode) {
+  currentProcessMode = mode || 'final';
+  const img = document.getElementById('lightbox-img');
+  const overlay = document.getElementById('process-overlay');
+  const btns = document.querySelectorAll('.lb-switch-btn');
+
+  btns.forEach(b => {
+    b.classList.toggle('active', b.getAttribute('data-mode') === currentProcessMode);
+  });
+
+  if (!img) return;
+
+  if (currentProcessMode === 'final') {
+    img.style.transform = 'scale(1)';
+    img.style.filter = 'none';
+    if (overlay) overlay.classList.remove('active');
+  } else if (currentProcessMode === 'process') {
+    img.style.transform = 'scale(1)';
+    img.style.filter = 'grayscale(100%) contrast(155%) brightness(105%)';
+    if (overlay) overlay.classList.add('active');
+  } else if (currentProcessMode === 'texture') {
+    img.style.transform = 'scale(2.2)';
+    img.style.filter = 'contrast(120%) brightness(100%)';
+    if (overlay) overlay.classList.remove('active');
+  }
+}
+
+function openLightbox(index) {
+  const cfg = STATE.config || DEFAULT_CONFIG;
+  const items = cfg.projects;
+  if (!items || !items[index]) return;
+  STATE.currentLightboxIndex = index;
+  const item = items[index];
+  const N = items.length;
+
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = document.getElementById('lightbox-img');
+  const lightboxIndex = document.getElementById('lightbox-index');
+  const lightboxYear = document.getElementById('lightbox-year');
+  const lightboxTitle = document.getElementById('lightbox-title');
+  const lightboxPlace = document.getElementById('lightbox-place');
+  const lightboxNote = document.getElementById('lightbox-note');
+
+  // Specs Elements
+  const lbRole = document.getElementById('lightbox-role');
+  const lbMedium = document.getElementById('lightbox-medium');
+  const lbTypo = document.getElementById('lightbox-typography');
+  const lbClient = document.getElementById('lightbox-client');
+  const driveBtn = document.getElementById('lightbox-drive-btn');
+
+  // Reset visual mode to 'final'
+  setLightboxProcessMode('final');
+
+  const imageSrc = getProjectImageSrc(item);
+  if (lightboxImg) {
+    lightboxImg.src = imageSrc;
+    attachImageErrorFallback(lightboxImg, item.id);
+  }
+
+  // Display texts according to currentLang
+  const isEn = (currentLang === 'en');
+  if (lightboxIndex) lightboxIndex.textContent = `${String(index + 1).padStart(2, '0')} / ${String(N).padStart(2, '0')}`;
+  if (lightboxYear) lightboxYear.textContent = item.year || '2025';
+
+  if (lightboxTitle) {
+    lightboxTitle.textContent = isEn ? (item.title_en || OfflineTranslator.toEn(item.title)) : item.title;
+  }
+  if (lightboxPlace) {
+    lightboxPlace.textContent = isEn ? (item.place_en || OfflineTranslator.toEn(item.place)) : item.place;
+  }
+  if (lightboxNote) {
+    lightboxNote.textContent = isEn ? (item.note_en || OfflineTranslator.toEn(item.note)) : item.note;
+  }
+
+  // Populate technical specifications
+  if (lbRole) {
+    const rVal = isEn ? (item.role_en || OfflineTranslator.toEn(item.role || 'Art Direction & Composition')) : (item.role || 'Dirección de Arte & Composición');
+    lbRole.textContent = rVal;
+  }
+  if (lbMedium) {
+    const mVal = isEn ? (item.medium_en || OfflineTranslator.toEn(item.medium || 'Digital Composition & Fine Art Print')) : (item.medium || 'Composición Digital & Impresión Fine Art');
+    lbMedium.textContent = mVal;
+  }
+  if (lbTypo) {
+    lbTypo.textContent = item.typography || 'Cormorant Garamond & Cinzel Custom';
+  }
+  if (lbClient) {
+    const cVal = isEn ? (item.client_en || OfflineTranslator.toEn(item.client || "Author's Collection")) : (item.client || 'Colección Autoral');
+    lbClient.textContent = cVal;
+  }
+
+  if (driveBtn) {
+    driveBtn.href = item.driveUrl || (item.id && !item.id.startsWith('http') ? `https://drive.google.com/file/d/${item.id}/view?usp=drivesdk` : (item.url || '#'));
+  }
+
+  if (lightbox) lightbox.classList.add('active');
+}
+
+function closeLightbox() {
+  const lightbox = document.getElementById('lightbox');
+  if (lightbox) lightbox.classList.remove('active');
+  setLightboxProcessMode('final');
+}
+
+// Lightbox Prev / Next Handlers
+function lightboxPrev() {
+  const cfg = STATE.config || DEFAULT_CONFIG;
+  const N = cfg.projects.length;
+  if (!N) return;
+  const idx = ((STATE.currentLightboxIndex || 0) - 1 + N) % N;
+  openLightbox(idx);
+}
+
+function lightboxNext() {
+  const cfg = STATE.config || DEFAULT_CONFIG;
+  const N = cfg.projects.length;
+  if (!N) return;
+  const idx = ((STATE.currentLightboxIndex || 0) + 1) % N;
+  openLightbox(idx);
+}
+
+// Inquire Similar Project Action
+function inquireSimilarProject() {
+  const cfg = STATE.config || DEFAULT_CONFIG;
+  const idx = STATE.currentLightboxIndex !== undefined ? STATE.currentLightboxIndex : 0;
+  const item = cfg.projects[idx] || cfg.projects[0];
+  if (!item) return;
+
+  closeLightbox();
+
+  // Open contact modal
+  const contactModal = document.getElementById('contact-modal');
+  if (contactModal) contactModal.classList.add('active');
+
+  const isEn = (currentLang === 'en');
+  const projTitle = isEn ? (item.title_en || item.title) : item.title;
+  const projPlace = isEn ? (item.place_en || item.place) : item.place;
+
+  // Pre-fill message
+  const msgEl = document.getElementById('form-message');
+  if (msgEl) {
+    if (isEn) {
+      msgEl.value = `Hello Wilmar, I am interested in commissioning an artwork or project similar to "${projTitle}" (${projPlace}). I would like to discuss availability and scope.`;
+    } else {
+      msgEl.value = `Hola Wilmar, me interesa encargar una obra o proyecto similar a "${projTitle}" (${projPlace}). Quisiera conversar sobre disponibilidad y presupuesto.`;
+    }
+  }
+
+  // Pre-select service if possible
+  const svcEl = document.getElementById('form-service');
+  if (svcEl && item.place) {
+    const pLower = item.place.toLowerCase();
+    if (pLower.includes('sacro') || pLower.includes('sacred')) {
+      for (let i = 0; i < svcEl.options.length; i++) {
+        if (svcEl.options[i].value.toLowerCase().includes('sacro') || svcEl.options[i].value.toLowerCase().includes('sacred')) {
+          svcEl.selectedIndex = i;
+          break;
+        }
+      }
+    } else if (pLower.includes('editorial') || pLower.includes('tipograf') || pLower.includes('typograph')) {
+      for (let i = 0; i < svcEl.options.length; i++) {
+        if (svcEl.options[i].value.toLowerCase().includes('editorial')) {
+          svcEl.selectedIndex = i;
+          break;
+        }
+      }
+    } else if (pLower.includes('fotograf') || pLower.includes('portrait') || pLower.includes('retrato')) {
+      for (let i = 0; i < svcEl.options.length; i++) {
+        if (svcEl.options[i].value.toLowerCase().includes('fotograf') || svcEl.options[i].value.toLowerCase().includes('portrait')) {
+          svcEl.selectedIndex = i;
+          break;
+        }
+      }
+    }
+  }
+
+  const nameInput = document.getElementById('form-name');
+  if (nameInput) setTimeout(() => nameInput.focus(), 300);
+
+  showToast(isEn ? 'Project linked to proposal form!' : '¡Proyecto vinculado al formulario de contacto!');
+}
+
+// Lightbox Listeners
+
+  // Lightbox Header Language Switcher
+  const lbLangToggleBtn = document.getElementById('lightbox-lang-toggle-btn');
+  if (lbLangToggleBtn) {
+    lbLangToggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      applyLanguage(currentLang === 'es' ? 'en' : 'es');
+      showToast(currentLang === 'es' ? 'Idioma: Español' : 'Language: English');
+    });
+  }
+
+const lbCloseBtn = document.getElementById('lightbox-close-btn');
+if (lbCloseBtn) lbCloseBtn.addEventListener('click', closeLightbox);
+
+const lbEl = document.getElementById('lightbox');
+if (lbEl) {
+  lbEl.addEventListener('click', (e) => {
+    if (e.target === lbEl) closeLightbox();
+  });
+}
+
+const lbPrevBtn = document.getElementById('lightbox-prev-btn');
+if (lbPrevBtn) lbPrevBtn.addEventListener('click', lightboxPrev);
+
+const lbNextBtn = document.getElementById('lightbox-next-btn');
+if (lbNextBtn) lbNextBtn.addEventListener('click', lightboxNext);
+
+const lbInquireBtn = document.getElementById('lightbox-inquire-btn');
+if (lbInquireBtn) lbInquireBtn.addEventListener('click', inquireSimilarProject);
+
+// Lightbox Process Mode Buttons
+const modeBtns = document.querySelectorAll('.lb-switch-btn');
+modeBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const mode = btn.getAttribute('data-mode');
+    setLightboxProcessMode(mode);
+  });
+});
+
+// Keyboard Navigation for Lightbox & Modals
+window.addEventListener('keydown', (e) => {
+  const lb = document.getElementById('lightbox');
+  if (lb && lb.classList.contains('active')) {
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      lightboxPrev();
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      lightboxNext();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      closeLightbox();
+    }
+  }
+});
+
+/* ==========================================================================
+   MENU & MODAL OVERLAYS (Contact & Statement)
+   ========================================================================== */
+(function() {
+  const menu = document.getElementById('menu');
+  const burgerBtn = document.getElementById('burger-btn');
+  const menuCloseBtn = document.getElementById('menu-close-btn');
+
+  const contactModal = document.getElementById('contact-modal');
+  const contactCloseBtn = document.getElementById('contact-close-btn');
+
+  const statementModal = document.getElementById('statement-modal');
+  const statementCloseBtn = document.getElementById('statement-close-btn');
+
+  function openMenu() {
+    menu.classList.add('open');
+    burgerBtn.setAttribute('aria-expanded', 'true');
+  }
+
+  function closeMenu() {
+    menu.classList.remove('open');
+    burgerBtn.setAttribute('aria-expanded', 'false');
+  }
+
+  burgerBtn.addEventListener('click', () => {
+    if (menu.classList.contains('open')) closeMenu();
+    else openMenu();
+  });
+
+  menuCloseBtn.addEventListener('click', closeMenu);
+
+  function openContact() {
+    closeMenu();
+    closeLightbox();
+    statementModal.classList.remove('active');
+    contactModal.classList.add('active');
+  }
+
+  function closeContact() {
+    contactModal.classList.remove('active');
+  }
+
+  function openStatement() {
+    closeMenu();
+    closeLightbox();
+    contactModal.classList.remove('active');
+    statementModal.classList.add('active');
+  }
+
+  function closeStatement() {
+    statementModal.classList.remove('active');
+  }
+
+  contactCloseBtn.addEventListener('click', closeContact);
+  statementCloseBtn.addEventListener('click', closeStatement);
+
+  const stmtToContact = document.getElementById('statement-to-contact-btn');
+  if (stmtToContact) {
+    stmtToContact.addEventListener('click', () => {
+      closeStatement();
+      openContact();
+    });
+  }
+
+  // Menu links routing
+  document.querySelectorAll('[data-menu-action]').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const action = link.getAttribute('data-menu-action');
+      closeMenu();
+
+      const gridView = document.getElementById('grid-view');
+      if (action === 'grid') {
+        if (!gridView.classList.contains('active')) window.toggleGridView();
+      } else if (action === 'sphere') {
+        if (gridView.classList.contains('active')) window.toggleGridView();
+      } else if (action === 'contact') {
+        openContact();
+      } else if (action === 'statement') {
+        openStatement();
+      } else if (action === 'master') {
+        closeMenu();
+        triggerMasterAuthOrConsole();
+      }
+    });
+  });
+
+  // Valledupar Real-Time Clock Widget (UTC-5)
+  function updateValleduparClock() {
+    const clockEl = document.getElementById('clock-time');
+    if (!clockEl) return;
+    try {
+      const now = new Date();
+      const formatter = new Intl.DateTimeFormat('es-CO', {
+        timeZone: 'America/Bogota',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      });
+      clockEl.textContent = formatter.format(now);
+    } catch(e) {
+      clockEl.textContent = new Date().toLocaleTimeString();
+    }
+  }
+  updateValleduparClock();
+  setInterval(updateValleduparClock, 1000);
+
+  // Email Copy button
+  const copyEmailBtn = document.getElementById('copy-email-btn');
+  if (copyEmailBtn) {
+    copyEmailBtn.addEventListener('click', () => {
+      const email = STATE.config?.profile?.email || 'wamimcim2@gmail.com';
+      navigator.clipboard.writeText(email).then(() => {
+        showToast('¡Correo copiado al portapapeles!');
+      }).catch(() => {
+        showToast(`Correo: ${email}`);
+      });
+    });
+  }
+
+  // Contact Form Submission
+  const contactForm = document.getElementById('contact-form');
+  const feedbackBox = document.getElementById('form-feedback-box');
+  let preparedMailto = '';
+  let preparedText = '';
+
+  if (contactForm) {
+    contactForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = document.getElementById('form-name').value.trim();
+      const email = document.getElementById('form-email').value.trim();
+      const service = document.getElementById('form-service').value;
+      const budget = document.getElementById('form-budget').value.trim();
+      const message = document.getElementById('form-message').value.trim();
+
+      const recipient = STATE.config?.profile?.email || 'wamimcim2@gmail.com';
+      const subject = encodeURIComponent(`Propuesta de Proyecto [${service}] — ${name}`);
+      const body = encodeURIComponent(
+        `Hola Wilmar,
+
+Mi nombre es ${name} (${email}).
+Tipo de Obra: ${service}
+Presupuesto / Cronograma: ${budget || 'A definir'}
+
+Descripción del Proyecto:
+${message}
+
+---
+Enviado desde el Portafolio Oficial de Wilmar Machado`
+      );
+
+      preparedMailto = `mailto:${recipient}?subject=${subject}&body=${body}`;
+      preparedText = `Propuesta de ${name} (${email})
+Disciplina: ${service}
+Presupuesto: ${budget}
+Mensaje:
+${message}`;
+
+      if (feedbackBox) {
+        feedbackBox.classList.add('success');
+      }
+
+      showToast('¡Propuesta preparada correctamente!');
+    });
+  }
+
+  const openMailtoBtn = document.getElementById('open-mailto-btn');
+  if (openMailtoBtn) {
+    openMailtoBtn.addEventListener('click', () => {
+      if (preparedMailto) window.location.href = preparedMailto;
+    });
+  }
+
+  const copySummaryBtn = document.getElementById('copy-summary-btn');
+  if (copySummaryBtn) {
+    copySummaryBtn.addEventListener('click', () => {
+      if (preparedText) {
+        navigator.clipboard.writeText(preparedText).then(() => {
+          showToast('¡Mensaje copiado al portapapeles!');
+        });
+      }
+    });
+  }
+
+  // Triple-click logo to access master console
+  const brandLogo = document.getElementById('ui-brand-logo');
+  let logoClickCount = 0;
+  let logoClickTimer = null;
+  if (brandLogo) {
+    brandLogo.addEventListener('click', (e) => {
+      logoClickCount++;
+      clearTimeout(logoClickTimer);
+      if (logoClickCount >= 3) {
+        e.preventDefault();
+        logoClickCount = 0;
+        triggerMasterAuthOrConsole();
+      } else {
+        logoClickTimer = setTimeout(() => {
+          logoClickCount = 0;
+        }, 500);
+      }
+    });
+  }
+})();
+
+/* ==========================================================================
+   MASTER ADMIN STUDIO CONSOLE (Access, CRUD, Customization, Exports)
+   ========================================================================== */
+function triggerMasterAuthOrConsole() {
+  const isAuth = sessionStorage.getItem('wilmar_master_auth') === '1';
+  if (isAuth) {
+    openMasterConsole();
+  } else {
+    openMasterAuthModal();
+  }
+}
+
+// Nav master button
+document.getElementById('master-trigger-nav').addEventListener('click', () => {
+  triggerMasterAuthOrConsole();
+});
+
+// Keyboard shortcut (Ctrl+M or Alt+M)
+window.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.altKey) && (e.key === 'm' || e.key === 'M')) {
+    e.preventDefault();
+    triggerMasterAuthOrConsole();
+  }
+});
+
+// Master Auth Gate
+function openMasterAuthModal() {
+  const modal = document.getElementById('master-auth-modal');
+  const input = document.getElementById('master-password-input');
+  if (modal) modal.classList.add('active');
+  if (input) {
+    input.value = '';
+    setTimeout(() => input.focus(), 100);
+  }
+}
+
+function closeMasterAuthModal() {
+  const modal = document.getElementById('master-auth-modal');
+  if (modal) modal.classList.remove('active');
+}
+
+document.getElementById('auth-cancel-btn').addEventListener('click', closeMasterAuthModal);
+
+// Toggle password visibility in auth modal
+document.getElementById('auth-eye-toggle').addEventListener('click', () => {
+  const input = document.getElementById('master-password-input');
+  if (!input) return;
+  input.type = input.type === 'password' ? 'text' : 'password';
+});
+
+// Master Login Submit
+document.getElementById('master-login-btn').addEventListener('click', performMasterLogin);
+document.getElementById('master-password-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') performMasterLogin();
+});
+
+function performMasterLogin() {
+  const input = document.getElementById('master-password-input');
+  const card = document.getElementById('auth-card');
+  const entered = (input.value || '').trim();
+  const currentMasterKey = STATE.config?.security?.masterPassword || DEFAULT_CONFIG.security.masterPassword;
+
+  if (entered === currentMasterKey) {
+    sessionStorage.setItem('wilmar_master_auth', '1');
+    STATE.isAuthenticated = true;
+    closeMasterAuthModal();
+    openMasterConsole();
+    showToast('¡Bienvenido, Wilmar! Consola Maestra activada.');
+  } else {
+    card.classList.add('shake');
+    setTimeout(() => card.classList.remove('shake'), 450);
+    showToast('Contraseña incorrecta. Por favor verifica.');
+    input.select();
+  }
+}
+
+// Master Console Window
+function openMasterConsole() {
+  const consoleEl = document.getElementById('master-console');
+  if (!consoleEl) return;
+  populateConsoleInputs(STATE.config);
+  renderAdminProjectsList(STATE.config);
+  consoleEl.classList.add('active');
+}
+
+function closeMasterConsole() {
+  const consoleEl = document.getElementById('master-console');
+  if (consoleEl) consoleEl.classList.remove('active');
+}
+
+document.getElementById('console-close-btn').addEventListener('click', closeMasterConsole);
+document.getElementById('console-preview-btn').addEventListener('click', closeMasterConsole);
+
+document.getElementById('console-logout-btn').addEventListener('click', () => {
+  sessionStorage.removeItem('wilmar_master_auth');
+  STATE.isAuthenticated = false;
+  closeMasterConsole();
+  showToast('Sesión de administrador cerrada con éxito.');
+});
+
+// Master Console Tab navigation
+document.querySelectorAll('.console-tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tabId = btn.getAttribute('data-tab');
+    document.querySelectorAll('.console-tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.console-tab-panel').forEach(p => p.classList.remove('active'));
+
+    btn.classList.add('active');
+    const targetPanel = document.getElementById(tabId);
+    if (targetPanel) targetPanel.classList.add('active');
+  });
+});
+
+// Populate Console Fields from Config
+function populateConsoleInputs(cfg) {
+  const setVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val !== undefined ? val : '';
+  };
+
+  setVal('cfg-author-name', cfg.profile.name);
+  setVal('cfg-author-role', cfg.profile.role);
+  setVal('cfg-sphere-h1', cfg.profile.headlineTitle);
+  setVal('cfg-sphere-h1-en', cfg.profile.headlineTitle_en || OfflineTranslator.toEn(cfg.profile.headlineTitle));
+  setVal('cfg-sphere-sub', cfg.profile.headlineSubtitle);
+  setVal('cfg-sphere-sub-en', cfg.profile.headlineSubtitle_en || OfflineTranslator.toEn(cfg.profile.headlineSubtitle));
+  setVal('cfg-grid-title', cfg.profile.gridTitle);
+  setVal('cfg-grid-title-en', cfg.profile.gridTitle_en || OfflineTranslator.toEn(cfg.profile.gridTitle));
+  setVal('cfg-grid-sub', cfg.profile.gridSubtitle);
+  setVal('cfg-grid-sub-en', cfg.profile.gridSubtitle_en || OfflineTranslator.toEn(cfg.profile.gridSubtitle));
+  setVal('cfg-video-brand', cfg.profile.videoBrand);
+  setVal('cfg-video-badge', cfg.profile.videoBadge);
+  setVal('cfg-video-greeting', cfg.profile.videoGreeting || 'Hola, Soy Wilmar');
+  setVal('cfg-statement-quote', cfg.profile.statementQuote);
+  setVal('cfg-statement-bio', cfg.profile.statementBio.replace(/<p>/g, '').replace(/<\/p>/g, '\n\n').trim());
+  setVal('cfg-menu-footer-l', cfg.profile.menuFooterLeft);
+  setVal('cfg-menu-footer-r', cfg.profile.menuFooterRight);
+
+  setVal('cfg-contact-email', cfg.profile.email);
+  setVal('cfg-contact-whatsapp', cfg.profile.whatsapp);
+  setVal('cfg-whatsapp-msg', cfg.profile.whatsappMsg);
+  setVal('cfg-contact-instagram', cfg.profile.instagram);
+  setVal('cfg-contact-behance', cfg.profile.behanceUrl || cfg.profile.behance);
+  setVal('cfg-contact-location', cfg.profile.location);
+  setVal('cfg-contact-avail', cfg.profile.availability);
+
+  setVal('cfg-color-accent', cfg.style.accent);
+  setVal('cfg-color-bg', cfg.style.bgPrimary);
+
+  setVal('slider-sphere-radius', cfg.style.sphereRadius);
+  const radTag = document.getElementById('val-sphere-radius');
+  if (radTag) radTag.textContent = `${cfg.style.sphereRadius}px`;
+
+  setVal('slider-cam-z', cfg.style.camZ);
+  const camTag = document.getElementById('val-cam-z');
+  if (camTag) camTag.textContent = `${cfg.style.camZ}px`;
+
+  setVal('slider-rotation-speed', cfg.style.rotationSpeed);
+  const rotTag = document.getElementById('val-rotation-speed');
+  if (rotTag) rotTag.textContent = cfg.style.rotationSpeed;
+
+  const vidToggle = document.getElementById('cfg-toggle-video');
+  if (vidToggle) vidToggle.checked = cfg.style.showVideoIntro !== false;
+}
+
+// Live Color & Slider Bindings
+document.getElementById('cfg-color-accent').addEventListener('input', (e) => {
+  const col = e.target.value;
+  STATE.config.style.accent = col;
+  document.documentElement.style.setProperty('--accent', col);
+});
+
+document.getElementById('cfg-color-bg').addEventListener('input', (e) => {
+  const col = e.target.value;
+  STATE.config.style.bgPrimary = col;
+  document.documentElement.style.setProperty('--bg-primary', col);
+});
+
+// Color Preset buttons
+document.querySelectorAll('.palette-preset-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const col = btn.getAttribute('data-color');
+    const colDim = btn.getAttribute('data-color-dim');
+    STATE.config.style.accent = col;
+    STATE.config.style.accentDim = colDim;
+    document.getElementById('cfg-color-accent').value = col;
+    document.documentElement.style.setProperty('--accent', col);
+    document.documentElement.style.setProperty('--accent-dim', colDim);
+    showToast(`Paleta aplicada: ${btn.textContent.trim()}`);
+  });
+});
+
+// Slider inputs
+document.getElementById('slider-sphere-radius').addEventListener('input', (e) => {
+  const val = parseInt(e.target.value);
+  STATE.config.style.sphereRadius = val;
+  document.getElementById('val-sphere-radius').textContent = `${val}px`;
+  document.documentElement.style.setProperty('--sphere-radius', `${val}px`);
+  layoutSphere();
+});
+
+document.getElementById('slider-cam-z').addEventListener('input', (e) => {
+  const val = parseInt(e.target.value);
+  STATE.config.style.camZ = val;
+  document.getElementById('val-cam-z').textContent = `${val}px`;
+  document.documentElement.style.setProperty('--cam-z', `${val}px`);
+});
+
+document.getElementById('slider-rotation-speed').addEventListener('input', (e) => {
+  const val = parseFloat(e.target.value);
+  STATE.config.style.rotationSpeed = val;
+  document.getElementById('val-rotation-speed').textContent = val;
+});
+
+document.getElementById('cfg-toggle-video').addEventListener('change', (e) => {
+  STATE.config.style.showVideoIntro = e.target.checked;
+});
+
+// Save from Console
+document.getElementById('console-save-btn').addEventListener('click', () => {
+  saveAllConsoleData();
+  showToast('¡Configuración guardada en vivo con éxito!');
+});
+
+function saveAllConsoleData() {
+  const cfg = STATE.config;
+
+  const getV = id => {
+    const el = document.getElementById(id);
+    return el ? el.value.trim() : '';
+  };
+
+  cfg.profile.name = getV('cfg-author-name') || cfg.profile.name;
+  cfg.profile.role = getV('cfg-author-role') || cfg.profile.role;
+  cfg.profile.headlineTitle = getV('cfg-sphere-h1') || cfg.profile.headlineTitle;
+  cfg.profile.headlineTitle_en = getV('cfg-sphere-h1-en') || OfflineTranslator.toEn(cfg.profile.headlineTitle);
+  cfg.profile.headlineSubtitle = getV('cfg-sphere-sub') || cfg.profile.headlineSubtitle;
+  cfg.profile.headlineSubtitle_en = getV('cfg-sphere-sub-en') || OfflineTranslator.toEn(cfg.profile.headlineSubtitle);
+  cfg.profile.gridTitle = getV('cfg-grid-title') || cfg.profile.gridTitle;
+  cfg.profile.gridTitle_en = getV('cfg-grid-title-en') || OfflineTranslator.toEn(cfg.profile.gridTitle);
+  cfg.profile.gridSubtitle = getV('cfg-grid-sub') || cfg.profile.gridSubtitle;
+  cfg.profile.gridSubtitle_en = getV('cfg-grid-sub-en') || OfflineTranslator.toEn(cfg.profile.gridSubtitle);
+  cfg.profile.videoBrand = getV('cfg-video-brand') || cfg.profile.videoBrand;
+  cfg.profile.videoBadge = getV('cfg-video-badge') || cfg.profile.videoBadge;
+  cfg.profile.videoGreeting = getV('cfg-video-greeting') || cfg.profile.videoGreeting || 'Hola, Soy Wilmar';
+  cfg.profile.statementQuote = getV('cfg-statement-quote') || cfg.profile.statementQuote;
+
+  const rawBio = getV('cfg-statement-bio');
+  cfg.profile.statementBio = rawBio;
+
+  cfg.profile.menuFooterLeft = getV('cfg-menu-footer-l') || cfg.profile.menuFooterLeft;
+  cfg.profile.menuFooterRight = getV('cfg-menu-footer-r') || cfg.profile.menuFooterRight;
+
+  cfg.profile.email = getV('cfg-contact-email') || cfg.profile.email;
+  cfg.profile.whatsapp = getV('cfg-contact-whatsapp') || cfg.profile.whatsapp;
+  cfg.profile.whatsappMsg = getV('cfg-whatsapp-msg') || cfg.profile.whatsappMsg;
+  cfg.profile.instagram = getV('cfg-contact-instagram') || cfg.profile.instagram;
+  cfg.profile.behanceUrl = getV('cfg-contact-behance') || cfg.profile.behanceUrl;
+  cfg.profile.location = getV('cfg-contact-location') || cfg.profile.location;
+  cfg.profile.availability = getV('cfg-contact-avail') || cfg.profile.availability;
+
+  saveConfigToStorage(cfg);
+  applyConfigToUI(cfg);
+}
+
+/* ==========================================================================
+   PROJECTS CRUD MANAGEMENT
+   ========================================================================== */
+function renderAdminProjectsList(cfg) {
+  const container = document.getElementById('admin-projects-list');
+  const tabBtn = document.getElementById('tab-btn-projects');
+  if (!container) return;
+
+  const items = cfg.projects;
+  if (tabBtn) tabBtn.textContent = `🖼 2. Proyectos (${items.length})`;
+
+  container.innerHTML = '';
+
+  items.forEach((item, index) => {
+    const row = document.createElement('div');
+    row.className = 'project-admin-row';
+
+    const imageSrc = getProjectImageSrc(item);
+    row.innerHTML = `
+      <div class="project-admin-left">
+        <div class="project-admin-thumb">
+          <img src="${imageSrc}" alt="${item.title}">
+        </div>
+        <div class="project-admin-info">
+          <span class="project-admin-idx">${String(index + 1).padStart(2, '0')} / ${String(items.length).padStart(2, '0')}</span>
+          <span class="project-admin-title">${item.title}</span>
+          <span class="project-admin-place">${item.place}</span>
+        </div>
+      </div>
+      <div class="project-admin-actions">
+        <button type="button" class="project-action-btn" data-act="up" data-idx="${index}" title="Mover arriba" ${index === 0 ? 'disabled style="opacity:0.3;"' : ''}>▲</button>
+        <button type="button" class="project-action-btn" data-act="down" data-idx="${index}" title="Mover abajo" ${index === items.length - 1 ? 'disabled style="opacity:0.3;"' : ''}>▼</button>
+        <button type="button" class="project-action-btn" data-act="edit" data-idx="${index}">✎ Editar</button>
+        <button type="button" class="project-action-btn del" data-act="del" data-idx="${index}">🗑</button>
+      </div>
+    `;
+
+    const img = row.querySelector('img');
+    attachImageErrorFallback(img, item.id);
+
+    container.appendChild(row);
+  });
+
+  // Action listeners
+  container.querySelectorAll('.project-action-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const act = btn.getAttribute('data-act');
+      const idx = parseInt(btn.getAttribute('data-idx'));
+
+      if (act === 'up' && idx > 0) {
+        const temp = items[idx];
+        items[idx] = items[idx - 1];
+        items[idx - 1] = temp;
+        saveAllConsoleData();
+        renderAdminProjectsList(STATE.config);
+      } else if (act === 'down' && idx < items.length - 1) {
+        const temp = items[idx];
+        items[idx] = items[idx + 1];
+        items[idx + 1] = temp;
+        saveAllConsoleData();
+        renderAdminProjectsList(STATE.config);
+      } else if (act === 'edit') {
+        openProjectEditModal(idx);
+      } else if (act === 'del') {
+        if (confirm(`¿Eliminar la obra "${items[idx].title}"?`)) {
+          items.splice(idx, 1);
+          saveAllConsoleData();
+          renderAdminProjectsList(STATE.config);
+          showToast('Obra eliminada');
+        }
+      }
+    });
+  });
+}
+
+// Project Edit/Create Modal
+function openProjectEditModal(index = -1) {
+  const modal = document.getElementById('project-edit-modal');
+  const titleHeader = document.getElementById('project-modal-mode-title');
+  const indexInput = document.getElementById('edit-project-index');
+  const titleInput = document.getElementById('edit-project-title');
+  const placeInput = document.getElementById('edit-project-place');
+  const idInput = document.getElementById('edit-project-id');
+  const driveInput = document.getElementById('edit-project-drive');
+  const noteInput = document.getElementById('edit-project-note');
+  const previewImg = document.getElementById('project-preview-img');
+
+  if (index >= 0) {
+    const item = STATE.config.projects[index];
+    titleHeader.textContent = 'Editar Obra Seleccionada';
+    indexInput.value = index;
+    titleInput.value = item.title || '';
+    placeInput.value = item.place || '';
+    idInput.value = item.id || item.url || '';
+    driveInput.value = item.driveUrl || '';
+    noteInput.value = item.note || '';
+
+    const titleEnIn = document.getElementById('edit-project-title-en');
+    const placeEnIn = document.getElementById('edit-project-place-en');
+    const noteEnIn = document.getElementById('edit-project-note-en');
+    if (titleEnIn) titleEnIn.value = item.title_en || '';
+    if (placeEnIn) placeEnIn.value = item.place_en || '';
+    if (noteEnIn) noteEnIn.value = item.note_en || '';
+
+    const src = getProjectImageSrc(item);
+    previewImg.src = src;
+    attachImageErrorFallback(previewImg, item.id);
+  } else {
+    titleHeader.textContent = 'Añadir Nueva Obra al Archivo';
+    indexInput.value = -1;
+    titleInput.value = '';
+    placeInput.value = '';
+    idInput.value = '';
+    driveInput.value = '';
+    noteInput.value = '';
+    const titleEnIn = document.getElementById('edit-project-title-en');
+    const placeEnIn = document.getElementById('edit-project-place-en');
+    const noteEnIn = document.getElementById('edit-project-note-en');
+    if (titleEnIn) titleEnIn.value = '';
+    if (placeEnIn) placeEnIn.value = '';
+    if (noteEnIn) noteEnIn.value = '';
+    previewImg.src = '';
+  }
+
+  modal.classList.add('active');
+  modal.style.display = 'flex';
+}
+
+function closeProjectEditModal() {
+  const modal = document.getElementById('project-edit-modal');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.style.display = 'none';
+  }
+}
+
+document.getElementById('project-edit-close-btn').addEventListener('click', closeProjectEditModal);
+document.getElementById('project-edit-cancel-btn').addEventListener('click', closeProjectEditModal);
+document.getElementById('add-project-btn').addEventListener('click', () => openProjectEditModal(-1));
+
+// Live preview when typing image ID/URL
+document.getElementById('edit-project-id').addEventListener('input', (e) => {
+  const val = e.target.value.trim();
+  const previewImg = document.getElementById('project-preview-img');
+  if (val.startsWith('http://') || val.startsWith('https://')) {
+    previewImg.src = val;
+  } else if (val) {
+    previewImg.src = `https://lh3.googleusercontent.com/d/${val}`;
+    attachImageErrorFallback(previewImg, val);
+  } else {
+    previewImg.src = '';
+  }
+});
+
+// Save Project Edit/Add
+document.getElementById('project-edit-save-btn').addEventListener('click', () => {
+  const index = parseInt(document.getElementById('edit-project-index').value);
+  const title = document.getElementById('edit-project-title').value.trim();
+  const titleEn = document.getElementById('edit-project-title-en')?.value.trim();
+  const place = document.getElementById('edit-project-place').value.trim();
+  const placeEn = document.getElementById('edit-project-place-en')?.value.trim();
+  const rawId = document.getElementById('edit-project-id').value.trim();
+  const driveUrl = document.getElementById('edit-project-drive').value.trim();
+  const note = document.getElementById('edit-project-note').value.trim();
+  const noteEn = document.getElementById('edit-project-note-en')?.value.trim();
+
+  if (!title || !rawId) {
+    alert('Por favor completa al menos el título y el ID o URL de la imagen.');
+    return;
+  }
+
+  const existing = index >= 0 ? (STATE.config.projects[index] || {}) : {};
+  const projectObj = {
+    ...existing,
+    title,
+    title_en: titleEn || OfflineTranslator.toEn(title),
+    place: place || 'Wilmar Machado 2026',
+    place_en: placeEn || OfflineTranslator.toEn(place),
+    note: note || 'Obra visual seleccionada.',
+    note_en: noteEn || OfflineTranslator.toEn(note),
+    driveUrl: driveUrl || (rawId.startsWith('http') ? rawId : `https://drive.google.com/file/d/${rawId}/view?usp=drivesdk`)
+  };
+
+  if (rawId.startsWith('http')) {
+    projectObj.url = rawId;
+    projectObj.id = '';
+  } else if (rawId.startsWith('images/') || rawId.endsWith('.webp') || rawId.endsWith('.png') || rawId.endsWith('.jpg')) {
+    projectObj.image = rawId;
+    projectObj.id = rawId;
+  } else {
+    projectObj.id = rawId;
+  }
+
+  if (index >= 0) {
+    STATE.config.projects[index] = projectObj;
+    showToast('¡Obra actualizada con éxito!');
+  } else {
+    STATE.config.projects.push(projectObj);
+    showToast('¡Nueva obra añadida con éxito!');
+  }
+
+  closeProjectEditModal();
+  saveAllConsoleData();
+  renderAdminProjectsList(STATE.config);
+  applyConfigToUI(STATE.config);
+  layoutSphere();
+});
+
+/* ==========================================================================
+   BACKUP, RESTORE & DOWNLOAD STANDALONE HTML EXPORTER
+   ========================================================================== */
+// Export Backup JSON
+document.getElementById('btn-export-json').addEventListener('click', () => {
+  saveAllConsoleData();
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(STATE.config, null, 2));
+  const dlAnchor = document.createElement('a');
+  dlAnchor.setAttribute("href", dataStr);
+  dlAnchor.setAttribute("download", `wilmar_machado_portfolio_backup_${new Date().toISOString().slice(0,10)}.json`);
+  document.body.appendChild(dlAnchor);
+  dlAnchor.click();
+  dlAnchor.remove();
+  showToast('Copia de respaldo JSON descargada.');
+});
+
+// Import Backup JSON
+document.getElementById('input-import-json').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    try {
+      const imported = JSON.parse(evt.target.result);
+      if (imported.profile && imported.projects) {
+        STATE.config = imported;
+        saveConfigToStorage(STATE.config);
+        applyConfigToUI(STATE.config);
+        populateConsoleInputs(STATE.config);
+        renderAdminProjectsList(STATE.config);
+        showToast('¡Copia de respaldo restaurada con éxito!');
+      } else {
+        alert('Formato de respaldo no válido.');
+      }
+    } catch(err) {
+      alert('Error al leer el archivo JSON.');
+    }
+  };
+  reader.readAsText(file);
+});
+
+// Reset Defaults
+document.getElementById('btn-reset-defaults').addEventListener('click', () => {
+  if (confirm('¿Restablecer toda la configuración a los valores de fábrica iniciales?')) {
+    STATE.config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+    saveConfigToStorage(STATE.config);
+    applyConfigToUI(STATE.config);
+    populateConsoleInputs(STATE.config);
+    renderAdminProjectsList(STATE.config);
+    showToast('Valores de fábrica restablecidos.');
+  }
+});
+
+// Change Master Password
+document.getElementById('btn-change-password').addEventListener('click', () => {
+  const cur = (document.getElementById('pwd-current').value || '').trim();
+  const next = (document.getElementById('pwd-new').value || '').trim();
+  const feedback = document.getElementById('pwd-feedback');
+  const currentKey = STATE.config?.security?.masterPassword || DEFAULT_CONFIG.security.masterPassword;
+
+  if (cur !== currentKey) {
+    feedback.style.color = '#e66550';
+    feedback.textContent = 'La contraseña actual no coincide.';
+    return;
+  }
+  if (!next || next.length < 4) {
+    feedback.style.color = '#e66550';
+    feedback.textContent = 'La nueva clave debe tener al menos 4 caracteres.';
+    return;
+  }
+
+  STATE.config.security.masterPassword = next;
+  saveConfigToStorage(STATE.config);
+  document.getElementById('pwd-current').value = '';
+  document.getElementById('pwd-new').value = '';
+  feedback.style.color = '#43d692';
+  feedback.textContent = '¡Contraseña actualizada con éxito!';
+  showToast('Contraseña maestra actualizada.');
+});
+
+// STANDALONE HTML EXPORTER ENGINE (Generates updated index.html for download)
+document.getElementById('btn-export-html').addEventListener('click', () => {
+  saveAllConsoleData();
+  exportUpdatedHtmlFile();
+});
+
+function exportUpdatedHtmlFile() {
+  showToast('Compilando archivo index.html independiente...');
+  
+  // Clone current config without passwords or runtime caches if needed
+  const exportConfigJson = JSON.stringify(STATE.config, null, 2);
+
+  // We fetch the current page source or build it cleanly
+  const doctype = '<!DOCTYPE html>\n';
+  const fullHtml = doctype + document.documentElement.outerHTML;
+
+  // Replace default config definition inside the script tag so the exported file opens with current changes by default
+  const configRegex = /const DEFAULT_CONFIG = \{[\s\S]*?\n\};/;
+  let updatedHtml = fullHtml.replace(configRegex, `const DEFAULT_CONFIG = ${exportConfigJson};`);
+
+  // Ensure modals are closed in the downloaded file
+  updatedHtml = updatedHtml.replace(/class="overlay-modal active"/g, 'class="overlay-modal"');
+  updatedHtml = updatedHtml.replace(/class="auth-card" id="auth-card"/g, 'class="auth-card" id="auth-card"');
+  updatedHtml = updatedHtml.replace(/id="master-auth-modal" class="active"/g, 'id="master-auth-modal"');
+  updatedHtml = updatedHtml.replace(/<section id="video-stage"[^>]*style="[^"]*"/g, '<section id="video-stage" aria-label="Introducción interactiva en video">');
+  updatedHtml = updatedHtml.replace(/class="video-greeting faded"/g, 'class="video-greeting"');
+
+  const blob = new Blob([updatedHtml], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'index.html';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  showToast('¡index.html descargado! Listo para publicar.');
+}
+
+/* ==========================================================================
+   GLOBAL ESCAPE KEY & INITIALIZATION
+   ========================================================================== */
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeLightbox();
+    closeMasterConsole();
+    closeMasterAuthModal();
+    closeProjectEditModal();
+    const contactModal = document.getElementById('contact-modal');
+    if (contactModal) contactModal.classList.remove('active');
+    const statementModal = document.getElementById('statement-modal');
+    if (statementModal) statementModal.classList.remove('active');
+    const menu = document.getElementById('menu');
+    const burgerBtn = document.getElementById('burger-btn');
+    if (menu && menu.classList.contains('open')) {
+      menu.classList.remove('open');
+      if (burgerBtn) burgerBtn.setAttribute('aria-expanded', 'false');
+    }
+  }
+});
+
+// Initial boot
+(function initApp() {
+  STATE.config = loadStoredConfig();
+  applyConfigToUI(STATE.config);
+  applyLanguage(currentLang);
+})();
