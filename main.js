@@ -1640,12 +1640,34 @@ function layoutSphere() {
 
   initFloatingTags();
 
-  introVideo.addEventListener('loadedmetadata', () => {
-    if (introVideo.duration && !isNaN(introVideo.duration)) {
+  function syncVideoDuration() {
+    if (introVideo.duration && !isNaN(introVideo.duration) && introVideo.duration > 0.5) {
       videoDuration = introVideo.duration;
     }
-    introVideo.currentTime = 0.001;
-  });
+  }
+  if (introVideo.readyState >= 1) {
+    syncVideoDuration();
+    if (introVideo.currentTime < 0.001) introVideo.currentTime = 0.001;
+  } else {
+    introVideo.addEventListener('loadedmetadata', () => {
+      syncVideoDuration();
+      introVideo.currentTime = 0.001;
+    });
+  }
+
+  // Pre-warm the media decoder so paused seeking is instantaneous
+  const primeVideo = () => {
+    if (introVideo.paused && introVideo.currentTime <= 0.02) {
+      const p = introVideo.play();
+      if (p && typeof p.then === 'function') {
+        p.then(() => {
+          if (!isAutoPlaying) introVideo.pause();
+        }).catch(() => {});
+      }
+    }
+  };
+  introVideo.addEventListener('canplay', primeVideo, { once: true });
+  if (introVideo.readyState >= 2) primeVideo();
 
   const TOTAL_SCROLL_PIXELS = 1400; // Calibrated for 4-5 natural flicks across full 13s video (zero user fatigue)
   const TOTAL_TOUCH_PIXELS = 850;   // Symmetrical travel for mobile swipe gestures
@@ -1662,9 +1684,14 @@ function layoutSphere() {
       return;
     }
     isSeeking = true;
-    introVideo.currentTime = time;
-    if (ambientVideo) {
-      try { ambientVideo.currentTime = time; } catch(e) {}
+    if (typeof introVideo.fastSeek === 'function') {
+      try {
+        introVideo.fastSeek(time);
+      } catch (err) {
+        introVideo.currentTime = time;
+      }
+    } else {
+      introVideo.currentTime = time;
     }
 
     clearTimeout(seekWatchdogTimer);
@@ -1677,12 +1704,15 @@ function layoutSphere() {
           seekVideoTo(next);
         }
       }
-    }, 70);
+    }, 60);
   }
 
   introVideo.addEventListener('seeked', () => {
     isSeeking = false;
     clearTimeout(seekWatchdogTimer);
+    if (ambientVideo && Math.abs(ambientVideo.currentTime - introVideo.currentTime) > 0.35) {
+      try { ambientVideo.currentTime = introVideo.currentTime; } catch(e) {}
+    }
     if (pendingSeekTime !== null) {
       const next = pendingSeekTime;
       pendingSeekTime = null;
