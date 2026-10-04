@@ -334,12 +334,15 @@
 
   async function registerBiometrics() {
     if (!window.PublicKeyCredential) {
-      showToast("Tu navegador no soporta autenticación biométrica WebAuthn.");
+      showAuthAlert("Tu navegador no soporta autenticación biométrica WebAuthn.", "error");
       return;
     }
 
     try {
       triggerHaptic(30);
+      const bioStatusText = document.getElementById('biometric-status');
+      if (bioStatusText) bioStatusText.textContent = "Registrando en Google Llaves...";
+
       const challenge = new Uint8Array(32);
       window.crypto.getRandomValues(challenge);
 
@@ -347,13 +350,14 @@
       window.crypto.getRandomValues(userId);
 
       const ownerEmail = getOwnerEmail();
+      const rpId = window.location.hostname;
 
       const credential = await navigator.credentials.create({
         publicKey: {
           challenge: challenge,
           rp: {
             name: "Wilmar Machado Portfolio",
-            id: window.location.hostname || "localhost"
+            id: rpId
           },
           user: {
             id: userId,
@@ -366,7 +370,7 @@
           ],
           authenticatorSelection: {
             authenticatorAttachment: "platform",
-            userVerification: "required",
+            userVerification: "preferred",
             residentKey: "preferred"
           },
           timeout: 60000,
@@ -378,16 +382,18 @@
         // Save credential id for future verifications
         const rawId = Array.from(new Uint8Array(credential.rawId));
         localStorage.setItem(BIO_CRED_KEY, JSON.stringify(rawId));
-        triggerHaptic(50);
-        showToast("¡Huella dactilar registrada exitosamente!");
-        showAuthAlert("Huella configurada correctamente para este dispositivo.", "success");
+        triggerHaptic([40, 60, 40]);
+        showToast("¡Huella guardada en Google Llaves!");
+        unlockAppShell("Huella Registrada en Google Llaves");
       }
     } catch (err) {
       console.warn('Error en registro de huella:', err);
+      const bioStatusText = document.getElementById('biometric-status');
+      if (bioStatusText) bioStatusText.textContent = "Toca para desbloquear o registrar huella";
       if (err.name === 'NotAllowedError') {
-        showToast("Operación cancelada en el sensor biométrico.");
+        showAuthAlert("Operación cancelada en el sensor de huella.", "error");
       } else {
-        showToast("No se pudo registrar la huella: " + err.message);
+        showAuthAlert("Error al registrar en Google Llaves: " + (err.message || err.name), "error");
       }
     }
   }
@@ -398,7 +404,7 @@
     if (bioStatusText) bioStatusText.textContent = "Esperando lectura de huella...";
 
     if (!window.PublicKeyCredential) {
-      showAuthAlert("Este dispositivo no cuenta con soporte biométrico. Inicia con Google o contraseña.", "error");
+      showAuthAlert("Este dispositivo no cuenta con soporte biométrico. Inicia con contraseña.", "error");
       return;
     }
 
@@ -419,14 +425,20 @@
         } catch(e) {}
       }
 
-      const assertion = await navigator.credentials.get({
+      const getOptions = {
         publicKey: {
           challenge: challenge,
           timeout: 60000,
-          userVerification: "required",
-          ...(allowCredentials.length > 0 ? { allowCredentials } : {})
+          userVerification: "preferred",
+          rpId: window.location.hostname
         }
-      });
+      };
+
+      if (allowCredentials.length > 0) {
+        getOptions.publicKey.allowCredentials = allowCredentials;
+      }
+
+      const assertion = await navigator.credentials.get(getOptions);
 
       if (assertion) {
         triggerHaptic([40, 60, 40]);
@@ -434,14 +446,28 @@
       }
     } catch (err) {
       console.warn('Biometric auth error:', err);
-      if (bioStatusText) bioStatusText.textContent = "Toca para desbloquear con tu huella";
-      if (err.name === 'NotAllowedError') {
-        showAuthAlert("Lectura biométrica cancelada o no reconocida. Intenta de nuevo.", "error");
+      const bioStatusText = document.getElementById('biometric-status');
+      if (bioStatusText) bioStatusText.textContent = "Toca para desbloquear o registrar huella";
+
+      if (err.name === 'NotFoundError' || err.name === 'NotAllowedError') {
+        showAuthAlert("No se encontró una llave previa en Google Llaves. Toca el botón abajo para registrarla con tu huella ahora.", "error");
+        const regPromptBtn = document.getElementById('btn-register-passkey-prompt');
+        if (regPromptBtn) regPromptBtn.style.display = 'inline-block';
       } else {
-        // If not registered yet, guide user
-        showAuthAlert("Registra primero tu huella desde los ajustes o inicia con Google.", "error");
+        showAuthAlert("Lectura biométrica no completada. Intenta de nuevo o usa contraseña.", "error");
       }
     }
+  }
+
+  async function handleBiometricClick() {
+    triggerHaptic(20);
+    const storedCred = localStorage.getItem(BIO_CRED_KEY);
+    // If not registered yet on this device, launch registration directly in Google Llaves
+    if (!storedCred) {
+      await registerBiometrics();
+      return;
+    }
+    await authenticateWithBiometrics();
   }
 
   /* ==========================================================================
@@ -479,12 +505,13 @@
         showAuthAlert(`Error al conectar con Google: ${err.message}`, "error");
       }
     } else {
-      // Direct Local Whitelist Simulation if Firebase is not yet provisioned
-      const promptEmail = prompt(`Ingresa tu correo de Google registrado como creador:\n(Por defecto: ${ownerEmail})`, ownerEmail);
-      if (promptEmail && promptEmail.trim().toLowerCase() === ownerEmail) {
-        unlockAppShell(`Sesión iniciada con Google (${ownerEmail})`);
-      } else if (promptEmail) {
-        showAuthAlert(`Acceso denegado: "${promptEmail}" no coincide con la lista autorizada (${ownerEmail}).`, "error");
+      // Professional feedback when Firebase is not yet connected in this browser
+      showAuthAlert("Para usar el inicio de sesión oficial con Google, ingresa primero tus credenciales de Firebase en la pestaña Seguridad. Despliega abajo el acceso con contraseña temporal.", "error");
+      const backupForm = document.getElementById('backup-auth-form');
+      if (backupForm) {
+        backupForm.classList.remove('hidden');
+        const passInput = document.getElementById('input-backup-password');
+        if (passInput) passInput.focus();
       }
     }
   }
@@ -1118,10 +1145,15 @@
      12. EVENT LISTENERS INITIALIZATION
      ========================================================================== */
   function initEvents() {
-    // Biometric Unlock Trigger
+    // Biometric Unlock & Smart Passkey Trigger
     const btnBiometric = document.getElementById('btn-biometric-unlock');
     if (btnBiometric) {
-      btnBiometric.addEventListener('click', authenticateWithBiometrics);
+      btnBiometric.addEventListener('click', handleBiometricClick);
+    }
+
+    const btnRegisterPrompt = document.getElementById('btn-register-passkey-prompt');
+    if (btnRegisterPrompt) {
+      btnRegisterPrompt.addEventListener('click', registerBiometrics);
     }
 
     // Google Sign-In Trigger
