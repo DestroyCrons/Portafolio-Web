@@ -23,14 +23,19 @@
 <section id="video-stage" aria-label="Introducción interactiva en video">
   <div class="video-topbar">
     <span class="video-brand" id="ui-video-brand">WILMAR MACHADO &middot; ARCHIVO VISUAL</span>
-    <span class="video-badge" id="ui-video-badge">PR&Oacute;LOGO INTERACTIVO</span>
+    <div class="video-topbar-actions">
+      <button type="button" class="video-topbar-btn" id="video-sound-btn" aria-label="Activar o desactivar sonido" title="Activar / Desactivar Sonido">
+        <span class="sound-icon">&#128263;</span>
+        <span id="ui-video-sound-label">Silencio</span>
+      </button>
+      <button type="button" class="video-topbar-btn skip" id="video-skip-btn" aria-label="Ir directo a la galería" title="Omitir video y entrar al portafolio">
+        <span id="ui-video-skip-label">Omitir</span> &#10141;
+      </button>
+    </div>
   </div>
 
   <!-- AMBIENT ILLUSION BACKDROP (Full-Bleed Dynamic Cinema Aura & Grid) -->
   <div id="video-backdrop-wrapper" aria-hidden="true">
-    <video id="ambient-video" class="ambient-video-backdrop" playsinline muted preload="auto" src="video.mp4">
-      <source src="video.mp4" type="video/mp4">
-    </video>
     <div class="video-backdrop-glow"></div>
     <div class="video-backdrop-grid"></div>
     <div class="video-backdrop-vignette"></div>
@@ -55,10 +60,11 @@
       <div class="video-corner-mark top-right" aria-hidden="true"></div>
       <div class="video-corner-mark bottom-left" aria-hidden="true"></div>
       <div class="video-corner-mark bottom-right" aria-hidden="true"></div>
-      <video id="intro-video" playsinline muted preload="auto" src="video.mp4" aria-label="Video interactivo de presentación">
+      <video id="intro-video" playsinline muted preload="auto" src="video.mp4" aria-label="Video interactivo de presentación" controlsList="nodownload nofullscreen noremoteplayback" disablePictureInPicture draggable="false" oncontextmenu="return false;">
         <source src="video.mp4" type="video/mp4">
       </video>
       <div class="video-vignette"></div>
+      <div class="media-protection-guard" aria-hidden="true"></div>
       <div id="video-greeting" class="video-greeting" aria-live="polite">
         <div class="video-greeting-inner">
           <div class="video-greeting-tag" id="ui-video-greeting-tag">Portafolio Oficial &middot; 2026</div>
@@ -76,26 +82,6 @@
             <polygon points="7 4 19 12 7 20 7 4"></polygon>
           </svg>
         </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="video-controls">
-    <div class="video-hint-bar">
-      <span class="video-hint-icon">&#9654;</span>
-      <span class="video-hint-text" id="ui-video-hint-text">Haz clic para reproducir o pulsa Omitir para entrar &middot; Click to play</span>
-    </div>
-
-    <div class="video-progress-track" id="video-progress-track" title="L&iacute;nea de tiempo">
-      <div class="video-progress-bar" id="video-progress-bar"></div>
-    </div>
-
-    <div class="video-action-row">
-      <span class="video-time" id="video-time-label">0:00 / 0:05 &middot; Vista General (0%)</span>
-      <div class="video-btn-group">
-        <button type="button" class="video-btn secondary" id="video-sound-btn" aria-label="Activar sonido del video" title="Activar / Desactivar Sonido">&#128263; <span id="ui-video-sound-label">Silencio</span></button>
-        <button type="button" class="video-btn" id="video-play-btn" aria-label="Reproducir autom&aacute;ticamente">&#9654; Reproducir</button>
-        <button type="button" class="video-btn secondary" id="video-skip-btn" aria-label="Ir directo a la galer&iacute;a">Omitir &#10141;</button>
       </div>
     </div>
   </div>
@@ -155,7 +141,6 @@
 
 <!-- FLOATING CURATORIAL DISCIPLINE FILTER BAR -->
 <aside class="curatorial-filter-bar" id="curatorial-filter-bar" aria-label="Filtrar por disciplina">
-  <button type="button" class="filter-scroll-arrow prev" id="filter-scroll-prev" aria-label="Ver filtros anteriores" title="Desplazar filtros a la izquierda">&#10094;</button>
   <div class="filter-pills-container" id="filter-pills-container">
     <button type="button" class="filter-pill active" data-filter="all" id="filter-pill-all">
       <span class="filter-pill-name" id="ui-filter-all">Todas</span>
@@ -178,7 +163,6 @@
       <span class="filter-pill-count">2</span>
     </button>
   </div>
-  <button type="button" class="filter-scroll-arrow next" id="filter-scroll-next" aria-label="Ver más filtros" title="Desplazar filtros a la derecha">&#10095;</button>
 </aside>
 
 <!-- LIGHTBOX -->
@@ -208,7 +192,8 @@
       <div class="lightbox-img-wrapper" id="lightbox-img-wrapper">
         <button type="button" class="lightbox-nav-btn prev" id="lightbox-prev-btn" aria-label="Obra anterior (Flecha Izquierda)" title="Obra anterior (←)">&#10094;</button>
         <button type="button" class="lightbox-nav-btn next" id="lightbox-next-btn" aria-label="Obra siguiente (Flecha Derecha)" title="Obra siguiente (→)">&#10095;</button>
-        <img src="" alt="" class="lightbox-img" id="lightbox-img">
+        <img src="" alt="" class="lightbox-img" id="lightbox-img" draggable="false" oncontextmenu="return false;" decoding="async">
+        <div class="media-protection-guard" aria-hidden="true"></div>
         <div class="process-overlay" id="process-overlay"></div>
       </div>
     </div>

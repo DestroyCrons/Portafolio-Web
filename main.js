@@ -1294,7 +1294,7 @@ function rebuildSphereAndGrid(cfg) {
     const imageSrc = getProjectImageSrc(item);
     card.innerHTML = `
       <div class="card-inner">
-        <img class="card-img" src="${imageSrc}" alt="${item.title}" loading="lazy" referrerpolicy="no-referrer">
+        <img class="card-img" src="${imageSrc}" alt="${item.title}" loading="lazy" decoding="async" draggable="false" oncontextmenu="return false;" referrerpolicy="no-referrer">
         <div class="card-overlay"></div>
         <div class="card-meta">
           <div class="card-idx">${String(i + 1).padStart(2, '0')} / ${String(N).padStart(2, '0')}</div>
@@ -1336,7 +1336,7 @@ function rebuildSphereAndGrid(cfg) {
     gridItem.setAttribute('tabindex', '0');
     gridItem.innerHTML = `
       <div class="grid-thumb">
-        <img src="${imageSrc}" alt="${item.title}" loading="lazy" referrerpolicy="no-referrer">
+        <img src="${imageSrc}" alt="${item.title}" loading="lazy" decoding="async" draggable="false" oncontextmenu="return false;" referrerpolicy="no-referrer">
       </div>
       <div class="grid-info">
         <div class="grid-idx">${String(i + 1).padStart(2, '0')} / ${String(N).padStart(2, '0')}</div>
@@ -1426,18 +1426,17 @@ document.querySelectorAll('.filter-pill').forEach(pill => {
   pill.addEventListener('click', () => {
     const filter = pill.getAttribute('data-filter');
     setCategoryFilter(filter);
+    pill.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
     const isEn = (currentLang === 'en');
     const label = pill.querySelector('span')?.textContent || filter;
     showToast(`✦ ${isEn ? 'Filter' : 'Filtro'}: ${label}`);
   });
 });
 
-// Curatorial Filter Bar Mobile Scroll, Chevrons & Edge Fade Controller
+// Curatorial Filter Bar Mobile Scroll Controller
 function initCuratorialFilterBar() {
   const bar = document.getElementById('curatorial-filter-bar');
   const container = document.getElementById('filter-pills-container');
-  const btnPrev = document.getElementById('filter-scroll-prev');
-  const btnNext = document.getElementById('filter-scroll-next');
   if (!bar || !container) return;
 
   function updateScrollState() {
@@ -1451,21 +1450,7 @@ function initCuratorialFilterBar() {
   window.addEventListener('resize', updateScrollState, { passive: true });
   setTimeout(updateScrollState, 100);
 
-  if (btnPrev) {
-    btnPrev.addEventListener('click', (e) => {
-      e.stopPropagation();
-      container.scrollBy({ left: -140, behavior: 'smooth' });
-    });
-  }
-
-  if (btnNext) {
-    btnNext.addEventListener('click', (e) => {
-      e.stopPropagation();
-      container.scrollBy({ left: 140, behavior: 'smooth' });
-    });
-  }
-
-  // Smooth mouse drag on hybrid touch devices
+  // Smooth mouse drag on desktop & hybrid touch devices
   let isDown = false;
   let startX;
   let scrollLeft;
@@ -1537,24 +1522,19 @@ function layoutSphere() {
   const videoStage = document.getElementById('video-stage');
   const videoFrame = document.getElementById('video-frame');
   const introVideo = document.getElementById('intro-video');
-  const progressBar = document.getElementById('video-progress-bar');
-  const progressTrack = document.getElementById('video-progress-track');
-  const timeLabel = document.getElementById('video-time-label');
-  const playBtn = document.getElementById('video-play-btn');
   const skipBtn = document.getElementById('video-skip-btn');
   const soundBtn = document.getElementById('video-sound-btn');
   const videoGreeting = document.getElementById('video-greeting');
-  const ambientVideo = document.getElementById('ambient-video');
 
   if (!introVideo || !videoStage) return;
 
-  // Primary source: Load the standalone high-quality original video directly
+  introVideo.controlsList = "nodownload nofullscreen noremoteplayback";
+  introVideo.disablePictureInPicture = true;
+
+  // Primary source: Load original high-quality video
   const vSrc = (STATE.config && STATE.config.profile && STATE.config.profile.videoSrc) || 'video.mp4';
   if (!introVideo.src || !introVideo.src.includes('.mp4')) {
     introVideo.src = vSrc;
-  }
-  if (ambientVideo && (!ambientVideo.src || !ambientVideo.src.includes('.mp4'))) {
-    ambientVideo.src = vSrc;
   }
 
   let videoDuration = 5.50;
@@ -1740,9 +1720,6 @@ function layoutSphere() {
 
   // Ensure video is strictly paused on load & refresh (never autoplay)
   introVideo.pause();
-  // Ensure video is strictly paused on load & refresh (never autoplay)
-  introVideo.pause();
-  if (ambientVideo) ambientVideo.pause();
 
   let isAutoPlaying = false;
 
@@ -1762,73 +1739,20 @@ function layoutSphere() {
     } else {
       isAutoPlaying = false;
       introVideo.pause();
-      if (ambientVideo && !ambientVideo.paused) ambientVideo.pause();
       const playOverlay = document.getElementById('video-play-overlay');
       if (playOverlay) playOverlay.classList.remove('hidden');
     }
   }
 
-  // Wheel & touch: If the user scrolls down on the video intro, transition directly to the 3D sphere archive
-  window.addEventListener('wheel', (e) => {
-    if (videoEnded || videoStage.style.display === 'none') return;
-    if (e.deltaY > 20) {
-      e.preventDefault();
-      completeVideoAndEnterArchive();
-    }
-  }, { passive: false });
-
-  let touchStartY = 0;
-  window.addEventListener('touchstart', (e) => {
-    if (videoEnded || videoStage.style.display === 'none') return;
-    if (e.touches.length === 1) {
-      touchStartY = e.touches[0].clientY;
-    }
-  }, { passive: true });
-
-  window.addEventListener('touchmove', (e) => {
-    if (videoEnded || videoStage.style.display === 'none') return;
-    if (e.touches.length === 1) {
-      const curY = e.touches[0].clientY;
-      const deltaY = touchStartY - curY; // swipe up
-      if (deltaY > 35) {
-        completeVideoAndEnterArchive();
-      }
-    }
-  }, { passive: true });
-
+  // Mousemove: gentle tilt parallax for desktop viewing
   window.addEventListener('mousemove', (e) => {
     if (videoEnded || videoStage.style.display === 'none') return;
     mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
     mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
   });
 
-  if (progressTrack) {
-    progressTrack.addEventListener('click', (e) => {
-      const rect = progressTrack.getBoundingClientRect();
-      const clickRatio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-      const targetTime = Math.min(videoDuration - 0.05, clickRatio * videoDuration);
-      currentProgress = clickRatio;
-      introVideo.currentTime = targetTime;
-      if (ambientVideo) { try { ambientVideo.currentTime = targetTime; } catch(e) {} }
-      updateFloatingTags(currentProgress);
-      if (progressBar) progressBar.style.transform = `scaleX(${currentProgress})`;
-    });
-  }
-
-  if (playBtn) {
-    playBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      startOrPauseVideo();
-    });
-  }
-
   introVideo.addEventListener('play', () => {
     isAutoPlaying = true;
-    if (playBtn) {
-      const d = I18N[currentLang] || I18N.es;
-      playBtn.innerHTML = '&#10074;&#10074; <span id="ui-video-play-label">' + d.videoPause + '</span>';
-    }
-    if (ambientVideo && ambientVideo.paused) ambientVideo.play().catch(() => {});
     hideGreeting();
     const playOverlay = document.getElementById('video-play-overlay');
     if (playOverlay) playOverlay.classList.add('hidden');
@@ -1836,29 +1760,24 @@ function layoutSphere() {
 
   introVideo.addEventListener('pause', () => {
     isAutoPlaying = false;
-    if (playBtn) {
-      const d = I18N[currentLang] || I18N.es;
-      playBtn.innerHTML = '&#9654; <span id="ui-video-play-label">' + d.videoPlay + '</span>';
-    }
-    if (ambientVideo && !ambientVideo.paused) ambientVideo.pause();
     const playOverlay = document.getElementById('video-play-overlay');
     if (playOverlay) playOverlay.classList.remove('hidden');
     if (currentProgress <= 0.008 && !videoEnded) showGreeting();
   });
 
-  // Clicking on video frame toggles play/pause
+  // Clicking on video frame toggles play/pause (never skipping unintentionally)
   if (videoFrame) {
     videoFrame.addEventListener('click', (e) => {
-      if (e.target.closest('.video-controls') || e.target.closest('.video-topbar') || e.target.closest('#video-greeting')) return;
+      if (e.target.closest('.video-topbar-actions') || e.target.closest('.video-topbar') || e.target.closest('#video-greeting')) return;
       startOrPauseVideo();
     });
   }
 
   introVideo.addEventListener('error', (err) => {
-    console.warn('Video decoding or load notice:', err);
+    console.warn('Video notice:', err);
   });
 
-  // Emergency keyboard pass: Escape or Enter skips intro
+  // Keyboard shortcut: Escape or Enter skips intro
   window.addEventListener('keydown', (e) => {
     if (videoStage && videoStage.style.display !== 'none' && !videoEnded) {
       if (e.key === 'Escape' || e.key === 'Enter') {
@@ -1872,20 +1791,24 @@ function layoutSphere() {
     completeVideoAndEnterArchive();
   });
 
+  // Skip button inside video topbar
   if (skipBtn) {
-    skipBtn.addEventListener('click', () => {
+    skipBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
       completeVideoAndEnterArchive();
     });
   }
 
+  // Sound toggle button inside video topbar
   if (soundBtn) {
     soundBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       introVideo.muted = !introVideo.muted;
       const d = I18N[currentLang] || I18N.es;
-      soundBtn.innerHTML = introVideo.muted
-        ? '<span class="sound-icon">🔇</span> <span id="ui-video-sound-label">' + d.videoSoundUnmute + '</span>'
-        : '<span class="sound-icon">🔊</span> <span id="ui-video-sound-label">' + d.videoSoundMute + '</span>';
+      const soundLabel = document.getElementById('ui-video-sound-label');
+      if (soundLabel) soundLabel.textContent = introVideo.muted ? d.videoSoundMute : d.videoSoundUnmute;
+      const soundIcon = soundBtn.querySelector('.sound-icon');
+      if (soundIcon) soundIcon.textContent = introVideo.muted ? '🔇' : '🔊';
       showToast(introVideo.muted ? (currentLang === 'en' ? 'Audio muted' : 'Audio silenciado') : (currentLang === 'en' ? 'Audio unmuted' : 'Audio activado'));
     });
   }
@@ -1905,10 +1828,6 @@ function layoutSphere() {
     isAutoPlaying = false;
     introVideo.currentTime = 0;
     introVideo.pause();
-    if (ambientVideo) {
-      ambientVideo.pause();
-      try { ambientVideo.currentTime = 0; } catch(e) {}
-    }
     showGreeting();
     const playOverlay = document.getElementById('video-play-overlay');
     if (playOverlay) playOverlay.classList.remove('hidden');
@@ -1941,7 +1860,6 @@ function layoutSphere() {
     if (videoEnded) return;
     videoEnded = true;
     introVideo.pause();
-    if (ambientVideo) ambientVideo.pause();
 
     const videoStage = document.getElementById('video-stage');
     const veil = document.getElementById('veil');
@@ -1959,7 +1877,7 @@ function layoutSphere() {
     STATE.targetYaw += 80;
 
     setTimeout(() => {
-      // 3. Dispatch enter-archive: reveals scene & triggers card blooming
+      // 3. Dispatch enter-archive: reveals scene & triggers card entrance
       window.dispatchEvent(new CustomEvent('enter-archive'));
 
       // 4. Smoothly dissipate veil & flare
@@ -1978,7 +1896,6 @@ function layoutSphere() {
     if (videoEnded || videoStage.style.display === 'none') return;
 
     if (!introVideo.paused) {
-      // Natural playback: follow video element currentTime
       currentProgress = Math.max(0, Math.min(1.0, introVideo.currentTime / videoDuration));
       targetProgress = currentProgress;
       hideGreeting();
@@ -1997,58 +1914,23 @@ function layoutSphere() {
       }
     }
 
-    if (ambientVideo) {
-      if (!introVideo.paused && ambientVideo.paused) {
-        ambientVideo.play().catch(() => {});
-      } else if (introVideo.paused && !ambientVideo.paused) {
-        ambientVideo.pause();
-      }
-      if (!introVideo.paused && Math.abs(ambientVideo.currentTime - introVideo.currentTime) > 0.25) {
-        try { ambientVideo.currentTime = introVideo.currentTime; } catch(e) {}
-      }
-      if (ambientVideo.playbackRate !== introVideo.playbackRate) {
-        ambientVideo.playbackRate = introVideo.playbackRate;
-      }
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      videoFrame.style.transform = 'none';
+    } else {
+      currentTiltX += (mouseY - currentTiltX) * 0.06;
+      currentTiltY += (mouseX - currentTiltY) * 0.06;
+
+      const scale = 0.88 + Math.pow(currentProgress, 1.35) * 0.22;
+      const rotX = -currentTiltX * 3.5;
+      const rotY = currentTiltY * 4.0;
+      const transX = currentTiltY * 12;
+      const transY = currentTiltX * 12;
+
+      videoFrame.style.transform = `scale(${scale}) translate3d(${transX}px, ${transY}px, 0) rotateX(${rotX}deg) rotateY(${rotY}deg)`;
     }
 
-    currentTiltX += (mouseY - currentTiltX) * 0.06;
-    currentTiltY += (mouseX - currentTiltY) * 0.06;
-
-    const scale = 0.82 + Math.pow(currentProgress, 1.35) * 1.95;
-    const rotX = -currentTiltX * 4.0;
-    const rotY = currentTiltY * 4.5;
-    const transX = currentTiltY * 14;
-    const transY = currentTiltX * 14;
-
-    videoFrame.style.transform = `scale(${scale}) translate3d(${transX}px, ${transY}px, 0) rotateX(${rotX}deg) rotateY(${rotY}deg)`;
     updateFloatingTags(currentProgress);
-
-    if (progressBar) {
-      progressBar.style.transform = `scaleX(${currentProgress})`;
-    }
-
-    if (timeLabel) {
-      const displayTime = currentProgress * videoDuration;
-      const curM = Math.floor(displayTime / 60);
-      const curS = Math.floor(displayTime % 60).toString().padStart(2, '0');
-      const totM = Math.floor(videoDuration / 60);
-      const totS = Math.floor(videoDuration % 60).toString().padStart(2, '0');
-      const percent = Math.round(currentProgress * 100);
-
-      const d = I18N[currentLang] || I18N.es;
-      let stageText = d.stages.overview;
-      if (percent > 20 && percent <= 50) stageText = d.stages.zoom;
-      else if (percent > 50 && percent <= 75) stageText = d.stages.gaze;
-      else if (percent > 75 && percent <= 90) stageText = d.stages.iris;
-      else if (percent > 90) stageText = d.stages.archive;
-
-      const newLabelText = `${curM}:${curS} / ${totM}:${totS} · ${stageText} (${percent}%)`;
-      if (newLabelText !== lastLabelText) {
-        lastLabelText = newLabelText;
-        timeLabel.textContent = newLabelText;
-      }
-    }
-
     requestAnimationFrame(renderVideoLoop);
   }
 
@@ -2198,23 +2080,9 @@ function layoutSphere() {
     layoutSphere();
     document.body.classList.add('revealed');
 
-    // Staggered card bloom choreography for 3D sphere entrance
-    if (STATE.cards && STATE.cards.length > 0) {
-      STATE.cards.forEach((card, idx) => {
-        card.classList.remove('blooming');
-        void card.offsetWidth; // Force reflow
-        card.style.animationDelay = `${idx * 45}ms`;
-        card.classList.add('blooming');
-        setTimeout(() => {
-          card.classList.remove('blooming');
-          card.style.animationDelay = '';
-        }, 1200 + idx * 45);
-      });
-    }
-
     setTimeout(() => {
       if (typeof hintFilterBarScroll === 'function') hintFilterBarScroll();
-    }, 850);
+    }, 600);
   });
 
   function toggleGrid() {
@@ -2893,3 +2761,32 @@ window.addEventListener('hashchange', handleUrlHash);
     handleUrlHash();
   }
 })();
+
+/* ==========================================================================
+   CONTENT SECURITY & MEDIA PROTECTION (Anti-Copy / Anti-Download Controller)
+   ========================================================================== */
+(function initMediaProtection() {
+  // Prevent context menu (right click / long press) on all imagery, videos, and portfolio cards
+  document.addEventListener('contextmenu', (e) => {
+    if (e.target.closest('img, video, .card, .grid-thumb, #video-frame, .lightbox-img, .lightbox-img-wrapper, #video-stage, .media-protection-guard')) {
+      e.preventDefault();
+      return false;
+    }
+  }, { passive: false });
+
+  // Prevent drag and drop of media assets
+  document.addEventListener('dragstart', (e) => {
+    if (e.target.tagName === 'IMG' || e.target.tagName === 'VIDEO' || e.target.closest('img, video, .card, .lightbox-img-wrapper, #video-frame')) {
+      e.preventDefault();
+      return false;
+    }
+  }, { passive: false });
+
+  // Prevent standard save keyboard shortcuts (Ctrl+S / Cmd+S)
+  window.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+      e.preventDefault();
+    }
+  });
+})();
+
