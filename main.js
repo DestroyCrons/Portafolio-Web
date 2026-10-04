@@ -2499,6 +2499,39 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
+// Mobile Touch Swipe Navigation for Lightbox (Left / Right swipe to switch artworks)
+(function initLightboxSwipe() {
+  const lb = document.getElementById('lightbox');
+  if (!lb) return;
+  let startX = 0;
+  let startY = 0;
+  let isSwiping = false;
+
+  lb.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 1) {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      isSwiping = true;
+    }
+  }, { passive: true });
+
+  lb.addEventListener('touchend', (e) => {
+    if (!isSwiping || e.changedTouches.length !== 1) return;
+    isSwiping = false;
+    const diffX = e.changedTouches[0].clientX - startX;
+    const diffY = e.changedTouches[0].clientY - startY;
+
+    // Trigger only on clear horizontal gesture (min 45px distance and 1.6x horizontal dominance)
+    if (Math.abs(diffX) > 45 && Math.abs(diffX) > Math.abs(diffY) * 1.6) {
+      if (diffX < 0) {
+        lightboxNext();
+      } else {
+        lightboxPrev();
+      }
+    }
+  }, { passive: true });
+})();
+
 /* ==========================================================================
    MENU & MODAL OVERLAYS (Contact & Statement)
    ========================================================================== */
