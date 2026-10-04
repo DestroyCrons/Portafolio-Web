@@ -1254,8 +1254,14 @@ function applyConfigToUI(cfg) {
   if (st.accentDim) root.style.setProperty('--accent-dim', st.accentDim);
   root.style.setProperty('--bg-primary', bgVal);
   root.style.setProperty('--bg-surface', surfVal);
-  root.style.setProperty('--sphere-radius', `${radVal}px`);
-  root.style.setProperty('--cam-z', `${camVal}px`);
+
+  if (window.innerWidth > 900) {
+    root.style.setProperty('--sphere-radius', `${radVal}px`);
+    root.style.setProperty('--cam-z', `${camVal}px`);
+  } else {
+    root.style.removeProperty('--sphere-radius');
+    root.style.removeProperty('--cam-z');
+  }
 
   // Regenerate Sphere & Grid
   rebuildSphereAndGrid(cfg);
@@ -1301,6 +1307,10 @@ function rebuildSphereAndGrid(cfg) {
     attachImageErrorFallback(imgEl, item.id);
 
     card.addEventListener('click', () => {
+      if (STATE.touchMoved) {
+        STATE.touchMoved = false;
+        return;
+      }
       card.classList.add('opening-pulse');
       setTimeout(() => card.classList.remove('opening-pulse'), 450);
       openLightbox(i);
@@ -1490,7 +1500,8 @@ function hintFilterBarScroll() {
 
 function layoutSphere() {
   const style = getComputedStyle(document.documentElement);
-  const radius = parseFloat(style.getPropertyValue('--sphere-radius')) || 950;
+  const defaultRadius = window.innerWidth <= 640 ? 260 : (window.innerWidth <= 900 ? 460 : 950);
+  const radius = parseFloat(style.getPropertyValue('--sphere-radius')) || defaultRadius;
   const goldenAngle = Math.PI * (3 - Math.sqrt(5));
   const N = STATE.cards.length;
 
@@ -2098,11 +2109,11 @@ function layoutSphere() {
     STATE.isDragging = false;
   });
 
-  // Mobile Touch Support for 3D Fibonacci Sphere
+  // Mobile Touch Support for 3D Fibonacci Sphere (Touch anywhere, even on cards, to rotate smoothly)
   viewport.addEventListener('touchstart', (e) => {
-    if (e.target.closest('.card')) return;
     if (e.touches.length === 1) {
       STATE.isDragging = true;
+      STATE.touchMoved = false;
       STATE.startX = e.touches[0].clientX;
       STATE.startY = e.touches[0].clientY;
       STATE.lastX = e.touches[0].clientX;
@@ -2118,11 +2129,14 @@ function layoutSphere() {
     const curY = e.touches[0].clientY;
     const dx = curX - STATE.lastX;
     const dy = curY - STATE.lastY;
+    if (Math.abs(curX - STATE.startX) > 8 || Math.abs(curY - STATE.startY) > 8) {
+      STATE.touchMoved = true;
+    }
     STATE.lastX = curX;
     STATE.lastY = curY;
 
-    STATE.velX = dx * 0.30;
-    STATE.velY = dy * 0.30;
+    STATE.velX = dx * 0.28;
+    STATE.velY = dy * 0.28;
 
     STATE.targetYaw += STATE.velX;
     STATE.targetPitch = Math.max(-55, Math.min(55, STATE.targetPitch - STATE.velY));
@@ -2130,6 +2144,9 @@ function layoutSphere() {
 
   window.addEventListener('touchend', () => {
     STATE.isDragging = false;
+    setTimeout(() => {
+      STATE.touchMoved = false;
+    }, 100);
   }, { passive: true });
 
   window.addEventListener('wheel', (e) => {
@@ -2160,7 +2177,8 @@ function layoutSphere() {
     STATE.dollyZ += (STATE.targetDollyZ - STATE.dollyZ) * 0.08;
 
     const style = getComputedStyle(document.documentElement);
-    const baseCamZ = parseFloat(style.getPropertyValue('--cam-z')) || -180;
+    const defaultCamZ = window.innerWidth <= 640 ? -280 : (window.innerWidth <= 900 ? -220 : -180);
+    const baseCamZ = parseFloat(style.getPropertyValue('--cam-z')) || defaultCamZ;
     const currentCamZ = baseCamZ + STATE.dollyZ;
 
     if (world) {
@@ -2256,7 +2274,21 @@ function layoutSphere() {
   gridCloseBtn.addEventListener('click', toggleGrid);
   window.toggleGridView = toggleGrid;
 
-  window.addEventListener('resize', layoutSphere);
+  window.addEventListener('resize', () => {
+    const root = document.documentElement;
+    const cfg = STATE.config || DEFAULT_CONFIG;
+    const st = cfg.style || cfg.styles || {};
+    const radVal = st.sphereRadius || 950;
+    const camVal = st.camZ !== undefined ? st.camZ : (st.cameraZ !== undefined ? st.cameraZ : -180);
+    if (window.innerWidth > 900) {
+      root.style.setProperty('--sphere-radius', `${radVal}px`);
+      root.style.setProperty('--cam-z', `${camVal}px`);
+    } else {
+      root.style.removeProperty('--sphere-radius');
+      root.style.removeProperty('--cam-z');
+    }
+    layoutSphere();
+  });
 })();
 
 /* ==========================================================================
