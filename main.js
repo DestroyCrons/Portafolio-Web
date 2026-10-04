@@ -1150,11 +1150,23 @@ const STATE = {
   velY: 0
 };
 
-// Storage manager
+// Storage manager & Cloud Bridge
 function loadStoredConfig() {
   try {
-    localStorage.removeItem('wilmar_portfolio_config_v3');
-  } catch(e) {}
+    const saved = localStorage.getItem('wilmar_portfolio_config_v3');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return {
+        ...DEFAULT_CONFIG,
+        ...parsed,
+        profile: { ...DEFAULT_CONFIG.profile, ...(parsed.profile || {}) },
+        style: { ...DEFAULT_CONFIG.style, ...(parsed.style || {}) },
+        projects: (parsed.projects && parsed.projects.length) ? parsed.projects : DEFAULT_CONFIG.projects
+      };
+    }
+  } catch(e) {
+    console.warn('Could not read stored config:', e);
+  }
   return JSON.parse(JSON.stringify(DEFAULT_CONFIG));
 }
 
@@ -1165,6 +1177,21 @@ function saveConfigToStorage(cfg) {
     console.warn('Could not save to localStorage:', e);
   }
 }
+
+// Live sync listener across tabs / mobile admin
+window.addEventListener('storage', (e) => {
+  if (e.key === 'wilmar_portfolio_config_v3' && e.newValue) {
+    try {
+      const updated = JSON.parse(e.newValue);
+      STATE.config = updated;
+      applyConfigToUI(updated);
+      showToast('✦ Portafolio actualizado desde la Consola');
+    } catch(err) {
+      console.warn('Error applying storage update:', err);
+    }
+  }
+});
+
 
 // Toast notification system
 function showToast(message) {
@@ -2863,6 +2890,47 @@ window.addEventListener('hashchange', handleUrlHash);
   if (typeof initShareModal === 'function') initShareModal();
   if (window.location.hash) {
     handleUrlHash();
+  }
+
+  // Connect to Cloud Firestore if configured
+  try {
+    const fbSaved = localStorage.getItem('wilmar_firebase_config_v1');
+    if (fbSaved && window.firebase) {
+      const fbConfig = JSON.parse(fbSaved);
+      if (fbConfig.apiKey && fbConfig.projectId) {
+        let app = firebase.apps.length ? firebase.app() : firebase.initializeApp(fbConfig);
+        const db = app.firestore();
+        db.collection('settings').doc('portfolio').onSnapshot((doc) => {
+          if (doc.exists) {
+            const cloudCfg = doc.data();
+            if (cloudCfg && cloudCfg.projects) {
+              STATE.config = cloudCfg;
+              applyConfigToUI(cloudCfg);
+              localStorage.setItem('wilmar_portfolio_config_v3', JSON.stringify(cloudCfg));
+            }
+          }
+        }, (err) => console.warn('Public cloud listener note:', err));
+      }
+    }
+  } catch(e) {
+    console.warn('Cloud listener init error:', e);
+  }
+
+  // Triple-click on brand logo to access Admin Console
+  let brandClicks = 0;
+  let brandTimer = null;
+  const brandEl = document.getElementById('ui-brand-logo');
+  if (brandEl) {
+    brandEl.addEventListener('click', (e) => {
+      brandClicks++;
+      clearTimeout(brandTimer);
+      if (brandClicks >= 3) {
+        e.preventDefault();
+        window.location.href = 'admin.html';
+      } else {
+        brandTimer = setTimeout(() => { brandClicks = 0; }, 800);
+      }
+    });
   }
 })();
 

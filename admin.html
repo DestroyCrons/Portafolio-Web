@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Consola WM">
+<meta name="theme-color" content="#07070a">
+<meta name="description" content="Consola Móvil de Administración y Personalización del Portafolio Wilmar Machado">
+<title>Consola Maestra &middot; Wilmar Machado</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/svg+xml" href="icons/icon-192.svg">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="admin.css">
+
+<!-- Firebase Compat Libraries for Direct Zero-Bundler Cloud Integration -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+</head>
+<body class="admin-body">
+
+<!-- ==========================================================================
+     1. SHIELD SCREEN: BIOMETRIC & GOOGLE AUTHENTICATION
+     ========================================================================== -->
+<div id="screen-auth" class="auth-screen">
+  <div class="auth-ambient-glow"></div>
+  <div class="auth-card">
+    <div class="auth-brand-monogram">
+      <svg viewBox="0 0 64 64" width="46" height="46">
+        <rect width="64" height="64" rx="14" fill="#0c0c12" stroke="rgba(212,163,89,0.3)" stroke-width="1.5"/>
+        <path d="M14 46L22 18h4l6 18 6-18h4l8 28h-5l-5-18-6 18h-4l-6-18-5 18z" fill="#d4a359"/>
+      </svg>
+    </div>
+    
+    <div class="auth-header">
+      <span class="auth-badge">PANEL PRIVADO &middot; 2026</span>
+      <h1 class="auth-title">Consola Maestra</h1>
+      <p class="auth-subtitle">Acceso exclusivo para Wilmar Machado</p>
+    </div>
+
+    <!-- Biometric Sensor Action Box -->
+    <div class="biometric-box" id="biometric-box">
+      <button type="button" class="biometric-btn" id="btn-biometric-unlock" aria-label="Desbloquear con Huella Dactilar">
+        <div class="biometric-pulse"></div>
+        <div class="biometric-icon-wrap">
+          <svg class="fingerprint-svg" viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 12C2 6.5 6.5 2 12 2a10 10 0 0 1 8 4"/>
+            <path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"/>
+            <path d="M8.65 22c.21-.66.45-1.32.75-2"/>
+            <path d="M9 6.8a6 6 0 0 1 9 5.2v2"/>
+            <path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/>
+            <path d="M14 13.1a2 2 0 0 0 .5-1.1"/>
+            <path d="M17 12c0 2.5-1 4.5-2 6.5"/>
+            <path d="M19 17.5a14 14 0 0 0 1-5.5 8 8 0 0 0-1.6-4.8"/>
+            <path d="M2 16.5c.7-1.3 1.6-2.5 2.5-3.5"/>
+            <path d="M12 18v4"/>
+          </svg>
+        </div>
+      </button>
+      <div class="biometric-status" id="biometric-status">Toca para desbloquear con tu huella</div>
+    </div>
+
+    <!-- Alternative Google Sign-in -->
+    <div class="auth-actions">
+      <button type="button" class="google-auth-btn" id="btn-google-login">
+        <svg class="google-svg" viewBox="0 0 24 24" width="18" height="18">
+          <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.04h3.88c2.27-2.09 3.66-5.17 3.66-9.14z"/>
+          <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.04c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.24v3.13C3.26 21.36 7.33 24 12 24z"/>
+          <path fill="#FBBC05" d="M5.28 14.28c-.25-.72-.38-1.49-.38-2.28s.13-1.56.38-2.28V6.59H1.24C.45 8.16 0 9.93 0 12s.45 3.84 1.24 5.41l4.04-3.13z"/>
+          <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.24 6.59l4.04 3.13c.95-2.83 3.6-4.97 6.72-4.97z"/>
+        </svg>
+        <span>Continuar con Google</span>
+      </button>
+
+      <!-- Toggle Master Password Backup -->
+      <button type="button" class="backup-toggle-btn" id="btn-toggle-backup">
+        Acceso de respaldo con contraseña &darr;
+      </button>
+
+      <form id="backup-auth-form" class="backup-form hidden">
+        <div class="input-row">
+          <input type="password" id="input-backup-password" class="admin-input" placeholder="Clave de administrador" autocomplete="current-password">
+          <button type="submit" class="admin-btn-primary" id="btn-backup-submit">Entrar</button>
+        </div>
+      </form>
+    </div>
+
+    <div id="auth-alert" class="auth-alert hidden"></div>
+
+    <div class="auth-footer-note">
+      <span>Cifrado biométrico local y protección de sesión activa</span>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================================================
+     2. APP SHELL: THE MOBILE CONSOLE WORKSPACE
+     ========================================================================== -->
+<div id="app-shell" class="app-shell hidden">
+  <!-- Top Mobile Bar -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="app-monogram">WM</div>
+      <div class="header-titles">
+        <span class="header-app-name">CONSOLA WILMAR</span>
+        <span class="sync-indicator" id="sync-indicator">
+          <span class="sync-dot"></span>
+          <span id="sync-text">Sincronizado</span>
+        </span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <a href="index.html" target="_blank" class="header-icon-btn" title="Ver Portafolio en Vivo">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+          <polyline points="15 3 21 3 21 9"/>
+          <line x1="10" y1="14" x2="21" y2="3"/>
+        </svg>
+      </a>
+      <button type="button" class="header-icon-btn" id="btn-lock-session" title="Bloquear con Huella">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Scrollable Screen Content Container -->
+  <main class="app-content">
+
+    <!-- ======================================================================
+         TAB 1: GESTOR DE OBRAS / PROYECTOS
+         ====================================================================== -->
+    <section id="tab-works" class="tab-panel active">
+      <div class="panel-header-sticky">
+        <div class="panel-header-row">
+          <div>
+            <span class="panel-tag">CATÁLOGO &middot; 2024–2026</span>
+            <h2 class="panel-title">Obras en Exhibición</h2>
+          </div>
+          <button type="button" class="action-btn-gold" id="btn-add-artwork">
+            <span>+ Nueva Obra</span>
+          </button>
+        </div>
+
+        <!-- Discipline Filter Chips -->
+        <div class="filter-chips-scroller">
+          <button type="button" class="chip active" data-filter="all">Todas (<span id="count-all">10</span>)</button>
+          <button type="button" class="chip" data-filter="sacro">Arte Sacro</button>
+          <button type="button" class="chip" data-filter="editorial">Diseño Editorial</button>
+          <button type="button" class="chip" data-filter="foto">Fotografía</button>
+          <button type="button" class="chip" data-filter="grafico">Arte Gráfico</button>
+        </div>
+      </div>
+
+      <!-- Artwork List Container -->
+      <div class="works-list" id="works-list">
+        <!-- Rendered dynamically by admin.js -->
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         TAB 2: PERSONALIZACIÓN DEL PORTAFOLIO
+         ====================================================================== -->
+    <section id="tab-portfolio" class="tab-panel">
+      <div class="panel-header-sticky">
+        <span class="panel-tag">IDENTIDAD &middot; TEXTOS</span>
+        <h2 class="panel-title">Ajustes del Portafolio</h2>
+      </div>
+
+      <div class="settings-form-wrapper">
+        <!-- 1. Disponibilidad -->
+        <div class="settings-card">
+          <h3 class="card-title">Disponibilidad del Estudio</h3>
+          <p class="card-desc">Texto del badge superior en la sección de contacto</p>
+          <div class="form-group">
+            <label class="form-label" for="cfg-availability">Estado de Disponibilidad</label>
+            <input type="text" id="cfg-availability" class="admin-input" placeholder="Ej. DISPONIBLE PARA PROYECTOS · Q4 2026 / 2027">
+          </div>
+        </div>
+
+        <!-- 2. Canales de Contacto Directo -->
+        <div class="settings-card">
+          <h3 class="card-title">Canales de Contacto Directo</h3>
+          <p class="card-desc">Actualiza tu WhatsApp, correo oficial y enlaces de perfiles</p>
+
+          <div class="form-group">
+            <label class="form-label" for="cfg-whatsapp">WhatsApp Oficial (con indicativo)</label>
+            <input type="text" id="cfg-whatsapp" class="admin-input" placeholder="+57 316 329 6958">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="cfg-whatsappMsg">Mensaje Predeterminado de WhatsApp</label>
+            <textarea id="cfg-whatsappMsg" class="admin-textarea" rows="2" placeholder="Hola Wilmar, me gustaría conversar sobre un proyecto..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="cfg-email">Correo Electrónico</label>
+            <input type="email" id="cfg-email" class="admin-input" placeholder="wamimcim2@gmail.com">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="cfg-instagram">Usuario de Instagram</label>
+            <input type="text" id="cfg-instagram" class="admin-input" placeholder="@wilmar.machado">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="cfg-instagramUrl">URL de Instagram</label>
+            <input type="url" id="cfg-instagramUrl" class="admin-input" placeholder="https://www.instagram.com/...">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="cfg-behance">Usuario / Texto Behance</label>
+            <input type="text" id="cfg-behance" class="admin-input" placeholder="behance.net/wilmarmachado">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="cfg-behanceUrl">URL de Behance</label>
+            <input type="url" id="cfg-behanceUrl" class="admin-input" placeholder="https://www.behance.net/...">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="cfg-location">Ubicación & Modalidad</label>
+            <input type="text" id="cfg-location" class="admin-input" placeholder="Valledupar, Cesar, Colombia">
+          </div>
+        </div>
+
+        <!-- 3. Video de Bienvenida & Saludo -->
+        <div class="settings-card">
+          <h3 class="card-title">Video Prólogo & Saludo</h3>
+          <p class="card-desc">Configuración del texto que aparece sobre el video inicial</p>
+
+          <div class="form-group">
+            <label class="form-label" for="cfg-videoGreeting">Saludo Principal</label>
+            <input type="text" id="cfg-videoGreeting" class="admin-input" placeholder="Hola, Soy Wilmar">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="cfg-videoRole">Rol / Título en Video</label>
+            <input type="text" id="cfg-videoRole" class="admin-input" placeholder="Diseñador Gráfico & Artista Visual">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="cfg-videoBrand">Nombre de Marca en Video</label>
+            <input type="text" id="cfg-videoBrand" class="admin-input" placeholder="ARCHIVO VISUAL">
+          </div>
+        </div>
+
+        <!-- 4. Manifiesto & Biografía -->
+        <div class="settings-card">
+          <h3 class="card-title">Manifiesto de Autor</h3>
+          <p class="card-desc">Frase de apertura y narrativa del manifiesto</p>
+
+          <div class="form-group">
+            <label class="form-label" for="cfg-statementQuote">Cita Principal (Español)</label>
+            <textarea id="cfg-statementQuote" class="admin-textarea" rows="3" placeholder="El diseño no es ornamento superficial..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="cfg-statementQuote_en">Cita Principal (Inglés)</label>
+            <textarea id="cfg-statementQuote_en" class="admin-textarea" rows="3" placeholder="Design is not superficial ornament..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="cfg-statementBio">Texto del Manifiesto / Bio (Español)</label>
+            <textarea id="cfg-statementBio" class="admin-textarea" rows="6" placeholder="Mi trabajo como creador visual y diseñador..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="cfg-statementBio_en">Texto del Manifiesto / Bio (Inglés)</label>
+            <textarea id="cfg-statementBio_en" class="admin-textarea" rows="6" placeholder="My work as a visual creator and designer..."></textarea>
+          </div>
+        </div>
+
+        <div class="floating-save-bar">
+          <button type="button" class="btn-save-all" id="btn-save-portfolio-settings">
+            <span>Guardar Ajustes de Portafolio</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         TAB 3: ESTILO & ESFERA 3D
+         ====================================================================== -->
+    <section id="tab-style" class="tab-panel">
+      <div class="panel-header-sticky">
+        <span class="panel-tag">ESTÉTICA &middot; FÍSICA 3D</span>
+        <h2 class="panel-title">Estilo & Experiencia 3D</h2>
+      </div>
+
+      <div class="settings-form-wrapper">
+        <!-- Accent Colors -->
+        <div class="settings-card">
+          <h3 class="card-title">Color de Acento Principal</h3>
+          <p class="card-desc">Tonalidad insignia para orlas, botones, brillos y tipografía</p>
+          
+          <div class="color-picker-row">
+            <input type="color" id="cfg-accent-picker" class="native-color-picker" value="#d4a359">
+            <input type="text" id="cfg-accent-text" class="admin-input font-mono" value="#d4a359">
+          </div>
+
+          <div class="color-presets-row">
+            <button type="button" class="color-preset-pill active" data-color="#d4a359">
+              <span class="color-circle" style="background: #d4a359;"></span> Oro Clásico (#d4a359)
+            </button>
+            <button type="button" class="color-preset-pill" data-color="#c8a96e">
+              <span class="color-circle" style="background: #c8a96e;"></span> Ámbar Suave (#c8a96e)
+            </button>
+            <button type="button" class="color-preset-pill" data-color="#e6c387">
+              <span class="color-circle" style="background: #e6c387;"></span> Oro Luminoso (#e6c387)
+            </button>
+            <button type="button" class="color-preset-pill" data-color="#9a8c73">
+              <span class="color-circle" style="background: #9a8c73;"></span> Titanio Cénit (#9a8c73)
+            </button>
+          </div>
+        </div>
+
+        <!-- Sphere 3D Physics -->
+        <div class="settings-card">
+          <h3 class="card-title">Parámetros de la Esfera 3D Fibonacci</h3>
+          <p class="card-desc">Controla la curvatura espacial y la velocidad de rotación</p>
+
+          <div class="slider-group">
+            <div class="slider-label-row">
+              <span>Radio de la Esfera (Espaciado)</span>
+              <span id="label-sphere-radius" class="font-mono">950 px</span>
+            </div>
+            <input type="range" id="cfg-sphereRadius" min="600" max="1400" step="25" value="950" class="admin-slider">
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-label-row">
+              <span>Velocidad de Giro Automático</span>
+              <span id="label-sphere-speed" class="font-mono">0.003</span>
+            </div>
+            <input type="range" id="cfg-rotationSpeed" min="0.0005" max="0.008" step="0.0005" value="0.003" class="admin-slider">
+          </div>
+        </div>
+
+        <div class="floating-save-bar">
+          <button type="button" class="btn-save-all" id="btn-save-style-settings">
+            <span>Aplicar Estilo & 3D</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         TAB 4: NUBE & SEGURIDAD BIOMÉTRICA
+         ====================================================================== -->
+    <section id="tab-security" class="tab-panel">
+      <div class="panel-header-sticky">
+        <span class="panel-tag">SEGURIDAD &middot; SINCRONIZACIÓN</span>
+        <h2 class="panel-title">Nube & Huella Dactilar</h2>
+      </div>
+
+      <div class="settings-form-wrapper">
+        <!-- 1. Biometrics Section -->
+        <div class="settings-card">
+          <div class="card-badge-row">
+            <span class="card-mini-badge gold">SEGURIDAD LOCAL WEBAUTHN</span>
+          </div>
+          <h3 class="card-title">Huella Dactilar del Dispositivo</h3>
+          <p class="card-desc">Configura el desbloqueo biométrico nativo de este teléfono</p>
+
+          <div class="biometric-status-card" id="biometric-info-card">
+            <div class="bio-stat-icon">&#128070;</div>
+            <div class="bio-stat-info">
+              <strong id="bio-stat-title">Sensor Biométrico Detectado</strong>
+              <p id="bio-stat-desc">Puedes activar tu huella dactilar para entrar al instante sin contraseñas.</p>
+            </div>
+          </div>
+
+          <div class="card-actions-col">
+            <button type="button" class="admin-btn-secondary" id="btn-enroll-biometrics">
+              <span>&#128070; Registrar Huella de este Celular</span>
+            </button>
+            <button type="button" class="admin-btn-ghost" id="btn-test-biometrics">
+              <span>Probar Sensor de Huella</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. Google Account Whitelist -->
+        <div class="settings-card">
+          <div class="card-badge-row">
+            <span class="card-mini-badge">GOOGLE OAUTH 2.0</span>
+          </div>
+          <h3 class="card-title">Cuenta Autorizada</h3>
+          <p class="card-desc">Únicamente esta cuenta de Google puede administrar el portafolio</p>
+
+          <div class="form-group">
+            <label class="form-label" for="cfg-ownerEmail">Correo de Administrador</label>
+            <input type="email" id="cfg-ownerEmail" class="admin-input" value="wamimcim2@gmail.com">
+          </div>
+          <span class="field-hint">Cualquier otra cuenta de Google que intente ingresar será rechazada de inmediato.</span>
+        </div>
+
+        <!-- 3. Firebase Cloud Configuration -->
+        <div class="settings-card">
+          <div class="card-badge-row">
+            <span class="card-mini-badge" id="badge-cloud-status">SINCRONIZACIÓN EN LA NUBE</span>
+          </div>
+          <h3 class="card-title">Conexión Firebase (Cloud Firestore)</h3>
+          <p class="card-desc">Permite que tus cambios se publiquen automáticamente en la web sin tener que subir archivos.</p>
+
+          <div class="form-group">
+            <label class="form-label" for="cfg-firebase-apiKey">API Key</label>
+            <input type="text" id="cfg-firebase-apiKey" class="admin-input font-mono" placeholder="AIzaSy...">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="cfg-firebase-projectId">Project ID</label>
+            <input type="text" id="cfg-firebase-projectId" class="admin-input font-mono" placeholder="wilmar-machado-portfolio">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="cfg-firebase-authDomain">Auth Domain</label>
+            <input type="text" id="cfg-firebase-authDomain" class="admin-input font-mono" placeholder="wilmar-machado-portfolio.firebaseapp.com">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="cfg-firebase-storageBucket">Storage Bucket</label>
+            <input type="text" id="cfg-firebase-storageBucket" class="admin-input font-mono" placeholder="wilmar-machado-portfolio.appspot.com">
+          </div>
+
+          <div class="card-actions-col">
+            <button type="button" class="action-btn-gold" id="btn-save-firebase-config">
+              <span>Guardar & Conectar Firebase</span>
+            </button>
+            <button type="button" class="admin-btn-ghost" id="btn-test-cloud-sync">
+              <span>Probar Sincronización en la Nube</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 4. Backup & Factory Reset -->
+        <div class="settings-card">
+          <h3 class="card-title">Copia de Seguridad & Respaldo</h3>
+          <p class="card-desc">Descarga una copia completa en formato JSON para restaurar cuando quieras</p>
+
+          <div class="card-actions-col">
+            <button type="button" class="admin-btn-secondary" id="btn-export-json">
+              <span>&#128190; Descargar Respaldo JSON</span>
+            </button>
+            <label class="admin-btn-ghost file-input-label">
+              <span>&#128194; Restaurar desde Archivo JSON</span>
+              <input type="file" id="input-import-json" accept=".json" class="hidden-file-input">
+            </label>
+            <button type="button" class="admin-btn-danger" id="btn-factory-reset">
+              <span>Restablecer 10 Obras Originales de Fábrica</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==========================================================================
+       BOTTOM NAVIGATION BAR (NATIVE MOBILE TOUCH FEEL)
+       ========================================================================== -->
+  <nav class="app-bottom-nav">
+    <button type="button" class="nav-tab active" data-target="tab-works">
+      <div class="nav-tab-icon">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+          <circle cx="8.5" cy="8.5" r="1.5"/>
+          <polyline points="21 15 16 10 5 21"/>
+        </svg>
+      </div>
+      <span class="nav-tab-label">Obras</span>
+    </button>
+
+    <button type="button" class="nav-tab" data-target="tab-portfolio">
+      <div class="nav-tab-icon">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="4" y1="21" x2="4" y2="14"/>
+          <line x1="4" y1="10" x2="4" y2="3"/>
+          <line x1="12" y1="21" x2="12" y2="12"/>
+          <line x1="12" y1="8" x2="12" y2="3"/>
+          <line x1="20" y1="21" x2="20" y2="16"/>
+          <line x1="20" y1="12" x2="20" y2="3"/>
+          <line x1="1" y1="14" x2="7" y2="14"/>
+          <line x1="9" y1="8" x2="15" y2="8"/>
+          <line x1="17" y1="16" x2="23" y2="16"/>
+        </svg>
+      </div>
+      <span class="nav-tab-label">Portafolio</span>
+    </button>
+
+    <button type="button" class="nav-tab" data-target="tab-style">
+      <div class="nav-tab-icon">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <circle cx="12" cy="12" r="4"/>
+          <line x1="4.93" y1="4.93" x2="9.17" y2="9.17"/>
+          <line x1="14.83" y1="14.83" x2="19.07" y2="19.07"/>
+          <line x1="14.83" y1="9.17" x2="19.07" y2="4.93"/>
+          <line x1="4.93" y1="19.07" x2="9.17" y2="14.83"/>
+        </svg>
+      </div>
+      <span class="nav-tab-label">Estilo & 3D</span>
+    </button>
+
+    <button type="button" class="nav-tab" data-target="tab-security">
+      <div class="nav-tab-icon">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      </div>
+      <span class="nav-tab-label">Seguridad</span>
+    </button>
+  </nav>
+</div>
+
+<!-- ==========================================================================
+     3. ARTWORK EDITOR MODAL (MOBILE BOTTOM SHEET / FULL SCREEN)
+     ========================================================================== -->
+<div id="modal-artwork-editor" class="artwork-modal" role="dialog" aria-modal="true">
+  <div class="artwork-modal-dialog">
+    <div class="modal-top-bar">
+      <button type="button" class="modal-close-btn" id="btn-close-artwork-editor">&times; Cancelar</button>
+      <span class="modal-title-text" id="editor-modal-title">Editar Obra</span>
+      <button type="button" class="modal-save-btn" id="btn-save-artwork-item">Guardar</button>
+    </div>
+
+    <form id="artwork-editor-form" class="modal-scroll-form">
+      <input type="hidden" id="edit-work-index" value="-1">
+
+      <!-- Image Preview & Upload Header -->
+      <div class="artwork-img-upload-hero">
+        <div class="preview-box" id="editor-img-preview-box">
+          <img id="editor-img-preview" src="" alt="Vista previa de la obra">
+          <div class="img-overlay-change">
+            <span class="change-tag">&#128247; Cambiar Imagen</span>
+          </div>
+        </div>
+        <div class="upload-actions-row">
+          <label class="upload-trigger-btn">
+            <span>&#128248; Subir desde Galería / Cámara</span>
+            <input type="file" id="input-upload-image" accept="image/*" class="hidden-file-input">
+          </label>
+        </div>
+      </div>
+
+      <!-- Core Metadata Fields -->
+      <div class="form-section-card">
+        <h4 class="section-label">IDENTIFICACIÓN & CATEGORÍA</h4>
+
+        <div class="form-group">
+          <label class="form-label" for="edit-title">Título de la Obra (Español) *</label>
+          <input type="text" id="edit-title" class="admin-input" required placeholder="Ej. Conflict in the Mind">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="edit-title-en">Título de la Obra (Inglés)</label>
+          <input type="text" id="edit-title-en" class="admin-input" placeholder="Ej. Conflict in the Mind">
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label" for="edit-year">Año *</label>
+            <input type="text" id="edit-year" class="admin-input font-mono" required placeholder="2026">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="edit-category">Disciplina / Filtro *</label>
+            <select id="edit-category" class="admin-select" required>
+              <option value="sacro">&#9764; Arte Sacro Contemporáneo</option>
+              <option value="editorial">&#128214; Diseño Editorial & Tipografía</option>
+              <option value="foto">&#128247; Fotografía Conceptual & Retrato</option>
+              <option value="grafico">&#127912; Arte Gráfico & Portadas</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="edit-place">Subtítulo / Serie (Español)</label>
+          <input type="text" id="edit-place" class="admin-input" placeholder="Ej. Arte Gráfico · Concepto de Portada">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="edit-place-en">Subtítulo / Serie (Inglés)</label>
+          <input type="text" id="edit-place-en" class="admin-input" placeholder="Ej. Graphic Art · Album Cover Concept">
+        </div>
+      </div>
+
+      <!-- Curatorial & Technical Specs -->
+      <div class="form-section-card">
+        <h4 class="section-label">FICHA TÉCNICA & CURATORIAL</h4>
+
+        <div class="form-group">
+          <label class="form-label" for="edit-note">Nota Curatorial (Español)</label>
+          <textarea id="edit-note" class="admin-textarea" rows="4" placeholder="Descripción conceptual y discursiva de la obra..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="edit-note-en">Nota Curatorial (Inglés)</label>
+          <textarea id="edit-note-en" class="admin-textarea" rows="4" placeholder="Conceptual and discursive description in English..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="edit-role">Rol Creativo (Español)</label>
+          <input type="text" id="edit-role" class="admin-input" placeholder="Ej. Diseño Gráfico & Composición Tipográfica">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="edit-role-en">Rol Creativo (Inglés)</label>
+          <input type="text" id="edit-role-en" class="admin-input" placeholder="Ej. Graphic Design & Typographic Composition">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="edit-medium">Técnica / Soporte (Español)</label>
+          <input type="text" id="edit-medium" class="admin-input" placeholder="Ej. Papel Hahnemühle 308g · Impresión Fine Art">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="edit-medium-en">Técnica / Soporte (Inglés)</label>
+          <input type="text" id="edit-medium-en" class="admin-input" placeholder="Ej. Hahnemühle 308g Paper · Fine Art Print">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="edit-typography">Tipografía de Autor</label>
+          <input type="text" id="edit-typography" class="admin-input" placeholder="Ej. Cormorant Garamond & Cinzel Custom">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="edit-client">Cliente / Editorial (Español)</label>
+          <input type="text" id="edit-client" class="admin-input" placeholder="Ej. Editorial The Kingdom / Colección Autoral">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="edit-client-en">Cliente / Editorial (Inglés)</label>
+          <input type="text" id="edit-client-en" class="admin-input" placeholder="Ej. The Kingdom Publishing">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="edit-image-src">Ruta o URL de Imagen Principal</label>
+          <input type="text" id="edit-image-src" class="admin-input font-mono" placeholder="images/obra-01.jpg o https://...">
+        </div>
+      </div>
+
+      <!-- Action buttons in modal footer -->
+      <div class="modal-action-footer">
+        <button type="button" class="admin-btn-danger" id="btn-delete-artwork">Eliminar Obra del Catálogo</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ==========================================================================
+     4. FLOATING NOTIFICATIONS (TOAST)
+     ========================================================================== -->
+<div id="admin-toast" class="admin-toast">Mensaje</div>
+
+<!-- Admin Logic -->
+<script src="admin.js"></script>
+</body>
+</html>
