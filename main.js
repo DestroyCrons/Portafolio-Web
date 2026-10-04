@@ -369,7 +369,15 @@ const I18N = {
     lbWhatsApp: "Consultar por WhatsApp",
     lbShare: "Compartir Obra",
     signatureRole: "Dirección de Arte & Diseño Visual · Valledupar, Colombia",
-    toastLinkCopied: "¡Enlace a la obra copiado al portapapeles!"
+    toastLinkCopied: "¡Enlace a la obra copiado al portapapeles!",
+    searchBtn: "Buscar",
+    searchPlaceholder: "Buscar por obra, disciplina, cliente, técnica...",
+    spotlightHint: "Enter para seleccionar · Esc para cerrar",
+    spotlightEmpty: "No se encontraron obras con ese término.",
+    focusMode: "Enfoque",
+    focusModeDeactivate: "Salir de Enfoque",
+    orbitPause: "Pausar Giro",
+    orbitResume: "Reanudar Giro"
   },
   en: {
     lang: "EN",
@@ -490,7 +498,15 @@ const I18N = {
     lbWhatsApp: "Inquire via WhatsApp",
     lbShare: "Share Artwork",
     signatureRole: "Art Direction & Visual Design · Valledupar, Colombia",
-    toastLinkCopied: "Artwork direct link copied to clipboard!"
+    toastLinkCopied: "Artwork direct link copied to clipboard!",
+    searchBtn: "Search",
+    searchPlaceholder: "Search by work, discipline, client, technique...",
+    spotlightHint: "Enter to select · Esc to close",
+    spotlightEmpty: "No artworks found matching your search.",
+    focusMode: "Focus",
+    focusModeDeactivate: "Exit Focus",
+    orbitPause: "Pause Orbit",
+    orbitResume: "Resume Orbit"
   }
 };
 
@@ -629,6 +645,14 @@ function applyLanguage(lang) {
 
   // Nav
   setT('ui-console-nav-label', dict.console);
+  setT('ui-nav-search-label', dict.searchBtn);
+  setT('ui-nav-focus-label', dict.focusMode);
+  setPh('spotlight-search-input', dict.searchPlaceholder);
+  setT('ui-spotlight-hint', dict.spotlightHint);
+  const orbitLabel = document.getElementById('ui-orbit-label');
+  if (orbitLabel) {
+    orbitLabel.textContent = STATE.orbitPaused ? dict.orbitResume : dict.orbitPause;
+  }
   const viewLabel = document.getElementById('view-label');
   const gridView = document.getElementById('grid-view');
   const isGrid = gridView && gridView.classList.contains('active');
@@ -1090,6 +1114,7 @@ const DEFAULT_CONFIG = {
 const STATE = {
   config: null,
   isAuthenticated: false,
+  orbitPaused: false,
   cards: [],
   spherePositions: [],
   yaw: 0,
@@ -1485,7 +1510,7 @@ function hintFilterBarScroll() {
 
 function layoutSphere() {
   const style = getComputedStyle(document.documentElement);
-  const defaultRadius = window.innerWidth <= 640 ? 260 : (window.innerWidth <= 900 ? 460 : 950);
+  const defaultRadius = window.innerWidth <= 640 ? 540 : (window.innerWidth <= 900 ? 700 : 950);
   const radius = parseFloat(style.getPropertyValue('--sphere-radius')) || defaultRadius;
   const goldenAngle = Math.PI * (3 - Math.sqrt(5));
   const N = STATE.cards.length;
@@ -2051,7 +2076,9 @@ function layoutSphere() {
       STATE.velY *= 0.94;
       STATE.targetYaw += STATE.velX;
       STATE.targetPitch = Math.max(-55, Math.min(55, STATE.targetPitch - STATE.velY));
-      STATE.targetYaw += currentSpeed; // rotation velocity
+      if (!STATE.orbitPaused) {
+        STATE.targetYaw += currentSpeed; // rotation velocity
+      }
     }
 
     STATE.yaw += (STATE.targetYaw - STATE.yaw) * 0.08;
@@ -2059,7 +2086,7 @@ function layoutSphere() {
     STATE.dollyZ += (STATE.targetDollyZ - STATE.dollyZ) * 0.08;
 
     const style = getComputedStyle(document.documentElement);
-    const defaultCamZ = window.innerWidth <= 640 ? -280 : (window.innerWidth <= 900 ? -220 : -180);
+    const defaultCamZ = window.innerWidth <= 640 ? -220 : (window.innerWidth <= 900 ? -200 : -180);
     const baseCamZ = parseFloat(style.getPropertyValue('--cam-z')) || defaultCamZ;
     const currentCamZ = baseCamZ + STATE.dollyZ;
 
@@ -2292,16 +2319,28 @@ function openLightbox(index) {
     waBtn.href = rawNumber ? `https://wa.me/${rawNumber}?text=${encodeURIComponent(waText)}` : '#';
   }
 
-  // Populate Share Button
+  // Populate Share Button (Native Web Share API with Clipboard Fallback)
   const shareBtn = document.getElementById('lightbox-share-btn');
   if (shareBtn) {
     shareBtn.onclick = () => {
       const shareUrl = `${window.location.origin}${window.location.pathname}#obra-${index + 1}`;
-      navigator.clipboard.writeText(shareUrl).then(() => {
-        showToast(isEn ? 'Artwork link copied to clipboard!' : '¡Enlace a la obra copiado al portapapeles!');
-      }).catch(() => {
-        showToast(shareUrl);
-      });
+      if (navigator.share) {
+        navigator.share({
+          title: `Wilmar Machado · ${currentTitle}`,
+          text: `${currentTitle} (${currentPlace}) — Portafolio Oficial de Wilmar Machado`,
+          url: shareUrl
+        }).catch(() => {
+          navigator.clipboard.writeText(shareUrl).then(() => {
+            showToast(isEn ? 'Artwork link copied to clipboard!' : '¡Enlace a la obra copiado al portapapeles!');
+          });
+        });
+      } else {
+        navigator.clipboard.writeText(shareUrl).then(() => {
+          showToast(isEn ? 'Artwork link copied to clipboard!' : '¡Enlace a la obra copiado al portapapeles!');
+        }).catch(() => {
+          showToast(shareUrl);
+        });
+      }
     };
   }
 
@@ -2757,10 +2796,236 @@ window.addEventListener('hashchange', handleUrlHash);
   applyConfigToUI(STATE.config);
   applyLanguage(currentLang);
   if (typeof initCuratorialFilterBar === 'function') initCuratorialFilterBar();
+  if (typeof initSpotlightSearch === 'function') initSpotlightSearch();
+  if (typeof initFocusMode === 'function') initFocusMode();
+  if (typeof initOrbitControl === 'function') initOrbitControl();
   if (window.location.hash) {
     handleUrlHash();
   }
 })();
+
+/* ==========================================================================
+   SPOTLIGHT CURATORIAL SEARCH CONTROLLER (Instant Live Filter & Quick Nav)
+   ========================================================================== */
+function initSpotlightSearch() {
+  const triggerBtn = document.getElementById('search-trigger-btn');
+  const modal = document.getElementById('spotlight-search-modal');
+  const backdrop = document.getElementById('spotlight-backdrop');
+  const closeBtn = document.getElementById('spotlight-close-btn');
+  const input = document.getElementById('spotlight-search-input');
+  const resultsContainer = document.getElementById('spotlight-results');
+
+  if (!modal || !input || !resultsContainer) return;
+
+  let activeIndex = -1;
+  let currentMatchedIndices = [];
+
+  function openSpotlight() {
+    modal.classList.add('active');
+    input.value = '';
+    renderResults('');
+    setTimeout(() => input.focus(), 80);
+  }
+
+  function closeSpotlight() {
+    modal.classList.remove('active');
+    input.blur();
+  }
+
+  function renderResults(query) {
+    const q = query.trim().toLowerCase();
+    const cfg = STATE.config || DEFAULT_CONFIG;
+    const items = cfg.projects || [];
+    const isEn = (currentLang === 'en');
+    const dict = I18N[currentLang] || I18N.es;
+
+    resultsContainer.innerHTML = '';
+    currentMatchedIndices = [];
+    activeIndex = -1;
+
+    items.forEach((item, idx) => {
+      const matchTitle = (item.title && item.title.toLowerCase().includes(q)) ||
+                         (item.title_en && item.title_en.toLowerCase().includes(q));
+      const matchPlace = (item.place && item.place.toLowerCase().includes(q)) ||
+                         (item.place_en && item.place_en.toLowerCase().includes(q));
+      const matchRole = (item.role && item.role.toLowerCase().includes(q)) ||
+                        (item.role_en && item.role_en.toLowerCase().includes(q));
+      const matchMedium = (item.medium && item.medium.toLowerCase().includes(q)) ||
+                          (item.medium_en && item.medium_en.toLowerCase().includes(q));
+      const matchClient = (item.client && item.client.toLowerCase().includes(q)) ||
+                          (item.client_en && item.client_en.toLowerCase().includes(q));
+      const matchDisc = (item.discipline && item.discipline.toLowerCase().includes(q));
+      const matchNote = (item.note && item.note.toLowerCase().includes(q)) ||
+                        (item.note_en && item.note_en.toLowerCase().includes(q));
+
+      if (!q || matchTitle || matchPlace || matchRole || matchMedium || matchClient || matchDisc || matchNote) {
+        currentMatchedIndices.push(idx);
+
+        const row = document.createElement('div');
+        row.className = 'spotlight-item';
+        row.setAttribute('data-index', idx);
+        row.setAttribute('role', 'option');
+
+        const titleText = isEn ? (item.title_en || OfflineTranslator.toEn(item.title)) : item.title;
+        const placeText = isEn ? (item.place_en || OfflineTranslator.toEn(item.place)) : item.place;
+        const roleText = isEn ? (item.role_en || OfflineTranslator.toEn(item.role || 'Direction')) : (item.role || 'Dirección de Arte');
+
+        row.innerHTML = `
+          <div class="spotlight-item-thumb">
+            <img src="${item.thumb || item.image}" alt="${titleText}" loading="lazy">
+          </div>
+          <div class="spotlight-item-info">
+            <div class="spotlight-item-title">${titleText}</div>
+            <div class="spotlight-item-meta">
+              <span class="spotlight-item-badge">${placeText}</span>
+              <span>·</span>
+              <span>${roleText}</span>
+            </div>
+          </div>
+        `;
+
+        row.addEventListener('click', () => {
+          closeSpotlight();
+          openLightbox(idx);
+        });
+
+        resultsContainer.appendChild(row);
+      }
+    });
+
+    if (currentMatchedIndices.length === 0) {
+      resultsContainer.innerHTML = `<div class="spotlight-empty">${dict.spotlightEmpty}</div>`;
+    } else {
+      highlightActive(0);
+    }
+  }
+
+  function highlightActive(index) {
+    const rows = resultsContainer.querySelectorAll('.spotlight-item');
+    rows.forEach(r => r.classList.remove('selected'));
+    if (index >= 0 && index < rows.length) {
+      activeIndex = index;
+      rows[index].classList.add('selected');
+      rows[index].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    } else {
+      activeIndex = -1;
+    }
+  }
+
+  input.addEventListener('input', (e) => {
+    renderResults(e.target.value);
+  });
+
+  input.addEventListener('keydown', (e) => {
+    const rows = resultsContainer.querySelectorAll('.spotlight-item');
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (rows.length > 0) {
+        const next = (activeIndex + 1) % rows.length;
+        highlightActive(next);
+      }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (rows.length > 0) {
+        const prev = activeIndex <= 0 ? rows.length - 1 : activeIndex - 1;
+        highlightActive(prev);
+      }
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (activeIndex >= 0 && currentMatchedIndices[activeIndex] !== undefined) {
+        const targetIdx = currentMatchedIndices[activeIndex];
+        closeSpotlight();
+        openLightbox(targetIdx);
+      }
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      closeSpotlight();
+    }
+  });
+
+  if (triggerBtn) {
+    triggerBtn.addEventListener('click', openSpotlight);
+  }
+  if (backdrop) {
+    backdrop.addEventListener('click', closeSpotlight);
+  }
+  if (closeBtn) {
+    closeBtn.addEventListener('click', closeSpotlight);
+  }
+
+  // Global Keyboard Shortcut: Ctrl+K / Cmd+K
+  window.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+      e.preventDefault();
+      if (modal.classList.contains('active')) {
+        closeSpotlight();
+      } else {
+        openSpotlight();
+      }
+    }
+    if (e.key === 'Escape' && modal.classList.contains('active')) {
+      closeSpotlight();
+    }
+  });
+}
+
+/* ==========================================================================
+   FOCUS EXHIBITION MODE CONTROLLER (Immersive Exhibition Lighting)
+   ========================================================================== */
+function initFocusMode() {
+  const btn = document.getElementById('focus-mode-btn');
+  if (!btn) return;
+
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isActive = document.body.classList.toggle('focus-mode-active');
+    const isEn = (currentLang === 'en');
+    if (isActive) {
+      showToast(isEn ? 'Focus Mode Active · Tap screen to exit' : 'Modo Enfoque Activo · Toca la pantalla para salir');
+    } else {
+      showToast(isEn ? 'Exited Focus Mode' : 'Modo Normal Restablecido');
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!document.body.classList.contains('focus-mode-active')) return;
+    if (e.target.closest('#focus-mode-btn, .card, #lightbox, #menu-overlay, #master-console, .spotlight-box')) return;
+    document.body.classList.remove('focus-mode-active');
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.body.classList.contains('focus-mode-active')) {
+      document.body.classList.remove('focus-mode-active');
+    }
+  });
+}
+
+/* ==========================================================================
+   ORBIT ROTATION CONTROLLER (Play/Pause 3D Automatic Spin)
+   ========================================================================== */
+function initOrbitControl() {
+  const btn = document.getElementById('orbit-toggle-btn');
+  const icon = document.getElementById('orbit-icon');
+  const label = document.getElementById('ui-orbit-label');
+  if (!btn) return;
+
+  STATE.orbitPaused = false;
+
+  btn.addEventListener('click', () => {
+    STATE.orbitPaused = !STATE.orbitPaused;
+    btn.classList.toggle('paused', STATE.orbitPaused);
+    const dict = I18N[currentLang] || I18N.es;
+    const isEn = (currentLang === 'en');
+
+    if (icon) icon.innerHTML = STATE.orbitPaused ? '&#9658;' : '&#10074;&#10074;';
+    if (label) label.textContent = STATE.orbitPaused ? dict.orbitResume : dict.orbitPause;
+
+    showToast(STATE.orbitPaused
+      ? (isEn ? '3D Orbit Paused' : 'Giro 3D Pausado')
+      : (isEn ? '3D Orbit Resumed' : 'Giro 3D Reanudado')
+    );
+  });
+}
 
 /* ==========================================================================
    CONTENT SECURITY & MEDIA PROTECTION (Anti-Copy / Anti-Download Controller)
