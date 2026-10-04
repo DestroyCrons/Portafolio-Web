@@ -1,0 +1,14 @@
+# Archivos de respaldo y duplicados locales
+video_backup.mp4
+Video Project 7 (1).mp4
+
+# Archivos de sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Entornos y configuraciones locales de IDE
+.vscode/
+.idea/
+*.log
+scratch/

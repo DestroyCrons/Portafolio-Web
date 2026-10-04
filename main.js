@@ -6,6 +6,8 @@
 const OfflineTranslator = (function() {
   // 1. Specific Multi-word Expressions & Idiomatic Phrases (Checked First)
   const PHRASE_PAIRS = [
+    ["Portafolio", "Portfolio"],
+    ["Dirección de Arte, Diseño Editorial & Arte Sacro Contemporáneo · Selección de Proyectos & Perfil Profesional", "Art Direction, Editorial Design & Contemporary Sacred Art · Selected Projects & Professional Profile"],
     ["Obras Seleccionadas & Proyectos", "Selected Works & Projects"],
     ["Obras Seleccionadas y Proyectos", "Selected Works & Projects"],
     ["Obras Seleccionadas", "Selected Works"],
@@ -256,7 +258,9 @@ const I18N = {
     close: "Cerrar",
     videoBrand: "WILMAR MACHADO · ARCHIVO VISUAL",
     videoBadge: "PRÓLOGO INTERACTIVO",
+    videoGreetingTag: "Portafolio Oficial · 2026",
     videoGreeting: "Hola, Soy Wilmar",
+    videoGreetingRole: "Diseñador Gráfico & Director de Arte",
     videoHint: "Gira la rueda del ratón o desliza para hacer zoom · Scroll to explore",
     videoPlay: "Reproducir",
     videoPause: "Pausar",
@@ -268,8 +272,8 @@ const I18N = {
       iris: "Iris",
       archive: "Hacia el Archivo"
     },
-    headlineTitle: "Obras Seleccionadas & Proyectos",
-    headlineSubtitle: "Diez Obras Seleccionadas · Colección 2024–2026",
+    headlineTitle: "Portafolio",
+    headlineSubtitle: "Dirección de Arte, Diseño Editorial & Arte Sacro Contemporáneo · Selección de Proyectos & Perfil Profesional",
     menuSphere: "Esfera 3D · The Archive",
     menuGrid: "Índice · Grid View",
     menuReplay: "◉ Ver Video Inicial · Replay Video",
@@ -354,7 +358,18 @@ const I18N = {
     authDesc: "Acceso exclusivo para el autor (Wilmar Machado) para gestionar contenidos, proyectos y estilos del portafolio.",
     authPlaceholder: "Introduce la clave maestra...",
     authLoginBtn: "Acceder a Consola",
-    authCancelBtn: "Cancelar"
+    authCancelBtn: "Cancelar",
+    videoSoundMute: "Silenciar",
+    videoSoundUnmute: "Sonido",
+    filterAll: "Todas (10)",
+    filterSacro: "Arte Sacro (2)",
+    filterEditorial: "Diseño Editorial (3)",
+    filterFoto: "Fotografía (3)",
+    filterGrafico: "Arte Gráfico (2)",
+    lbWhatsApp: "Consultar por WhatsApp",
+    lbShare: "Compartir Obra",
+    signatureRole: "Dirección de Arte & Diseño Visual · Valledupar, Colombia",
+    toastLinkCopied: "¡Enlace a la obra copiado al portapapeles!"
   },
   en: {
     lang: "EN",
@@ -364,7 +379,9 @@ const I18N = {
     close: "Close",
     videoBrand: "WILMAR MACHADO · VISUAL ARCHIVE",
     videoBadge: "INTERACTIVE PROLOGUE",
+    videoGreetingTag: "Official Portfolio · 2026",
     videoGreeting: "Hello, I'm Wilmar",
+    videoGreetingRole: "Graphic Designer & Art Director",
     videoHint: "Scroll wheel or swipe to explore · Zoom to enter",
     videoPlay: "Play",
     videoPause: "Pause",
@@ -376,8 +393,8 @@ const I18N = {
       iris: "Iris",
       archive: "Into Archive"
     },
-    headlineTitle: "Selected Works & Projects",
-    headlineSubtitle: "Ten Selected Works · 2024–2026 Collection",
+    headlineTitle: "Portfolio",
+    headlineSubtitle: "Art Direction, Editorial Design & Contemporary Sacred Art · Selected Projects & Professional Profile",
     menuSphere: "3D Sphere · The Archive",
     menuGrid: "Index · Grid View",
     menuReplay: "◉ Play Intro Video · Replay Video",
@@ -462,7 +479,18 @@ const I18N = {
     authDesc: "Exclusive author access (Wilmar Machado) to manage portfolio content, projects, and styling.",
     authPlaceholder: "Enter master password...",
     authLoginBtn: "Access Console",
-    authCancelBtn: "Cancel"
+    authCancelBtn: "Cancel",
+    videoSoundMute: "Mute",
+    videoSoundUnmute: "Sound",
+    filterAll: "All (10)",
+    filterSacro: "Sacred Art (2)",
+    filterEditorial: "Editorial Design (3)",
+    filterFoto: "Photography (3)",
+    filterGrafico: "Graphic Art (2)",
+    lbWhatsApp: "Inquire via WhatsApp",
+    lbShare: "Share Artwork",
+    signatureRole: "Art Direction & Visual Design · Valledupar, Colombia",
+    toastLinkCopied: "Artwork direct link copied to clipboard!"
   }
 };
 
@@ -537,6 +565,8 @@ function updateLightboxLanguage(lang) {
   setT('ui-spec-client-label', dict.specClient);
   setHtml('lightbox-drive-btn', dict.lbDrive);
   setT('ui-lb-inquire-label', dict.inquireSimilar);
+  setT('ui-lb-wa-label', dict.lbWhatsApp);
+  setT('ui-lb-share-label', dict.lbShare);
 
   const lb = document.getElementById('lightbox');
   if (lb && lb.classList.contains('active')) {
@@ -576,6 +606,14 @@ function applyLanguage(lang) {
     optEn.classList.toggle('active', currentLang === 'en');
   }
 
+  // Active pills in lightbox topbar
+  const lbOptEs = document.getElementById('lb-lang-opt-es');
+  const lbOptEn = document.getElementById('lb-lang-opt-en');
+  if (lbOptEs && lbOptEn) {
+    lbOptEs.classList.toggle('active', currentLang === 'es');
+    lbOptEn.classList.toggle('active', currentLang === 'en');
+  }
+
   const setT = (id, text) => {
     const el = document.getElementById(id);
     if (el) el.textContent = text;
@@ -599,51 +637,39 @@ function applyLanguage(lang) {
   // Video Stage
   setT('ui-video-brand', dict.videoBrand);
   setT('ui-video-badge', dict.videoBadge);
+  setT('ui-video-greeting-tag', dict.videoGreetingTag);
   setT('ui-video-greeting', dict.videoGreeting);
+  setT('ui-video-greeting-role', dict.videoGreetingRole);
   setT('ui-video-hint-text', dict.videoHint);
   setT('ui-video-play-label', dict.videoPlay);
   setT('ui-video-skip-label', dict.videoSkip);
-
-  // Sync lightbox language pills if present
-  const lbOptEs = document.getElementById('lb-lang-opt-es');
-  const lbOptEn = document.getElementById('lb-lang-opt-en');
-  if (lbOptEs && lbOptEn) {
-    lbOptEs.classList.toggle('active', currentLang === 'es');
-    lbOptEn.classList.toggle('active', currentLang === 'en');
+  const sndBtn = document.getElementById('video-sound-btn');
+  const introVid = document.getElementById('intro-video');
+  if (sndBtn && introVid) {
+    sndBtn.innerHTML = introVid.muted
+      ? '<span class="sound-icon">🔇</span> <span id="ui-video-sound-label">' + dict.videoSoundUnmute + '</span>'
+      : '<span class="sound-icon">🔊</span> <span id="ui-video-sound-label">' + dict.videoSoundMute + '</span>';
   }
 
-  // Main 3D Sphere Headline & Subtitle (Guaranteed bilingual translation)
+  // Main 3D Sphere Headline & Subtitle (Guaranteed Bilingual Sync)
   const hTitle = document.getElementById('ui-headline-title');
   const hSub = document.getElementById('ui-headline-subtitle');
   if (hTitle) {
-    if (isEn) {
-      let t = cfg.profile.headlineTitle_en;
-      if (!t || t.trim() === '' || t === cfg.profile.headlineTitle) {
-        t = OfflineTranslator.toEn(cfg.profile.headlineTitle) || dict.headlineTitle || 'Selected Works & Projects';
-      }
-      hTitle.textContent = t;
-    } else {
-      let t = cfg.profile.headlineTitle;
-      if (!t || t.trim() === '' || t === 'Selected Works & Projects') {
-        t = dict.headlineTitle || 'Obras Seleccionadas & Proyectos';
-      }
-      hTitle.textContent = t;
-    }
+    hTitle.textContent = dict.headlineTitle;
   }
   if (hSub) {
-    if (isEn) {
-      let s = cfg.profile.headlineSubtitle_en;
-      if (!s || s.trim() === '' || s === cfg.profile.headlineSubtitle) {
-        s = OfflineTranslator.toEn(cfg.profile.headlineSubtitle) || dict.headlineSubtitle || 'Ten Selected Works · 2024–2026 Collection';
-      }
-      hSub.textContent = s;
-    } else {
-      let s = cfg.profile.headlineSubtitle;
-      if (!s || s.trim() === '' || s.includes('Ten Selected Works')) {
-        s = dict.headlineSubtitle || 'Diez Obras Seleccionadas · Colección 2024–2026';
-      }
-      hSub.textContent = s;
-    }
+    hSub.textContent = dict.headlineSubtitle;
+  }
+
+  // Update floating skill tags in video stage
+  if (typeof window.updateFloatingTagsLanguage === 'function') {
+    window.updateFloatingTagsLanguage(currentLang);
+  }
+
+  // If lightbox is currently open, live refresh the artwork in new language!
+  const lbModal = document.getElementById('lightbox');
+  if (lbModal && lbModal.classList.contains('active') && STATE.currentLightboxIndex !== undefined) {
+    openLightbox(STATE.currentLightboxIndex);
   }
 
   // Update sphere & grid cards
@@ -674,6 +700,11 @@ function applyLanguage(lang) {
       : (cfg.profile.gridSubtitle || 'Diez Obras Seleccionadas · 10 Works Index');
   }
   setT('grid-close-btn', dict.gridClose);
+  setT('ui-filter-all-label', dict.filterAll);
+  setT('ui-filter-sacro-label', dict.filterSacro);
+  setT('ui-filter-editorial-label', dict.filterEditorial);
+  setT('ui-filter-foto-label', dict.filterFoto);
+  setT('ui-filter-grafico-label', dict.filterGrafico);
 
   // Lightbox
   updateLightboxLanguage(currentLang);
@@ -714,6 +745,7 @@ function applyLanguage(lang) {
   setT('ui-cap4-title', dict.cap4Title);
   setT('ui-cap4-desc', dict.cap4Desc);
   setT('ui-stmt-cta-text', dict.stmtCtaText);
+  setT('ui-statement-sig-role', dict.signatureRole);
 
   // Contact Section
   setT('ui-contact-tag', dict.contactTag);
@@ -778,10 +810,10 @@ const DEFAULT_CONFIG = {
     "role_en": "Art Direction · Graphic & Editorial Design",
     "brandTitle": "Wilmar Machado · Archivo Visual",
     "brandSubtitle": "Colección de Obras & Proyectos · 2024–2026",
-    "headlineTitle": "Obras Seleccionadas & Proyectos",
-    "headlineTitle_en": "Selected Works & Projects",
-    "headlineSubtitle": "Diez Obras Seleccionadas · Colección 2024–2026",
-    "headlineSubtitle_en": "Ten Selected Works · 2024–2026 Collection",
+    "headlineTitle": "Portafolio",
+    "headlineTitle_en": "Portfolio",
+    "headlineSubtitle": "Dirección de Arte, Diseño Editorial & Arte Sacro Contemporáneo · Selección de Proyectos & Perfil Profesional",
+    "headlineSubtitle_en": "Art Direction, Editorial Design & Contemporary Sacred Art · Selected Projects & Professional Profile",
     "gridTitle": "Catálogo Completo · Archivo",
     "gridTitle_en": "Complete Catalog · Archive",
     "gridSubtitle": "Diez Obras Seleccionadas · Índice de 10 Obras",
@@ -812,9 +844,10 @@ const DEFAULT_CONFIG = {
   },
   "projects": [
     {
+      "image": "images/obra-01.jpg",
       "id": "1kUdMl7BScjHoLJLuKhEM9zcM0SWR4BrU",
-      "image": "images/img1.webp",
       "year": "2024",
+      "category": "grafico",
       "title": "Conflict in the Mind",
       "title_en": "Conflict in the Mind",
       "place": "Arte Gráfico · Concepto de Portada de Álbum",
@@ -831,9 +864,10 @@ const DEFAULT_CONFIG = {
       "driveUrl": "https://drive.google.com/file/d/1kUdMl7BScjHoLJLuKhEM9zcM0SWR4BrU/view?usp=drivesdk"
     },
     {
+      "image": "images/obra-02.jpg",
       "id": "1s6lwti7WrcAAWXN1FDCvncLIevFg2kgv",
-      "image": "images/img2.webp",
       "year": "2025",
+      "category": "sacro",
       "title": "Inevitable Ocaso",
       "title_en": "Inevitable Sunset",
       "place": "El Reino · Wilmar Machado 2025",
@@ -850,9 +884,10 @@ const DEFAULT_CONFIG = {
       "driveUrl": "https://drive.google.com/file/d/1s6lwti7WrcAAWXN1FDCvncLIevFg2kgv/view?usp=drivesdk"
     },
     {
+      "image": "images/obra-03.jpg",
       "id": "1_f7I4HgQ7w51u2Kwo2yQ7S8itjpbozEZ",
-      "image": "images/img3.webp",
       "year": "2024",
+      "category": "foto",
       "title": "Vuelo Urbano",
       "title_en": "Urban Flight",
       "place": "Fotografía Callejera · Retrato en Terreno",
@@ -869,9 +904,10 @@ const DEFAULT_CONFIG = {
       "driveUrl": "https://drive.google.com/file/d/1_f7I4HgQ7w51u2Kwo2yQ7S8itjpbozEZ/view?usp=drivesdk"
     },
     {
+      "image": "images/obra-04.jpg",
       "id": "1nC_BG7yBIWBaNgvXPQ-g6JebPmVihbNc",
-      "image": "images/img4.webp",
       "year": "2025",
+      "category": "foto",
       "title": "Conexión Íntima",
       "title_en": "Intimate Connection",
       "place": "Retrato de Estudio · Sesión Editorial",
@@ -888,9 +924,10 @@ const DEFAULT_CONFIG = {
       "driveUrl": "https://drive.google.com/file/d/1nC_BG7yBIWBaNgvXPQ-g6JebPmVihbNc/view?usp=drivesdk"
     },
     {
+      "image": "images/obra-05.jpg",
       "id": "1tErfd_njfYEoTHsJ3E90KcgJ9KI8OcfE",
-      "image": "images/img5.webp",
       "year": "2025",
+      "category": "editorial",
       "title": "Complex Xpress",
       "title_en": "Complex Xpress",
       "place": "Diseño Editorial · Tipografía Y2K",
@@ -907,9 +944,10 @@ const DEFAULT_CONFIG = {
       "driveUrl": "https://drive.google.com/file/d/1tErfd_njfYEoTHsJ3E90KcgJ9KI8OcfE/view?usp=drivesdk"
     },
     {
+      "image": "images/obra-06.jpg",
       "id": "1qdrQwLAgcDBnami8tUD-YsaOfW6fYwWu",
-      "image": "images/img6.webp",
       "year": "2024",
+      "category": "grafico",
       "title": "Serpent",
       "title_en": "Serpent",
       "place": "Diseño de Cartel · Archivo Heráldico 2024",
@@ -926,9 +964,10 @@ const DEFAULT_CONFIG = {
       "driveUrl": "https://drive.google.com/file/d/1qdrQwLAgcDBnami8tUD-YsaOfW6fYwWu/view?usp=drivesdk"
     },
     {
+      "image": "images/obra-07.jpg",
       "id": "1rPtZU7lpYOb1EnY-IPAfzicwce119xRq",
-      "image": "images/img7.webp",
       "year": "2024",
+      "category": "sacro",
       "title": "Divino Angel",
       "title_en": "Divine Angel",
       "place": "Arte Sacro Contemporáneo · Cartel Digital 2024",
@@ -945,9 +984,10 @@ const DEFAULT_CONFIG = {
       "driveUrl": "https://drive.google.com/file/d/1rPtZU7lpYOb1EnY-IPAfzicwce119xRq/view?usp=drivesdk"
     },
     {
+      "image": "images/obra-08.jpg",
       "id": "114uYCmwvhuasuLE6hxt1T00XsVsqpDY7",
-      "image": "images/img8.webp",
       "year": "2024",
+      "category": "foto",
       "title": "Monster / Prisión Interior",
       "title_en": "Monster / Inner Prison",
       "place": "Fotografía Conceptual · Narrativa Visual",
@@ -964,9 +1004,10 @@ const DEFAULT_CONFIG = {
       "driveUrl": "https://drive.google.com/file/d/114uYCmwvhuasuLE6hxt1T00XsVsqpDY7/view?usp=drivesdk"
     },
     {
+      "image": "images/obra-09.jpg",
       "id": "1q2x-CI2n4NgZx6ozDmosiFNJazhQyN8s",
-      "image": "images/img9.webp",
       "year": "2024",
+      "category": "editorial",
       "title": "Journey / El Camino",
       "title_en": "Journey / The Way",
       "place": "Estética Manga · Cartel Narrativo",
@@ -983,9 +1024,10 @@ const DEFAULT_CONFIG = {
       "driveUrl": "https://drive.google.com/file/d/1q2x-CI2n4NgZx6ozDmosiFNJazhQyN8s/view?usp=drivesdk"
     },
     {
+      "image": "images/obra-10.jpg",
       "id": "1jMfHQDqfKzhL9SYMTy4GKvI8nFcyX0E_",
-      "image": "images/img10.webp",
       "year": "2025",
+      "category": "editorial",
       "title": "Amor Verdadero",
       "title_en": "True Love",
       "place": "Ensayo Visual · Diseño Editorial",
@@ -1068,28 +1110,8 @@ const STATE = {
 // Storage manager
 function loadStoredConfig() {
   try {
-    const raw = localStorage.getItem('wilmar_portfolio_config_v3');
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed.profile) {
-        if (!parsed.profile.headlineTitle_en || parsed.profile.headlineTitle_en === parsed.profile.headlineTitle) {
-          parsed.profile.headlineTitle_en = OfflineTranslator.toEn(parsed.profile.headlineTitle || DEFAULT_CONFIG.profile.headlineTitle) || 'Selected Works & Projects';
-        }
-        if (!parsed.profile.headlineSubtitle_en || parsed.profile.headlineSubtitle_en === parsed.profile.headlineSubtitle) {
-          parsed.profile.headlineSubtitle_en = OfflineTranslator.toEn(parsed.profile.headlineSubtitle || DEFAULT_CONFIG.profile.headlineSubtitle) || 'Ten Selected Works · 2024–2026 Collection';
-        }
-      }
-      // Merge with default to guarantee schema completeness
-      return {
-        profile: { ...DEFAULT_CONFIG.profile, ...(parsed.profile || {}) },
-        style: { ...DEFAULT_CONFIG.style, ...(parsed.style || {}) },
-        security: { ...DEFAULT_CONFIG.security, ...(parsed.security || {}) },
-        projects: Array.isArray(parsed.projects) && parsed.projects.length > 0 ? parsed.projects : DEFAULT_CONFIG.projects
-      };
-    }
-  } catch(e) {
-    console.warn('Could not read config from localStorage:', e);
-  }
+    localStorage.removeItem('wilmar_portfolio_config_v3');
+  } catch(e) {}
   return JSON.parse(JSON.stringify(DEFAULT_CONFIG));
 }
 
@@ -1113,30 +1135,12 @@ function showToast(message) {
   }, 3200);
 }
 
-// Helper: Resolve image src with fallback for Google Drive IDs or normal URLs
-// Helper: Resolve image src with fallback for local images, Google Drive IDs or normal URLs
+// Helper: Resolve image src (Local separate image files first, fallback to URL/Drive)
 function getProjectImageSrc(item) {
   if (item.image) return item.image;
-  if (item.file) return item.file;
   if (item.url) return item.url;
   if (item.id) {
-    if (item.id.startsWith('http://') || item.id.startsWith('https://') || item.id.startsWith('images/') || item.id.endsWith('.webp') || item.id.endsWith('.png') || item.id.endsWith('.jpg')) {
-      return item.id;
-    }
-    // Direct map for known Drive IDs to local images folder for offline & GitHub performance
-    const driveToLocalMap = {
-      '1kUdMl7BScjHoLJLuKhEM9zcM0SWR4BrU': 'images/img1.webp',
-      '1s6lwti7WrcAAWXN1FDCvncLIevFg2kgv': 'images/img2.webp',
-      '1_f7I4HgQ7w51u2Kwo2yQ7S8itjpbozEZ': 'images/img3.webp',
-      '1nC_BG7yBIWBaNgvXPQ-g6JebPmVihbNc': 'images/img4.webp',
-      '1tErfd_njfYEoTHsJ3E90KcgJ9KI8OcfE': 'images/img5.webp',
-      '1qdrQwLAgcDBnami8tUD-YsaOfW6fYwWu': 'images/img6.webp',
-      '1rPtZU7lpYOb1EnY-IPAfzicwce119xRq': 'images/img7.webp',
-      '114uYCmwvhuasuLE6hxt1T00XsVsqpDY7': 'images/img8.webp',
-      '1q2x-CI2n4NgZx6ozDmosiFNJazhQyN8s': 'images/img9.webp',
-      '1jMfHQDqfKzhL9SYMTy4GKvI8nFcyX0E_': 'images/img10.webp'
-    };
-    if (driveToLocalMap[item.id]) return driveToLocalMap[item.id];
+    if (item.id.startsWith('http://') || item.id.startsWith('https://')) return item.id;
     return `https://lh3.googleusercontent.com/d/${item.id}`;
   }
   return '';
@@ -1171,34 +1175,21 @@ function applyConfigToUI(cfg) {
   const videoGreetingEl = document.getElementById('ui-video-greeting');
   if (videoGreetingEl) videoGreetingEl.textContent = cfg.profile.videoGreeting || 'Hola, Soy Wilmar';
 
-  // Headlines (Bilingual Aware)
+  // Headlines with Language Awareness
   const isEn = (currentLang === 'en');
-  const dict = I18N[currentLang] || I18N.es;
   const hTitle = document.getElementById('ui-headline-title');
   if (hTitle) {
-    hTitle.textContent = isEn
-      ? (cfg.profile.headlineTitle_en || OfflineTranslator.toEn(cfg.profile.headlineTitle) || dict.headlineTitle)
-      : (cfg.profile.headlineTitle || dict.headlineTitle);
+    hTitle.textContent = isEn ? I18N.en.headlineTitle : I18N.es.headlineTitle;
   }
   const hSub = document.getElementById('ui-headline-subtitle');
   if (hSub) {
-    hSub.textContent = isEn
-      ? (cfg.profile.headlineSubtitle_en || OfflineTranslator.toEn(cfg.profile.headlineSubtitle) || dict.headlineSubtitle)
-      : (cfg.profile.headlineSubtitle || dict.headlineSubtitle);
+    hSub.textContent = isEn ? I18N.en.headlineSubtitle : I18N.es.headlineSubtitle;
   }
 
   const gTitle = document.getElementById('ui-grid-title');
-  if (gTitle) {
-    gTitle.textContent = isEn
-      ? (cfg.profile.gridTitle_en || OfflineTranslator.toEn(cfg.profile.gridTitle) || dict.gridTitle)
-      : (cfg.profile.gridTitle || dict.gridTitle);
-  }
+  if (gTitle) gTitle.textContent = cfg.profile.gridTitle;
   const gSub = document.getElementById('ui-grid-subtitle');
-  if (gSub) {
-    gSub.textContent = isEn
-      ? (cfg.profile.gridSubtitle_en || OfflineTranslator.toEn(cfg.profile.gridSubtitle) || dict.gridSubtitle)
-      : (cfg.profile.gridSubtitle || dict.gridSubtitle);
-  }
+  if (gSub) gSub.textContent = cfg.profile.gridSubtitle;
 
   // Menu footers
   const mfLeft = document.getElementById('ui-menu-footer-left');
@@ -1289,6 +1280,7 @@ function rebuildSphereAndGrid(cfg) {
     const card = document.createElement('div');
     card.className = 'card';
     card.setAttribute('data-index', i);
+    card.setAttribute('data-category', item.category || 'all');
     card.setAttribute('role', 'button');
     card.setAttribute('tabindex', '0');
     card.setAttribute('aria-label', `${item.title}, ${item.place}`);
@@ -1308,10 +1300,16 @@ function rebuildSphereAndGrid(cfg) {
     const imgEl = card.querySelector('img');
     attachImageErrorFallback(imgEl, item.id);
 
-    card.addEventListener('click', () => openLightbox(i));
+    card.addEventListener('click', () => {
+      card.classList.add('opening-pulse');
+      setTimeout(() => card.classList.remove('opening-pulse'), 450);
+      openLightbox(i);
+    });
     card.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
+        card.classList.add('opening-pulse');
+        setTimeout(() => card.classList.remove('opening-pulse'), 450);
         openLightbox(i);
       }
     });
@@ -1322,6 +1320,8 @@ function rebuildSphereAndGrid(cfg) {
     // Grid Item
     const gridItem = document.createElement('div');
     gridItem.className = 'grid-item';
+    gridItem.setAttribute('data-index', i);
+    gridItem.setAttribute('data-category', item.category || 'all');
     gridItem.setAttribute('role', 'button');
     gridItem.setAttribute('tabindex', '0');
     gridItem.innerHTML = `
@@ -1337,10 +1337,16 @@ function rebuildSphereAndGrid(cfg) {
     const gImgEl = gridItem.querySelector('img');
     attachImageErrorFallback(gImgEl, item.id);
 
-    gridItem.addEventListener('click', () => openLightbox(i));
+    gridItem.addEventListener('click', () => {
+      gridItem.classList.add('opening-pulse');
+      setTimeout(() => gridItem.classList.remove('opening-pulse'), 450);
+      openLightbox(i);
+    });
     gridItem.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
+        gridItem.classList.add('opening-pulse');
+        setTimeout(() => gridItem.classList.remove('opening-pulse'), 450);
         openLightbox(i);
       }
     });
@@ -1350,6 +1356,11 @@ function rebuildSphereAndGrid(cfg) {
   // Re-layout Fibonacci Sphere
   layoutSphere();
 
+  // Re-apply curatorial filter if any
+  if (typeof window.applyCurrentCategoryFilter === 'function') {
+    window.applyCurrentCategoryFilter();
+  }
+
   // Attach hover cursor state
   const customCursor = document.getElementById('custom-cursor');
   document.querySelectorAll('button, a, .card, .grid-item, .project-admin-row').forEach(el => {
@@ -1357,6 +1368,53 @@ function rebuildSphereAndGrid(cfg) {
     el.addEventListener('mouseleave', () => customCursor && customCursor.classList.remove('hovered'));
   });
 }
+
+// Curatorial Discipline Filter Controller
+function setCategoryFilter(category) {
+  STATE.currentFilter = category || 'all';
+  const pills = document.querySelectorAll('.filter-pill');
+  pills.forEach(pill => {
+    const filterVal = pill.getAttribute('data-filter');
+    pill.classList.toggle('active', filterVal === STATE.currentFilter);
+  });
+
+  const cards = document.querySelectorAll('#world .card');
+  cards.forEach(card => {
+    const cardCat = card.getAttribute('data-category') || 'all';
+    const matches = (STATE.currentFilter === 'all' || cardCat === STATE.currentFilter);
+    if (matches) {
+      card.classList.remove('filtered-out');
+      card.classList.add('filtered-in');
+      card.style.pointerEvents = 'auto';
+    } else {
+      card.classList.add('filtered-out');
+      card.classList.remove('filtered-in');
+      card.style.pointerEvents = 'none';
+    }
+  });
+
+  const gridItems = document.querySelectorAll('#grid-container .grid-item');
+  gridItems.forEach(item => {
+    const itemCat = item.getAttribute('data-category') || 'all';
+    const matches = (STATE.currentFilter === 'all' || itemCat === STATE.currentFilter);
+    item.classList.toggle('filtered-out', !matches);
+  });
+}
+window.setCategoryFilter = setCategoryFilter;
+window.applyCurrentCategoryFilter = function() {
+  setCategoryFilter(STATE.currentFilter || 'all');
+};
+
+// Wire curatorial discipline filter pills
+document.querySelectorAll('.filter-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    const filter = pill.getAttribute('data-filter');
+    setCategoryFilter(filter);
+    const isEn = (currentLang === 'en');
+    const label = pill.querySelector('span')?.textContent || filter;
+    showToast(`${isEn ? 'Filter' : 'Filtro'}: ${label}`);
+  });
+});
 
 function layoutSphere() {
   const style = getComputedStyle(document.documentElement);
@@ -1401,7 +1459,9 @@ function layoutSphere() {
   const timeLabel = document.getElementById('video-time-label');
   const playBtn = document.getElementById('video-play-btn');
   const skipBtn = document.getElementById('video-skip-btn');
+  const soundBtn = document.getElementById('video-sound-btn');
   const videoGreeting = document.getElementById('video-greeting');
+  const ambientVideo = document.getElementById('ambient-video');
 
   if (!introVideo || !videoStage) return;
 
@@ -1409,6 +1469,9 @@ function layoutSphere() {
   const vSrc = (STATE.config && STATE.config.profile && STATE.config.profile.videoSrc) || 'video.mp4';
   if (!introVideo.src || !introVideo.src.includes('.mp4')) {
     introVideo.src = vSrc;
+  }
+  if (ambientVideo && (!ambientVideo.src || !ambientVideo.src.includes('.mp4'))) {
+    ambientVideo.src = vSrc;
   }
 
   let videoDuration = 13.07;
@@ -1443,6 +1506,140 @@ function layoutSphere() {
     }
   }
 
+  /* ==========================================================================
+     FLOATING SKILLS & WORK AREAS CONTROLLER (Dynamic Drifting Trajectories)
+     ========================================================================== */
+  const FLOATING_SKILLS = [
+    {
+      title_es: "Dirección de Arte",
+      title_en: "Art Direction",
+      start: 0.05,
+      peak: 0.20,
+      end: 0.35,
+      startX: 47,
+      startY: 17,
+      endX: 53,
+      endY: 23
+    },
+    {
+      title_es: "Diseño Editorial",
+      title_en: "Editorial Design",
+      start: 0.30,
+      peak: 0.44,
+      end: 0.58,
+      startX: 53,
+      startY: 20,
+      endX: 47,
+      endY: 26
+    },
+    {
+      title_es: "Arte Sacro",
+      title_en: "Sacred Art",
+      start: 0.53,
+      peak: 0.67,
+      end: 0.81,
+      startX: 47,
+      startY: 18,
+      endX: 53,
+      endY: 24
+    },
+    {
+      title_es: "Fotografía",
+      title_en: "Photography",
+      start: 0.74,
+      peak: 0.86,
+      end: 0.96,
+      startX: 53,
+      startY: 21,
+      endX: 47,
+      endY: 27
+    }
+  ];
+
+  function initFloatingTags() {
+    const container = document.getElementById('video-floating-tags');
+    if (!container) return;
+    container.innerHTML = '';
+    const isEn = (currentLang === 'en');
+
+    FLOATING_SKILLS.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'floating-tag';
+      div.style.left = `${item.startX}%`;
+      div.style.top = `${item.startY}%`;
+
+      const dot = document.createElement('span');
+      dot.className = 'floating-tag-dot';
+
+      const title = document.createElement('span');
+      title.className = 'floating-tag-title';
+      title.textContent = isEn ? item.title_en : item.title_es;
+
+      div.appendChild(dot);
+      div.appendChild(title);
+      container.appendChild(div);
+
+      item.element = div;
+      item.titleEl = title;
+    });
+  }
+
+  function updateFloatingTags(p) {
+    if (videoEnded || videoStage.style.display === 'none') return;
+    FLOATING_SKILLS.forEach(item => {
+      const el = item.element;
+      if (!el) return;
+
+      if (p < item.start || p > item.end || p >= 0.96) {
+        el.style.opacity = '0';
+        el.style.visibility = 'hidden';
+        return;
+      }
+
+      // Normalized progress within this tag's lifespan (0.0 to 1.0)
+      const normProgress = Math.max(0, Math.min(1.0, (p - item.start) / (item.end - item.start)));
+
+      // Dynamic position interpolation along its drifting path
+      const curX = item.startX + (item.endX - item.startX) * normProgress;
+      const curY = item.startY + (item.endY - item.startY) * normProgress;
+
+      el.style.left = `${curX.toFixed(2)}%`;
+      el.style.top = `${curY.toFixed(2)}%`;
+
+      let opacity = 0;
+      let scale = 0.92;
+      let tz = -15;
+
+      if (p <= item.peak) {
+        const inNorm = (p - item.start) / (item.peak - item.start);
+        opacity = inNorm;
+        scale = 0.92 + inNorm * 0.08;
+        tz = -15 + inNorm * 20;
+      } else {
+        const outNorm = (p - item.peak) / (item.end - item.peak);
+        opacity = Math.max(0, 1 - outNorm);
+        scale = 1.0 + outNorm * 0.06;
+        tz = 5 + outNorm * 15;
+      }
+
+      const parallaxX = currentTiltY * 6;
+      const parallaxY = currentTiltX * 6;
+
+      el.style.visibility = 'visible';
+      el.style.opacity = opacity.toFixed(3);
+      el.style.transform = `translate(-50%, -50%) translate3d(${parallaxX.toFixed(1)}px, ${parallaxY.toFixed(1)}px, ${tz.toFixed(1)}px) scale(${scale.toFixed(3)})`;
+    });
+  }
+
+  window.updateFloatingTagsLanguage = function(lang) {
+    const isEn = (lang === 'en');
+    FLOATING_SKILLS.forEach(item => {
+      if (item.titleEl) item.titleEl.textContent = isEn ? item.title_en : item.title_es;
+    });
+  };
+
+  initFloatingTags();
+
   introVideo.addEventListener('loadedmetadata', () => {
     if (introVideo.duration && !isNaN(introVideo.duration)) {
       videoDuration = introVideo.duration;
@@ -1450,31 +1647,48 @@ function layoutSphere() {
     introVideo.currentTime = 0.001;
   });
 
-  function applySeek(targetTime) {
-    if (introVideo.seeking) {
-      queuedSeekTime = targetTime;
+  const TOTAL_SCROLL_PIXELS = 1400; // Calibrated for 4-5 natural flicks across full 13s video (zero user fatigue)
+  const TOTAL_TOUCH_PIXELS = 850;   // Symmetrical travel for mobile swipe gestures
+
+  let isAutoPlaying = false;
+  let isSeeking = false;
+  let pendingSeekTime = null;
+  let seekWatchdogTimer = null;
+
+  function seekVideoTo(time) {
+    time = Math.max(0.001, Math.min(videoDuration - 0.001, time));
+    if (isSeeking) {
+      pendingSeekTime = time;
       return;
     }
-    try {
-      if (typeof introVideo.fastSeek === 'function') {
-        introVideo.fastSeek(targetTime);
-      } else {
-        introVideo.currentTime = targetTime;
-      }
-    } catch (err) {
-      introVideo.currentTime = targetTime;
+    isSeeking = true;
+    introVideo.currentTime = time;
+    if (ambientVideo) {
+      try { ambientVideo.currentTime = time; } catch(e) {}
     }
+
+    clearTimeout(seekWatchdogTimer);
+    seekWatchdogTimer = setTimeout(() => {
+      if (isSeeking) {
+        isSeeking = false;
+        if (pendingSeekTime !== null) {
+          const next = pendingSeekTime;
+          pendingSeekTime = null;
+          seekVideoTo(next);
+        }
+      }
+    }, 70);
   }
 
   introVideo.addEventListener('seeked', () => {
-    if (queuedSeekTime !== null) {
-      const nextTime = queuedSeekTime;
-      queuedSeekTime = null;
-      applySeek(nextTime);
+    isSeeking = false;
+    clearTimeout(seekWatchdogTimer);
+    if (pendingSeekTime !== null) {
+      const next = pendingSeekTime;
+      pendingSeekTime = null;
+      seekVideoTo(next);
     }
   });
-
-  const TOTAL_SCROLL_PIXELS = 4800;
 
   window.addEventListener('wheel', (e) => {
     if (videoEnded || videoStage.style.display === 'none') return;
@@ -1484,27 +1698,20 @@ function layoutSphere() {
     if (e.deltaMode === 1) delta *= 32;
     else if (e.deltaMode === 2) delta *= 600;
 
-    hideGreeting();
+    // Immediately stop auto-play so user has total manual tactile control
+    if (isAutoPlaying || !introVideo.paused) {
+      isAutoPlaying = false;
+      introVideo.pause();
+      if (ambientVideo && !ambientVideo.paused) ambientVideo.pause();
+    }
 
-    if (delta > 0) {
-      // User is scrolling forward / down: PLAY FLUIDLY!
-      if (introVideo.paused) {
-        introVideo.play().catch(err => console.warn('Play error:', err));
-      }
-      // Speed up video playback smoothly if scrolling vigorously
-      const dynamicRate = Math.min(2.5, Math.max(1.0, 1.0 + (delta / 120)));
-      introVideo.playbackRate = dynamicRate;
-      clearTimeout(playbackRateResetTimer);
-      playbackRateResetTimer = setTimeout(() => {
-        if (!introVideo.paused) introVideo.playbackRate = 1.0;
-      }, 300);
-    } else if (delta < 0) {
-      // User is scrolling backward / up: seek backwards smoothly!
-      if (!introVideo.paused) introVideo.pause();
-      targetProgress = Math.max(0, Math.min(1.0, currentProgress + delta / 3200));
-      currentProgress = targetProgress;
-      applySeek(Math.min(videoDuration - 0.05, targetProgress * videoDuration));
-      if (currentProgress <= 0.008) showGreeting();
+    // 100% Symmetrical speed in both directions (forward and rewind share the exact same step sensitivity)
+    targetProgress = Math.max(0, Math.min(1.0, targetProgress + (delta / TOTAL_SCROLL_PIXELS)));
+
+    if (targetProgress > 0.008) {
+      hideGreeting();
+    } else {
+      showGreeting();
     }
   }, { passive: false });
 
@@ -1523,23 +1730,22 @@ function layoutSphere() {
     if (videoEnded || !isTouching || videoStage.style.display === 'none') return;
     if (e.touches.length === 1) {
       const curY = e.touches[0].clientY;
-      const deltaY = touchStartY - curY;
+      const deltaY = touchStartY - curY; // swipe up (forward > 0), swipe down (rewind < 0)
       touchStartY = curY;
 
-      hideGreeting();
+      if (isAutoPlaying || !introVideo.paused) {
+        isAutoPlaying = false;
+        introVideo.pause();
+        if (ambientVideo && !ambientVideo.paused) ambientVideo.pause();
+      }
 
-      if (deltaY > 0) {
-        // User swiped up / scrolled forward: PLAY FLUIDLY!
-        if (introVideo.paused) {
-          introVideo.play().catch(err => console.warn('Play error:', err));
-        }
-      } else if (deltaY < 0) {
-        // User swiped down / scrolled backward: seek backwards smoothly!
-        if (!introVideo.paused) introVideo.pause();
-        targetProgress = Math.max(0, Math.min(1.0, currentProgress - 0.03));
-        currentProgress = targetProgress;
-        applySeek(Math.min(videoDuration - 0.05, targetProgress * videoDuration));
-        if (currentProgress <= 0.008) showGreeting();
+      // 100% Symmetrical touch sensitivity
+      targetProgress = Math.max(0, Math.min(1.0, targetProgress + (deltaY / TOTAL_TOUCH_PIXELS)));
+
+      if (targetProgress > 0.008) {
+        hideGreeting();
+      } else {
+        showGreeting();
       }
       e.preventDefault();
     }
@@ -1558,10 +1764,19 @@ function layoutSphere() {
   if (progressTrack) {
     progressTrack.addEventListener('click', (e) => {
       hideGreeting();
+      if (isAutoPlaying || !introVideo.paused) {
+        isAutoPlaying = false;
+        introVideo.pause();
+        if (ambientVideo && !ambientVideo.paused) ambientVideo.pause();
+      }
       const rect = progressTrack.getBoundingClientRect();
-      targetProgress = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-      currentProgress = targetProgress;
-      applySeek(Math.min(videoDuration - 0.05, targetProgress * videoDuration));
+      const clickRatio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      const targetTime = Math.min(videoDuration - 0.05, clickRatio * videoDuration);
+      targetProgress = clickRatio;
+      currentProgress = clickRatio;
+      seekVideoTo(targetTime);
+      updateFloatingTags(currentProgress);
+      if (progressBar) progressBar.style.transform = `scaleX(${currentProgress})`;
     });
   }
 
@@ -1570,35 +1785,50 @@ function layoutSphere() {
       hideGreeting();
       if (introVideo.paused) {
         if (introVideo.currentTime >= videoDuration - 0.25) {
+          introVideo.currentTime = 0.001;
           targetProgress = 0.0;
           currentProgress = 0.0;
-          applySeek(0.001);
         }
-        introVideo.play().catch(err => console.warn('Play error:', err));
+        isAutoPlaying = true;
+        introVideo.playbackRate = 1.0;
+        introVideo.play().catch(err => console.warn('Play notice:', err));
       } else {
+        isAutoPlaying = false;
         introVideo.pause();
       }
     });
   }
 
   introVideo.addEventListener('play', () => {
+    isAutoPlaying = true;
     if (playBtn) { const d = I18N[currentLang] || I18N.es; playBtn.innerHTML = '&#10074;&#10074; <span id="ui-video-play-label">' + d.videoPause + '</span>'; }
+    if (ambientVideo && ambientVideo.paused) ambientVideo.play().catch(() => {});
     hideGreeting();
   });
 
   introVideo.addEventListener('pause', () => {
+    isAutoPlaying = false;
     if (playBtn) { const d = I18N[currentLang] || I18N.es; playBtn.innerHTML = '&#9654; <span id="ui-video-play-label">' + d.videoPlay + '</span>'; }
+    if (ambientVideo && !ambientVideo.paused) ambientVideo.pause();
     if (currentProgress <= 0.008 && !videoEnded) showGreeting();
   });
 
   // Video click & error fallbacks
   if (videoFrame) {
     videoFrame.addEventListener('click', (e) => {
-      if (e.target.closest('.video-controls') || e.target.closest('.video-topbar')) return;
+      if (e.target.closest('.video-controls') || e.target.closest('.video-topbar') || e.target.closest('#video-greeting')) return;
       hideGreeting();
       if (introVideo.paused) {
+        if (introVideo.currentTime >= videoDuration - 0.25) {
+          introVideo.currentTime = 0.001;
+          targetProgress = 0.0;
+          currentProgress = 0.0;
+        }
+        isAutoPlaying = true;
+        introVideo.playbackRate = 1.0;
         introVideo.play().catch(err => console.warn('Play error:', err));
       } else {
+        isAutoPlaying = false;
         introVideo.pause();
       }
     });
@@ -1628,6 +1858,18 @@ function layoutSphere() {
     });
   }
 
+  if (soundBtn) {
+    soundBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      introVideo.muted = !introVideo.muted;
+      const d = I18N[currentLang] || I18N.es;
+      soundBtn.innerHTML = introVideo.muted
+        ? '<span class="sound-icon">🔇</span> <span id="ui-video-sound-label">' + d.videoSoundUnmute + '</span>'
+        : '<span class="sound-icon">🔊</span> <span id="ui-video-sound-label">' + d.videoSoundMute + '</span>';
+      showToast(introVideo.muted ? (currentLang === 'en' ? 'Audio muted' : 'Audio silenciado') : (currentLang === 'en' ? 'Audio unmuted' : 'Audio activado'));
+    });
+  }
+
   const replayLinks = document.querySelectorAll('[data-replay-video]');
   replayLinks.forEach(link => {
     link.addEventListener('click', (e) => {
@@ -1640,9 +1882,15 @@ function layoutSphere() {
     videoEnded = false;
     targetProgress = 0.0;
     currentProgress = 0.0;
+    isAutoPlaying = false;
+    introVideo.currentTime = 0.001;
     introVideo.pause();
-    applySeek(0.001);
+    if (ambientVideo) {
+      ambientVideo.pause();
+      try { ambientVideo.currentTime = 0.001; } catch(e) {}
+    }
     showGreeting();
+    updateFloatingTags(0.0);
 
     const menu = document.getElementById('menu');
     const burger = document.getElementById('burger-btn');
@@ -1651,74 +1899,109 @@ function layoutSphere() {
       if (burger) burger.setAttribute('aria-expanded', 'false');
     }
 
-    videoStage.style.display = 'flex';
-    videoStage.style.opacity = '1';
-    videoStage.style.pointerEvents = 'auto';
-
     const veil = document.getElementById('veil');
-    if (veil) veil.style.opacity = '0';
+    if (veil) veil.classList.add('active');
 
-    requestAnimationFrame(renderVideoLoop);
+    document.body.classList.remove('revealed');
+
+    setTimeout(() => {
+      videoStage.classList.remove('transitioning-out');
+      videoStage.style.display = 'flex';
+      videoStage.style.opacity = '1';
+      videoStage.style.pointerEvents = 'auto';
+
+      if (veil) veil.classList.remove('active');
+      requestAnimationFrame(renderVideoLoop);
+    }, 350);
   };
 
   window.completeVideoAndEnterArchive = function() {
     if (videoEnded) return;
     videoEnded = true;
     introVideo.pause();
+    if (ambientVideo) ambientVideo.pause();
 
+    const videoStage = document.getElementById('video-stage');
     const veil = document.getElementById('veil');
-    if (veil) {
-      veil.style.transition = 'opacity 0.7s var(--ease-cinematic)';
-      veil.style.opacity = '1';
-    }
+    const flare = document.getElementById('portal-flare');
+
+    // 1. Dynamic optical dive & flare shockwave
+    if (videoStage) videoStage.classList.add('transitioning-out');
+    if (veil) veil.classList.add('active');
+    if (flare) flare.classList.add('flash');
+
+    // 2. Prepare 3D Fibonacci Sphere starting from deep space with majestic angular sweep
+    STATE.dollyZ = -550;
+    STATE.targetDollyZ = 0;
+    STATE.yaw -= 40;
+    STATE.targetYaw += 80;
 
     setTimeout(() => {
-      videoStage.style.opacity = '0';
-      videoStage.style.pointerEvents = 'none';
-
+      // 3. Dispatch enter-archive: reveals scene & triggers card blooming
       window.dispatchEvent(new CustomEvent('enter-archive'));
 
+      // 4. Smoothly dissipate veil & flare
       setTimeout(() => {
-        videoStage.style.display = 'none';
-        if (veil) {
-          veil.style.transition = 'opacity 0.9s var(--ease-cinematic)';
-          veil.style.opacity = '0';
+        if (flare) flare.classList.remove('flash');
+        if (veil) veil.classList.remove('active');
+        if (videoStage) {
+          videoStage.style.display = 'none';
+          videoStage.classList.remove('transitioning-out');
         }
-      }, 500);
+      }, 450);
     }, 400);
   };
 
   function renderVideoLoop() {
     if (videoEnded || videoStage.style.display === 'none') return;
 
-    if (!introVideo.paused) {
-      const p = Math.max(0, Math.min(1.0, introVideo.currentTime / videoDuration));
-      targetProgress = p;
-      currentProgress = p;
-
+    if (isAutoPlaying && !introVideo.paused) {
+      // Natural playback: follow video element currentTime
+      currentProgress = Math.max(0, Math.min(1.0, introVideo.currentTime / videoDuration));
+      targetProgress = currentProgress;
       hideGreeting();
 
-      if (introVideo.currentTime >= videoDuration - 0.25 || p >= 0.985) {
+      if (introVideo.currentTime >= videoDuration - 0.25 || currentProgress >= 0.985) {
         window.completeVideoAndEnterArchive();
         return;
       }
     } else {
-      currentProgress += (targetProgress - currentProgress) * 0.15;
-      if (Math.abs(targetProgress - currentProgress) < 0.0005) {
+      // Symmetrical scroll scrubbing: smooth lerp to targetProgress
+      const progressDiff = targetProgress - currentProgress;
+      if (Math.abs(progressDiff) > 0.0002) {
+        currentProgress += progressDiff * 0.35;
+      } else {
         currentProgress = targetProgress;
       }
-      const targetTime = Math.min(videoDuration - 0.05, currentProgress * videoDuration);
-      if (!introVideo.seeking && Math.abs(introVideo.currentTime - targetTime) > 0.03) {
-        applySeek(targetTime);
+
+      const targetTime = currentProgress * videoDuration;
+      if (Math.abs(introVideo.currentTime - targetTime) > 0.015) {
+        seekVideoTo(targetTime);
       }
+
+      if (currentProgress >= 0.985 || targetProgress >= 0.995) {
+        window.completeVideoAndEnterArchive();
+        return;
+      }
+
       if (currentProgress > 0.008) {
         hideGreeting();
       } else if (!videoEnded) {
         showGreeting();
       }
-      if (currentProgress >= 0.985) {
-        window.completeVideoAndEnterArchive();
-        return;
+    }
+
+    if (ambientVideo) {
+      if (!introVideo.paused && ambientVideo.paused) {
+        ambientVideo.play().catch(() => {});
+      } else if (introVideo.paused && !ambientVideo.paused) {
+        ambientVideo.pause();
+      }
+      if (!introVideo.paused && Math.abs(ambientVideo.currentTime - introVideo.currentTime) > 0.25) {
+        try { ambientVideo.currentTime = introVideo.currentTime; } catch(e) {}
+      }
+      if (ambientVideo.playbackRate !== introVideo.playbackRate) {
+        ambientVideo.playbackRate = introVideo.playbackRate;
       }
     }
 
@@ -1732,13 +2015,14 @@ function layoutSphere() {
     const transY = currentTiltX * 14;
 
     videoFrame.style.transform = `scale(${scale}) translate3d(${transX}px, ${transY}px, 0) rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+    updateFloatingTags(currentProgress);
 
     if (progressBar) {
       progressBar.style.transform = `scaleX(${currentProgress})`;
     }
 
     if (timeLabel) {
-      const displayTime = !introVideo.paused ? introVideo.currentTime : (currentProgress * videoDuration);
+      const displayTime = currentProgress * videoDuration;
       const curM = Math.floor(displayTime / 60);
       const curS = Math.floor(displayTime % 60).toString().padStart(2, '0');
       const totM = Math.floor(videoDuration / 60);
@@ -1819,6 +2103,40 @@ function layoutSphere() {
     STATE.isDragging = false;
   });
 
+  // Mobile Touch Support for 3D Fibonacci Sphere
+  viewport.addEventListener('touchstart', (e) => {
+    if (e.target.closest('.card')) return;
+    if (e.touches.length === 1) {
+      STATE.isDragging = true;
+      STATE.startX = e.touches[0].clientX;
+      STATE.startY = e.touches[0].clientY;
+      STATE.lastX = e.touches[0].clientX;
+      STATE.lastY = e.touches[0].clientY;
+      STATE.velX = 0;
+      STATE.velY = 0;
+    }
+  }, { passive: true });
+
+  window.addEventListener('touchmove', (e) => {
+    if (!STATE.isDragging || e.touches.length !== 1) return;
+    const curX = e.touches[0].clientX;
+    const curY = e.touches[0].clientY;
+    const dx = curX - STATE.lastX;
+    const dy = curY - STATE.lastY;
+    STATE.lastX = curX;
+    STATE.lastY = curY;
+
+    STATE.velX = dx * 0.30;
+    STATE.velY = dy * 0.30;
+
+    STATE.targetYaw += STATE.velX;
+    STATE.targetPitch = Math.max(-55, Math.min(55, STATE.targetPitch - STATE.velY));
+  }, { passive: true });
+
+  window.addEventListener('touchend', () => {
+    STATE.isDragging = false;
+  }, { passive: true });
+
   window.addEventListener('wheel', (e) => {
     const videoStage = document.getElementById('video-stage');
     if (videoStage && videoStage.style.display !== 'none') return;
@@ -1865,8 +2183,21 @@ function layoutSphere() {
 
   window.addEventListener('enter-archive', () => {
     layoutSphere();
-    layoutSphere();
     document.body.classList.add('revealed');
+
+    // Staggered card bloom choreography for 3D sphere entrance
+    if (STATE.cards && STATE.cards.length > 0) {
+      STATE.cards.forEach((card, idx) => {
+        card.classList.remove('blooming');
+        void card.offsetWidth; // Force reflow
+        card.style.animationDelay = `${idx * 45}ms`;
+        card.classList.add('blooming');
+        setTimeout(() => {
+          card.classList.remove('blooming');
+          card.style.animationDelay = '';
+        }, 1200 + idx * 45);
+      });
+    }
   });
 
   function toggleGrid() {
@@ -1886,52 +2217,40 @@ function layoutSphere() {
   // Bilingual toggle button listener
   const langToggleBtn = document.getElementById('lang-toggle-btn');
   if (langToggleBtn) {
-    langToggleBtn.addEventListener('click', () => {
-      applyLanguage(currentLang === 'es' ? 'en' : 'es');
+    langToggleBtn.addEventListener('click', (e) => {
+      const targetOpt = e.target.closest('.lang-opt');
+      if (targetOpt) {
+        if (targetOpt.id.includes('en')) {
+          applyLanguage('en');
+        } else if (targetOpt.id.includes('es')) {
+          applyLanguage('es');
+        } else {
+          applyLanguage(currentLang === 'es' ? 'en' : 'es');
+        }
+      } else {
+        applyLanguage(currentLang === 'es' ? 'en' : 'es');
+      }
       showToast(currentLang === 'es' ? 'Idioma: Español' : 'Language: English');
     });
   }
 
-
-  // Auto-translate buttons listeners (100% Offline)
-  const btnAutoTransProf = document.getElementById('btn-auto-translate-profile');
-  if (btnAutoTransProf) {
-    btnAutoTransProf.addEventListener('click', () => {
-      const h1Es = document.getElementById('cfg-sphere-h1')?.value || '';
-      const subEs = document.getElementById('cfg-sphere-sub')?.value || '';
-      const gtEs = document.getElementById('cfg-grid-title')?.value || '';
-      const gsEs = document.getElementById('cfg-grid-sub')?.value || '';
-
-      const h1EnEl = document.getElementById('cfg-sphere-h1-en');
-      const subEnEl = document.getElementById('cfg-sphere-sub-en');
-      const gtEnEl = document.getElementById('cfg-grid-title-en');
-      const gsEnEl = document.getElementById('cfg-grid-sub-en');
-
-      if (h1EnEl && h1Es) h1EnEl.value = OfflineTranslator.toEn(h1Es);
-      if (subEnEl && subEs) subEnEl.value = OfflineTranslator.toEn(subEs);
-      if (gtEnEl && gtEs) gtEnEl.value = OfflineTranslator.toEn(gtEs);
-      if (gsEnEl && gsEs) gsEnEl.value = OfflineTranslator.toEn(gsEs);
-
-      showToast('¡Titulares traducidos a inglés con el motor offline!');
-    });
-  }
-
-  const btnAutoTransProj = document.getElementById('btn-auto-translate-project');
-  if (btnAutoTransProj) {
-    btnAutoTransProj.addEventListener('click', () => {
-      const titleEs = document.getElementById('edit-project-title')?.value || '';
-      const placeEs = document.getElementById('edit-project-place')?.value || '';
-      const noteEs = document.getElementById('edit-project-note')?.value || '';
-
-      const titleEnEl = document.getElementById('edit-project-title-en');
-      const placeEnEl = document.getElementById('edit-project-place-en');
-      const noteEnEl = document.getElementById('edit-project-note-en');
-
-      if (titleEnEl && titleEs) titleEnEl.value = OfflineTranslator.toEn(titleEs);
-      if (placeEnEl && placeEs) placeEnEl.value = OfflineTranslator.toEn(placeEs);
-      if (noteEnEl && noteEs) noteEnEl.value = OfflineTranslator.toEn(noteEs);
-
-      showToast('¡Ficha de obra traducida a inglés en modo offline!');
+  // Bilingual toggle button listener inside Lightbox Topbar
+  const lbLangToggleBtn = document.getElementById('lightbox-lang-toggle');
+  if (lbLangToggleBtn) {
+    lbLangToggleBtn.addEventListener('click', (e) => {
+      const targetOpt = e.target.closest('.lang-opt');
+      if (targetOpt) {
+        if (targetOpt.id.includes('en')) {
+          applyLanguage('en');
+        } else if (targetOpt.id.includes('es')) {
+          applyLanguage('es');
+        } else {
+          applyLanguage(currentLang === 'es' ? 'en' : 'es');
+        }
+      } else {
+        applyLanguage(currentLang === 'es' ? 'en' : 'es');
+      }
+      showToast(currentLang === 'es' ? 'Idioma: Español' : 'Language: English');
     });
   }
 
@@ -2005,7 +2324,19 @@ function openLightbox(index) {
 
   const imageSrc = getProjectImageSrc(item);
   if (lightboxImg) {
-    lightboxImg.src = imageSrc;
+    if (lightbox && lightbox.classList.contains('active') && lightboxImg.src !== imageSrc) {
+      lightboxImg.style.opacity = '0.35';
+      lightboxImg.style.transform = 'scale(0.97)';
+      setTimeout(() => {
+        lightboxImg.src = imageSrc;
+        lightboxImg.style.opacity = '1';
+        lightboxImg.style.transform = 'scale(1)';
+      }, 70);
+    } else {
+      lightboxImg.src = imageSrc;
+      lightboxImg.style.opacity = '1';
+      lightboxImg.style.transform = 'scale(1)';
+    }
     attachImageErrorFallback(lightboxImg, item.id);
   }
 
@@ -2013,6 +2344,11 @@ function openLightbox(index) {
   const isEn = (currentLang === 'en');
   if (lightboxIndex) lightboxIndex.textContent = `${String(index + 1).padStart(2, '0')} / ${String(N).padStart(2, '0')}`;
   if (lightboxYear) lightboxYear.textContent = item.year || '2025';
+
+  const topBadge = document.getElementById('lightbox-top-badge');
+  if (topBadge) {
+    topBadge.textContent = `${String(index + 1).padStart(2, '0')} / ${String(N).padStart(2, '0')} · ${isEn ? 'ARCHIVE' : 'ARCHIVO'}`;
+  }
 
   if (lightboxTitle) {
     lightboxTitle.textContent = isEn ? (item.title_en || OfflineTranslator.toEn(item.title)) : item.title;
@@ -2045,13 +2381,75 @@ function openLightbox(index) {
     driveBtn.href = item.driveUrl || (item.id && !item.id.startsWith('http') ? `https://drive.google.com/file/d/${item.id}/view?usp=drivesdk` : (item.url || '#'));
   }
 
+  // Populate WhatsApp Direct Inquiry link
+  const waBtn = document.getElementById('lightbox-wa-btn');
+  if (waBtn) {
+    const rawNumber = (cfg.profile.whatsapp || '+573001234567').replace(/[^0-9]/g, '');
+    const currentTitle = isEn ? (item.title_en || item.title) : item.title;
+    const currentPlace = isEn ? (item.place_en || item.place) : item.place;
+    const waText = isEn
+      ? `Hello Wilmar, I am viewing your artwork "${currentTitle}" (${currentPlace}) in the official portfolio and would like to inquire about commissioning or availability.`
+      : `Hola Wilmar, estuve viendo la obra "${currentTitle}" (${currentPlace}) en tu portafolio oficial y me gustaría consultar disponibilidad o cotizar una pieza similar.`;
+    waBtn.href = rawNumber ? `https://wa.me/${rawNumber}?text=${encodeURIComponent(waText)}` : '#';
+  }
+
+  // Populate Share Button
+  const shareBtn = document.getElementById('lightbox-share-btn');
+  if (shareBtn) {
+    shareBtn.onclick = () => {
+      const shareUrl = `${window.location.origin}${window.location.pathname}#obra-${index + 1}`;
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        showToast(isEn ? 'Artwork link copied to clipboard!' : '¡Enlace a la obra copiado al portapapeles!');
+      }).catch(() => {
+        showToast(shareUrl);
+      });
+    };
+  }
+
+  // Render quickstrip navigation
+  renderLightboxQuickstrip(index, N);
+
+  // Sync URL hash
+  try {
+    history.replaceState(null, '', `#obra-${index + 1}`);
+  } catch(e) {}
+
   if (lightbox) lightbox.classList.add('active');
+}
+
+function renderLightboxQuickstrip(currentIndex, totalCount) {
+  const container = document.getElementById('lightbox-quickstrip');
+  if (!container) return;
+  const cfg = STATE.config || DEFAULT_CONFIG;
+  const items = cfg.projects || [];
+  const isEn = (currentLang === 'en');
+
+  container.innerHTML = '';
+  for (let i = 0; i < totalCount; i++) {
+    const dot = document.createElement('button');
+    dot.className = 'quickstrip-dot' + (i === currentIndex ? ' active' : '');
+    dot.type = 'button';
+    const item = items[i];
+    const dotTitle = item ? (isEn ? (item.title_en || item.title) : item.title) : `Obra ${i + 1}`;
+    dot.title = `${String(i + 1).padStart(2, '0')}. ${dotTitle}`;
+    dot.setAttribute('aria-label', dot.title);
+    dot.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openLightbox(i);
+    });
+    container.appendChild(dot);
+  }
 }
 
 function closeLightbox() {
   const lightbox = document.getElementById('lightbox');
   if (lightbox) lightbox.classList.remove('active');
   setLightboxProcessMode('final');
+  try {
+    if (window.location.hash.startsWith('#obra-')) {
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+  } catch(e) {}
 }
 
 // Lightbox Prev / Next Handlers
@@ -2133,17 +2531,6 @@ function inquireSimilarProject() {
 }
 
 // Lightbox Listeners
-
-  // Lightbox Header Language Switcher
-  const lbLangToggleBtn = document.getElementById('lightbox-lang-toggle-btn');
-  if (lbLangToggleBtn) {
-    lbLangToggleBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      applyLanguage(currentLang === 'es' ? 'en' : 'es');
-      showToast(currentLang === 'es' ? 'Idioma: Español' : 'Language: English');
-    });
-  }
-
 const lbCloseBtn = document.getElementById('lightbox-close-btn');
 if (lbCloseBtn) lbCloseBtn.addEventListener('click', closeLightbox);
 
@@ -2245,6 +2632,9 @@ window.addEventListener('keydown', (e) => {
   contactCloseBtn.addEventListener('click', closeContact);
   statementCloseBtn.addEventListener('click', closeStatement);
 
+  window.openContactModal = openContact;
+  window.openStatementModal = openStatement;
+
   const stmtToContact = document.getElementById('statement-to-contact-btn');
   if (stmtToContact) {
     stmtToContact.addEventListener('click', () => {
@@ -2269,9 +2659,6 @@ window.addEventListener('keydown', (e) => {
         openContact();
       } else if (action === 'statement') {
         openStatement();
-      } else if (action === 'master') {
-        closeMenu();
-        triggerMasterAuthOrConsole();
       }
     });
   });
@@ -2373,621 +2760,7 @@ ${message}`;
       }
     });
   }
-
-  // Triple-click logo to access master console
-  const brandLogo = document.getElementById('ui-brand-logo');
-  let logoClickCount = 0;
-  let logoClickTimer = null;
-  if (brandLogo) {
-    brandLogo.addEventListener('click', (e) => {
-      logoClickCount++;
-      clearTimeout(logoClickTimer);
-      if (logoClickCount >= 3) {
-        e.preventDefault();
-        logoClickCount = 0;
-        triggerMasterAuthOrConsole();
-      } else {
-        logoClickTimer = setTimeout(() => {
-          logoClickCount = 0;
-        }, 500);
-      }
-    });
-  }
 })();
-
-/* ==========================================================================
-   MASTER ADMIN STUDIO CONSOLE (Access, CRUD, Customization, Exports)
-   ========================================================================== */
-function triggerMasterAuthOrConsole() {
-  const isAuth = sessionStorage.getItem('wilmar_master_auth') === '1';
-  if (isAuth) {
-    openMasterConsole();
-  } else {
-    openMasterAuthModal();
-  }
-}
-
-// Nav master button
-document.getElementById('master-trigger-nav').addEventListener('click', () => {
-  triggerMasterAuthOrConsole();
-});
-
-// Keyboard shortcut (Ctrl+M or Alt+M)
-window.addEventListener('keydown', (e) => {
-  if ((e.ctrlKey || e.altKey) && (e.key === 'm' || e.key === 'M')) {
-    e.preventDefault();
-    triggerMasterAuthOrConsole();
-  }
-});
-
-// Master Auth Gate
-function openMasterAuthModal() {
-  const modal = document.getElementById('master-auth-modal');
-  const input = document.getElementById('master-password-input');
-  if (modal) modal.classList.add('active');
-  if (input) {
-    input.value = '';
-    setTimeout(() => input.focus(), 100);
-  }
-}
-
-function closeMasterAuthModal() {
-  const modal = document.getElementById('master-auth-modal');
-  if (modal) modal.classList.remove('active');
-}
-
-document.getElementById('auth-cancel-btn').addEventListener('click', closeMasterAuthModal);
-
-// Toggle password visibility in auth modal
-document.getElementById('auth-eye-toggle').addEventListener('click', () => {
-  const input = document.getElementById('master-password-input');
-  if (!input) return;
-  input.type = input.type === 'password' ? 'text' : 'password';
-});
-
-// Master Login Submit
-document.getElementById('master-login-btn').addEventListener('click', performMasterLogin);
-document.getElementById('master-password-input').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') performMasterLogin();
-});
-
-function performMasterLogin() {
-  const input = document.getElementById('master-password-input');
-  const card = document.getElementById('auth-card');
-  const entered = (input.value || '').trim();
-  const currentMasterKey = STATE.config?.security?.masterPassword || DEFAULT_CONFIG.security.masterPassword;
-
-  if (entered === currentMasterKey) {
-    sessionStorage.setItem('wilmar_master_auth', '1');
-    STATE.isAuthenticated = true;
-    closeMasterAuthModal();
-    openMasterConsole();
-    showToast('¡Bienvenido, Wilmar! Consola Maestra activada.');
-  } else {
-    card.classList.add('shake');
-    setTimeout(() => card.classList.remove('shake'), 450);
-    showToast('Contraseña incorrecta. Por favor verifica.');
-    input.select();
-  }
-}
-
-// Master Console Window
-function openMasterConsole() {
-  const consoleEl = document.getElementById('master-console');
-  if (!consoleEl) return;
-  populateConsoleInputs(STATE.config);
-  renderAdminProjectsList(STATE.config);
-  consoleEl.classList.add('active');
-}
-
-function closeMasterConsole() {
-  const consoleEl = document.getElementById('master-console');
-  if (consoleEl) consoleEl.classList.remove('active');
-}
-
-document.getElementById('console-close-btn').addEventListener('click', closeMasterConsole);
-document.getElementById('console-preview-btn').addEventListener('click', closeMasterConsole);
-
-document.getElementById('console-logout-btn').addEventListener('click', () => {
-  sessionStorage.removeItem('wilmar_master_auth');
-  STATE.isAuthenticated = false;
-  closeMasterConsole();
-  showToast('Sesión de administrador cerrada con éxito.');
-});
-
-// Master Console Tab navigation
-document.querySelectorAll('.console-tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const tabId = btn.getAttribute('data-tab');
-    document.querySelectorAll('.console-tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.console-tab-panel').forEach(p => p.classList.remove('active'));
-
-    btn.classList.add('active');
-    const targetPanel = document.getElementById(tabId);
-    if (targetPanel) targetPanel.classList.add('active');
-  });
-});
-
-// Populate Console Fields from Config
-function populateConsoleInputs(cfg) {
-  const setVal = (id, val) => {
-    const el = document.getElementById(id);
-    if (el) el.value = val !== undefined ? val : '';
-  };
-
-  setVal('cfg-author-name', cfg.profile.name);
-  setVal('cfg-author-role', cfg.profile.role);
-  setVal('cfg-sphere-h1', cfg.profile.headlineTitle);
-  setVal('cfg-sphere-h1-en', cfg.profile.headlineTitle_en || OfflineTranslator.toEn(cfg.profile.headlineTitle));
-  setVal('cfg-sphere-sub', cfg.profile.headlineSubtitle);
-  setVal('cfg-sphere-sub-en', cfg.profile.headlineSubtitle_en || OfflineTranslator.toEn(cfg.profile.headlineSubtitle));
-  setVal('cfg-grid-title', cfg.profile.gridTitle);
-  setVal('cfg-grid-title-en', cfg.profile.gridTitle_en || OfflineTranslator.toEn(cfg.profile.gridTitle));
-  setVal('cfg-grid-sub', cfg.profile.gridSubtitle);
-  setVal('cfg-grid-sub-en', cfg.profile.gridSubtitle_en || OfflineTranslator.toEn(cfg.profile.gridSubtitle));
-  setVal('cfg-video-brand', cfg.profile.videoBrand);
-  setVal('cfg-video-badge', cfg.profile.videoBadge);
-  setVal('cfg-video-greeting', cfg.profile.videoGreeting || 'Hola, Soy Wilmar');
-  setVal('cfg-statement-quote', cfg.profile.statementQuote);
-  setVal('cfg-statement-bio', cfg.profile.statementBio.replace(/<p>/g, '').replace(/<\/p>/g, '\n\n').trim());
-  setVal('cfg-menu-footer-l', cfg.profile.menuFooterLeft);
-  setVal('cfg-menu-footer-r', cfg.profile.menuFooterRight);
-
-  setVal('cfg-contact-email', cfg.profile.email);
-  setVal('cfg-contact-whatsapp', cfg.profile.whatsapp);
-  setVal('cfg-whatsapp-msg', cfg.profile.whatsappMsg);
-  setVal('cfg-contact-instagram', cfg.profile.instagram);
-  setVal('cfg-contact-behance', cfg.profile.behanceUrl || cfg.profile.behance);
-  setVal('cfg-contact-location', cfg.profile.location);
-  setVal('cfg-contact-avail', cfg.profile.availability);
-
-  setVal('cfg-color-accent', cfg.style.accent);
-  setVal('cfg-color-bg', cfg.style.bgPrimary);
-
-  setVal('slider-sphere-radius', cfg.style.sphereRadius);
-  const radTag = document.getElementById('val-sphere-radius');
-  if (radTag) radTag.textContent = `${cfg.style.sphereRadius}px`;
-
-  setVal('slider-cam-z', cfg.style.camZ);
-  const camTag = document.getElementById('val-cam-z');
-  if (camTag) camTag.textContent = `${cfg.style.camZ}px`;
-
-  setVal('slider-rotation-speed', cfg.style.rotationSpeed);
-  const rotTag = document.getElementById('val-rotation-speed');
-  if (rotTag) rotTag.textContent = cfg.style.rotationSpeed;
-
-  const vidToggle = document.getElementById('cfg-toggle-video');
-  if (vidToggle) vidToggle.checked = cfg.style.showVideoIntro !== false;
-}
-
-// Live Color & Slider Bindings
-document.getElementById('cfg-color-accent').addEventListener('input', (e) => {
-  const col = e.target.value;
-  STATE.config.style.accent = col;
-  document.documentElement.style.setProperty('--accent', col);
-});
-
-document.getElementById('cfg-color-bg').addEventListener('input', (e) => {
-  const col = e.target.value;
-  STATE.config.style.bgPrimary = col;
-  document.documentElement.style.setProperty('--bg-primary', col);
-});
-
-// Color Preset buttons
-document.querySelectorAll('.palette-preset-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const col = btn.getAttribute('data-color');
-    const colDim = btn.getAttribute('data-color-dim');
-    STATE.config.style.accent = col;
-    STATE.config.style.accentDim = colDim;
-    document.getElementById('cfg-color-accent').value = col;
-    document.documentElement.style.setProperty('--accent', col);
-    document.documentElement.style.setProperty('--accent-dim', colDim);
-    showToast(`Paleta aplicada: ${btn.textContent.trim()}`);
-  });
-});
-
-// Slider inputs
-document.getElementById('slider-sphere-radius').addEventListener('input', (e) => {
-  const val = parseInt(e.target.value);
-  STATE.config.style.sphereRadius = val;
-  document.getElementById('val-sphere-radius').textContent = `${val}px`;
-  document.documentElement.style.setProperty('--sphere-radius', `${val}px`);
-  layoutSphere();
-});
-
-document.getElementById('slider-cam-z').addEventListener('input', (e) => {
-  const val = parseInt(e.target.value);
-  STATE.config.style.camZ = val;
-  document.getElementById('val-cam-z').textContent = `${val}px`;
-  document.documentElement.style.setProperty('--cam-z', `${val}px`);
-});
-
-document.getElementById('slider-rotation-speed').addEventListener('input', (e) => {
-  const val = parseFloat(e.target.value);
-  STATE.config.style.rotationSpeed = val;
-  document.getElementById('val-rotation-speed').textContent = val;
-});
-
-document.getElementById('cfg-toggle-video').addEventListener('change', (e) => {
-  STATE.config.style.showVideoIntro = e.target.checked;
-});
-
-// Save from Console
-document.getElementById('console-save-btn').addEventListener('click', () => {
-  saveAllConsoleData();
-  showToast('¡Configuración guardada en vivo con éxito!');
-});
-
-function saveAllConsoleData() {
-  const cfg = STATE.config;
-
-  const getV = id => {
-    const el = document.getElementById(id);
-    return el ? el.value.trim() : '';
-  };
-
-  cfg.profile.name = getV('cfg-author-name') || cfg.profile.name;
-  cfg.profile.role = getV('cfg-author-role') || cfg.profile.role;
-  cfg.profile.headlineTitle = getV('cfg-sphere-h1') || cfg.profile.headlineTitle;
-  cfg.profile.headlineTitle_en = getV('cfg-sphere-h1-en') || OfflineTranslator.toEn(cfg.profile.headlineTitle);
-  cfg.profile.headlineSubtitle = getV('cfg-sphere-sub') || cfg.profile.headlineSubtitle;
-  cfg.profile.headlineSubtitle_en = getV('cfg-sphere-sub-en') || OfflineTranslator.toEn(cfg.profile.headlineSubtitle);
-  cfg.profile.gridTitle = getV('cfg-grid-title') || cfg.profile.gridTitle;
-  cfg.profile.gridTitle_en = getV('cfg-grid-title-en') || OfflineTranslator.toEn(cfg.profile.gridTitle);
-  cfg.profile.gridSubtitle = getV('cfg-grid-sub') || cfg.profile.gridSubtitle;
-  cfg.profile.gridSubtitle_en = getV('cfg-grid-sub-en') || OfflineTranslator.toEn(cfg.profile.gridSubtitle);
-  cfg.profile.videoBrand = getV('cfg-video-brand') || cfg.profile.videoBrand;
-  cfg.profile.videoBadge = getV('cfg-video-badge') || cfg.profile.videoBadge;
-  cfg.profile.videoGreeting = getV('cfg-video-greeting') || cfg.profile.videoGreeting || 'Hola, Soy Wilmar';
-  cfg.profile.statementQuote = getV('cfg-statement-quote') || cfg.profile.statementQuote;
-
-  const rawBio = getV('cfg-statement-bio');
-  cfg.profile.statementBio = rawBio;
-
-  cfg.profile.menuFooterLeft = getV('cfg-menu-footer-l') || cfg.profile.menuFooterLeft;
-  cfg.profile.menuFooterRight = getV('cfg-menu-footer-r') || cfg.profile.menuFooterRight;
-
-  cfg.profile.email = getV('cfg-contact-email') || cfg.profile.email;
-  cfg.profile.whatsapp = getV('cfg-contact-whatsapp') || cfg.profile.whatsapp;
-  cfg.profile.whatsappMsg = getV('cfg-whatsapp-msg') || cfg.profile.whatsappMsg;
-  cfg.profile.instagram = getV('cfg-contact-instagram') || cfg.profile.instagram;
-  cfg.profile.behanceUrl = getV('cfg-contact-behance') || cfg.profile.behanceUrl;
-  cfg.profile.location = getV('cfg-contact-location') || cfg.profile.location;
-  cfg.profile.availability = getV('cfg-contact-avail') || cfg.profile.availability;
-
-  saveConfigToStorage(cfg);
-  applyConfigToUI(cfg);
-}
-
-/* ==========================================================================
-   PROJECTS CRUD MANAGEMENT
-   ========================================================================== */
-function renderAdminProjectsList(cfg) {
-  const container = document.getElementById('admin-projects-list');
-  const tabBtn = document.getElementById('tab-btn-projects');
-  if (!container) return;
-
-  const items = cfg.projects;
-  if (tabBtn) tabBtn.textContent = `🖼 2. Proyectos (${items.length})`;
-
-  container.innerHTML = '';
-
-  items.forEach((item, index) => {
-    const row = document.createElement('div');
-    row.className = 'project-admin-row';
-
-    const imageSrc = getProjectImageSrc(item);
-    row.innerHTML = `
-      <div class="project-admin-left">
-        <div class="project-admin-thumb">
-          <img src="${imageSrc}" alt="${item.title}">
-        </div>
-        <div class="project-admin-info">
-          <span class="project-admin-idx">${String(index + 1).padStart(2, '0')} / ${String(items.length).padStart(2, '0')}</span>
-          <span class="project-admin-title">${item.title}</span>
-          <span class="project-admin-place">${item.place}</span>
-        </div>
-      </div>
-      <div class="project-admin-actions">
-        <button type="button" class="project-action-btn" data-act="up" data-idx="${index}" title="Mover arriba" ${index === 0 ? 'disabled style="opacity:0.3;"' : ''}>▲</button>
-        <button type="button" class="project-action-btn" data-act="down" data-idx="${index}" title="Mover abajo" ${index === items.length - 1 ? 'disabled style="opacity:0.3;"' : ''}>▼</button>
-        <button type="button" class="project-action-btn" data-act="edit" data-idx="${index}">✎ Editar</button>
-        <button type="button" class="project-action-btn del" data-act="del" data-idx="${index}">🗑</button>
-      </div>
-    `;
-
-    const img = row.querySelector('img');
-    attachImageErrorFallback(img, item.id);
-
-    container.appendChild(row);
-  });
-
-  // Action listeners
-  container.querySelectorAll('.project-action-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const act = btn.getAttribute('data-act');
-      const idx = parseInt(btn.getAttribute('data-idx'));
-
-      if (act === 'up' && idx > 0) {
-        const temp = items[idx];
-        items[idx] = items[idx - 1];
-        items[idx - 1] = temp;
-        saveAllConsoleData();
-        renderAdminProjectsList(STATE.config);
-      } else if (act === 'down' && idx < items.length - 1) {
-        const temp = items[idx];
-        items[idx] = items[idx + 1];
-        items[idx + 1] = temp;
-        saveAllConsoleData();
-        renderAdminProjectsList(STATE.config);
-      } else if (act === 'edit') {
-        openProjectEditModal(idx);
-      } else if (act === 'del') {
-        if (confirm(`¿Eliminar la obra "${items[idx].title}"?`)) {
-          items.splice(idx, 1);
-          saveAllConsoleData();
-          renderAdminProjectsList(STATE.config);
-          showToast('Obra eliminada');
-        }
-      }
-    });
-  });
-}
-
-// Project Edit/Create Modal
-function openProjectEditModal(index = -1) {
-  const modal = document.getElementById('project-edit-modal');
-  const titleHeader = document.getElementById('project-modal-mode-title');
-  const indexInput = document.getElementById('edit-project-index');
-  const titleInput = document.getElementById('edit-project-title');
-  const placeInput = document.getElementById('edit-project-place');
-  const idInput = document.getElementById('edit-project-id');
-  const driveInput = document.getElementById('edit-project-drive');
-  const noteInput = document.getElementById('edit-project-note');
-  const previewImg = document.getElementById('project-preview-img');
-
-  if (index >= 0) {
-    const item = STATE.config.projects[index];
-    titleHeader.textContent = 'Editar Obra Seleccionada';
-    indexInput.value = index;
-    titleInput.value = item.title || '';
-    placeInput.value = item.place || '';
-    idInput.value = item.id || item.url || '';
-    driveInput.value = item.driveUrl || '';
-    noteInput.value = item.note || '';
-
-    const titleEnIn = document.getElementById('edit-project-title-en');
-    const placeEnIn = document.getElementById('edit-project-place-en');
-    const noteEnIn = document.getElementById('edit-project-note-en');
-    if (titleEnIn) titleEnIn.value = item.title_en || '';
-    if (placeEnIn) placeEnIn.value = item.place_en || '';
-    if (noteEnIn) noteEnIn.value = item.note_en || '';
-
-    const src = getProjectImageSrc(item);
-    previewImg.src = src;
-    attachImageErrorFallback(previewImg, item.id);
-  } else {
-    titleHeader.textContent = 'Añadir Nueva Obra al Archivo';
-    indexInput.value = -1;
-    titleInput.value = '';
-    placeInput.value = '';
-    idInput.value = '';
-    driveInput.value = '';
-    noteInput.value = '';
-    const titleEnIn = document.getElementById('edit-project-title-en');
-    const placeEnIn = document.getElementById('edit-project-place-en');
-    const noteEnIn = document.getElementById('edit-project-note-en');
-    if (titleEnIn) titleEnIn.value = '';
-    if (placeEnIn) placeEnIn.value = '';
-    if (noteEnIn) noteEnIn.value = '';
-    previewImg.src = '';
-  }
-
-  modal.classList.add('active');
-  modal.style.display = 'flex';
-}
-
-function closeProjectEditModal() {
-  const modal = document.getElementById('project-edit-modal');
-  if (modal) {
-    modal.classList.remove('active');
-    modal.style.display = 'none';
-  }
-}
-
-document.getElementById('project-edit-close-btn').addEventListener('click', closeProjectEditModal);
-document.getElementById('project-edit-cancel-btn').addEventListener('click', closeProjectEditModal);
-document.getElementById('add-project-btn').addEventListener('click', () => openProjectEditModal(-1));
-
-// Live preview when typing image ID/URL
-document.getElementById('edit-project-id').addEventListener('input', (e) => {
-  const val = e.target.value.trim();
-  const previewImg = document.getElementById('project-preview-img');
-  if (val.startsWith('http://') || val.startsWith('https://')) {
-    previewImg.src = val;
-  } else if (val) {
-    previewImg.src = `https://lh3.googleusercontent.com/d/${val}`;
-    attachImageErrorFallback(previewImg, val);
-  } else {
-    previewImg.src = '';
-  }
-});
-
-// Save Project Edit/Add
-document.getElementById('project-edit-save-btn').addEventListener('click', () => {
-  const index = parseInt(document.getElementById('edit-project-index').value);
-  const title = document.getElementById('edit-project-title').value.trim();
-  const titleEn = document.getElementById('edit-project-title-en')?.value.trim();
-  const place = document.getElementById('edit-project-place').value.trim();
-  const placeEn = document.getElementById('edit-project-place-en')?.value.trim();
-  const rawId = document.getElementById('edit-project-id').value.trim();
-  const driveUrl = document.getElementById('edit-project-drive').value.trim();
-  const note = document.getElementById('edit-project-note').value.trim();
-  const noteEn = document.getElementById('edit-project-note-en')?.value.trim();
-
-  if (!title || !rawId) {
-    alert('Por favor completa al menos el título y el ID o URL de la imagen.');
-    return;
-  }
-
-  const existing = index >= 0 ? (STATE.config.projects[index] || {}) : {};
-  const projectObj = {
-    ...existing,
-    title,
-    title_en: titleEn || OfflineTranslator.toEn(title),
-    place: place || 'Wilmar Machado 2026',
-    place_en: placeEn || OfflineTranslator.toEn(place),
-    note: note || 'Obra visual seleccionada.',
-    note_en: noteEn || OfflineTranslator.toEn(note),
-    driveUrl: driveUrl || (rawId.startsWith('http') ? rawId : `https://drive.google.com/file/d/${rawId}/view?usp=drivesdk`)
-  };
-
-  if (rawId.startsWith('http')) {
-    projectObj.url = rawId;
-    projectObj.id = '';
-  } else if (rawId.startsWith('images/') || rawId.endsWith('.webp') || rawId.endsWith('.png') || rawId.endsWith('.jpg')) {
-    projectObj.image = rawId;
-    projectObj.id = rawId;
-  } else {
-    projectObj.id = rawId;
-  }
-
-  if (index >= 0) {
-    STATE.config.projects[index] = projectObj;
-    showToast('¡Obra actualizada con éxito!');
-  } else {
-    STATE.config.projects.push(projectObj);
-    showToast('¡Nueva obra añadida con éxito!');
-  }
-
-  closeProjectEditModal();
-  saveAllConsoleData();
-  renderAdminProjectsList(STATE.config);
-  applyConfigToUI(STATE.config);
-  layoutSphere();
-});
-
-/* ==========================================================================
-   BACKUP, RESTORE & DOWNLOAD STANDALONE HTML EXPORTER
-   ========================================================================== */
-// Export Backup JSON
-document.getElementById('btn-export-json').addEventListener('click', () => {
-  saveAllConsoleData();
-  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(STATE.config, null, 2));
-  const dlAnchor = document.createElement('a');
-  dlAnchor.setAttribute("href", dataStr);
-  dlAnchor.setAttribute("download", `wilmar_machado_portfolio_backup_${new Date().toISOString().slice(0,10)}.json`);
-  document.body.appendChild(dlAnchor);
-  dlAnchor.click();
-  dlAnchor.remove();
-  showToast('Copia de respaldo JSON descargada.');
-});
-
-// Import Backup JSON
-document.getElementById('input-import-json').addEventListener('change', (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = function(evt) {
-    try {
-      const imported = JSON.parse(evt.target.result);
-      if (imported.profile && imported.projects) {
-        STATE.config = imported;
-        saveConfigToStorage(STATE.config);
-        applyConfigToUI(STATE.config);
-        populateConsoleInputs(STATE.config);
-        renderAdminProjectsList(STATE.config);
-        showToast('¡Copia de respaldo restaurada con éxito!');
-      } else {
-        alert('Formato de respaldo no válido.');
-      }
-    } catch(err) {
-      alert('Error al leer el archivo JSON.');
-    }
-  };
-  reader.readAsText(file);
-});
-
-// Reset Defaults
-document.getElementById('btn-reset-defaults').addEventListener('click', () => {
-  if (confirm('¿Restablecer toda la configuración a los valores de fábrica iniciales?')) {
-    STATE.config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
-    saveConfigToStorage(STATE.config);
-    applyConfigToUI(STATE.config);
-    populateConsoleInputs(STATE.config);
-    renderAdminProjectsList(STATE.config);
-    showToast('Valores de fábrica restablecidos.');
-  }
-});
-
-// Change Master Password
-document.getElementById('btn-change-password').addEventListener('click', () => {
-  const cur = (document.getElementById('pwd-current').value || '').trim();
-  const next = (document.getElementById('pwd-new').value || '').trim();
-  const feedback = document.getElementById('pwd-feedback');
-  const currentKey = STATE.config?.security?.masterPassword || DEFAULT_CONFIG.security.masterPassword;
-
-  if (cur !== currentKey) {
-    feedback.style.color = '#e66550';
-    feedback.textContent = 'La contraseña actual no coincide.';
-    return;
-  }
-  if (!next || next.length < 4) {
-    feedback.style.color = '#e66550';
-    feedback.textContent = 'La nueva clave debe tener al menos 4 caracteres.';
-    return;
-  }
-
-  STATE.config.security.masterPassword = next;
-  saveConfigToStorage(STATE.config);
-  document.getElementById('pwd-current').value = '';
-  document.getElementById('pwd-new').value = '';
-  feedback.style.color = '#43d692';
-  feedback.textContent = '¡Contraseña actualizada con éxito!';
-  showToast('Contraseña maestra actualizada.');
-});
-
-// STANDALONE HTML EXPORTER ENGINE (Generates updated index.html for download)
-document.getElementById('btn-export-html').addEventListener('click', () => {
-  saveAllConsoleData();
-  exportUpdatedHtmlFile();
-});
-
-function exportUpdatedHtmlFile() {
-  showToast('Compilando archivo index.html independiente...');
-  
-  // Clone current config without passwords or runtime caches if needed
-  const exportConfigJson = JSON.stringify(STATE.config, null, 2);
-
-  // We fetch the current page source or build it cleanly
-  const doctype = '<!DOCTYPE html>\n';
-  const fullHtml = doctype + document.documentElement.outerHTML;
-
-  // Replace default config definition inside the script tag so the exported file opens with current changes by default
-  const configRegex = /const DEFAULT_CONFIG = \{[\s\S]*?\n\};/;
-  let updatedHtml = fullHtml.replace(configRegex, `const DEFAULT_CONFIG = ${exportConfigJson};`);
-
-  // Ensure modals are closed in the downloaded file
-  updatedHtml = updatedHtml.replace(/class="overlay-modal active"/g, 'class="overlay-modal"');
-  updatedHtml = updatedHtml.replace(/class="auth-card" id="auth-card"/g, 'class="auth-card" id="auth-card"');
-  updatedHtml = updatedHtml.replace(/id="master-auth-modal" class="active"/g, 'id="master-auth-modal"');
-  updatedHtml = updatedHtml.replace(/<section id="video-stage"[^>]*style="[^"]*"/g, '<section id="video-stage" aria-label="Introducción interactiva en video">');
-  updatedHtml = updatedHtml.replace(/class="video-greeting faded"/g, 'class="video-greeting"');
-
-  const blob = new Blob([updatedHtml], { type: 'text/html;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'index.html';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-  showToast('¡index.html descargado! Listo para publicar.');
-}
 
 /* ==========================================================================
    GLOBAL ESCAPE KEY & INITIALIZATION
@@ -2995,9 +2768,6 @@ function exportUpdatedHtmlFile() {
 window.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     closeLightbox();
-    closeMasterConsole();
-    closeMasterAuthModal();
-    closeProjectEditModal();
     const contactModal = document.getElementById('contact-modal');
     if (contactModal) contactModal.classList.remove('active');
     const statementModal = document.getElementById('statement-modal');
@@ -3011,9 +2781,50 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
+// URL Deep-Linking & Routing Controller (#obra-1 .. #obra-10, #contacto, #manifiesto, #archivo)
+function handleUrlHash() {
+  const hash = (window.location.hash || '').toLowerCase();
+  if (!hash) return;
+
+  if (hash.startsWith('#obra-')) {
+    const idx = parseInt(hash.replace('#obra-', ''), 10) - 1;
+    const cfg = STATE.config || DEFAULT_CONFIG;
+    if (!isNaN(idx) && idx >= 0 && cfg.projects && idx < cfg.projects.length) {
+      if (typeof window.completeVideoAndEnterArchive === 'function') {
+        window.completeVideoAndEnterArchive();
+      }
+      setTimeout(() => {
+        openLightbox(idx);
+      }, 350);
+    }
+  } else if (hash === '#contacto' || hash === '#contact') {
+    if (typeof window.completeVideoAndEnterArchive === 'function') {
+      window.completeVideoAndEnterArchive();
+    }
+    if (typeof window.openContactModal === 'function') window.openContactModal();
+  } else if (hash === '#manifiesto' || hash === '#statement') {
+    if (typeof window.completeVideoAndEnterArchive === 'function') {
+      window.completeVideoAndEnterArchive();
+    }
+    if (typeof window.openStatementModal === 'function') window.openStatementModal();
+  } else if (hash === '#archivo' || hash === '#grid') {
+    if (typeof window.completeVideoAndEnterArchive === 'function') {
+      window.completeVideoAndEnterArchive();
+    }
+    const gridView = document.getElementById('grid-view');
+    if (gridView && !gridView.classList.contains('active') && typeof window.toggleGridView === 'function') {
+      window.toggleGridView();
+    }
+  }
+}
+window.addEventListener('hashchange', handleUrlHash);
+
 // Initial boot
 (function initApp() {
   STATE.config = loadStoredConfig();
   applyConfigToUI(STATE.config);
   applyLanguage(currentLang);
+  if (window.location.hash) {
+    handleUrlHash();
+  }
 })();

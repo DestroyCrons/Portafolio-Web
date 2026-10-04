@@ -4,28 +4,17 @@ Portafolio interactivo tridimensional, bilingüe y modular para **Wilmar Machado
 
 ---
 
-## 📁 Estructura del Proyecto (Optimizado para GitHub & Despliegue Web)
+## 📁 Estructura del Proyecto
 
-El proyecto está organizado de manera completamente modular y desacoplada, separando la estructura, los estilos, la lógica y los activos multimedia para que puedas subirlo directamente a GitHub (o GitHub Pages) con un código liviano y organizado:
+El proyecto está organizado de manera completamente modular, separando estructura, estilos, interactividad y medios:
 
 ```
 portafolio_wilmar_machado/
 │
 ├── index.html        # Estructura semántica HTML5 (Prólogo interactivo, Esfera 3D, Cuadrícula, Lightbox, Modales)
-├── styles.css        # Hoja de estilos completa, variables CSS, tipografías y efectos visuales
+├── styles.css        # Sistema completo de diseño, variables CSS, tipografías y efectos visuales
 ├── main.js           # Motor de la esfera 3D, traductor offline autónomo, controlador del lightbox y consola
-├── video.mp4         # Video prólogo en alta definición, 30 FPS y fotogramas clave intra-frame optimizados
-├── images/           # Carpeta dedicada con las 10 obras en formato WebP de alta fidelidad
-│   ├── img1.webp     # Conflict in the Mind
-│   ├── img2.webp     # Inevitable Ocaso
-│   ├── img3.webp     # Vuelo Urbano
-│   ├── img4.webp     # Conexión Íntima
-│   ├── img5.webp     # Complex Xpress
-│   ├── img6.webp     # Serpent
-│   ├── img7.webp     # Divino Angel
-│   ├── img8.webp     # Monster / Prisión Interior
-│   ├── img9.webp     # Journey / El Camino
-│   └── img10.webp    # Sacro Contemporáneo
+├── video.mp4         # Video prólogo original en alta definición y 30 FPS (archivo separado de alto rendimiento)
 └── README.md         # Documentación oficial del proyecto y guía de uso
 ```
 
@@ -36,7 +25,7 @@ portafolio_wilmar_machado/
 1. **Apertura Directa:**
    Simplemente haz doble clic en `index.html` para abrirlo en cualquier navegador web moderno (Google Chrome, Safari, Mozilla Firefox, Microsoft Edge, Brave, Opera).
 
-2. **Servidor Local (Recomendado para desarrollo):**
+2. **Servidor Local (Recomendado para producción o desarrollo):**
    Puedes iniciar un servidor web rápido desde la terminal en esta carpeta:
    ```bash
    # Con Python 3:
@@ -44,48 +33,63 @@ portafolio_wilmar_machado/
    ```
    Luego abre en tu navegador: `http://localhost:8000/index.html`
 
-3. **Publicación en GitHub Pages:**
-   Sube la carpeta a un repositorio de GitHub y activa **GitHub Pages** desde la rama `main` en la configuración del repositorio. ¡Tu portafolio estará online al instante!
-
 ---
 
-## ✨ Características Principales y Mejoras Recientes
+## ✨ Características Principales
 
 ### 1. Prólogo Interactivo en Video (`video.mp4`)
-- El video se carga como un archivo independiente (`video.mp4`), con **calidad visual de alta fidelidad (CRF 20) y 30 FPS nativos**.
-- **Reproducción Fluida al Hacer Scroll:** Al girar la rueda del ratón o deslizar, el video se reproduce de forma continua y acelerada por hardware, sin tirones ni caídas de fotogramas.
-- **Desaparición Inmediata del Saludo:** El texto *"Hola, Soy Wilmar"* se desvanece de inmediato en cuanto se detecta la interacción de scroll o reproducción.
-- Controles multimedia accesibles: botón de pausa/reproducción, barra de progreso con scrub interactivo, botón para saltar la intro, y atajos de teclado (`Enter` o `Escape`).
+- El video ahora se carga como un archivo independiente (`video.mp4`), preservando la **calidad original completa y 30 FPS fluidos**.
+- **Interactividad Parallax:** Desliza o gira la rueda del ratón para acercarte hacia el iris de Wilmar y entrar al archivo 3D.
+- Controles de reproducción: botón de pausa/reproducción, botón para saltar la intro, y atajos de teclado (`Enter` o `Escape` para acceder directamente al archivo).
 
 ### 2. Archivo en Esfera 3D Fibonacci
 - Disposición matemática armónica de las **10 obras seleccionadas** en una esfera tridimensional fluida.
-- **Titular Central Bilingüe Garantizado:** El titular del centro de la esfera traduce fielmente entre:
-  - **Español:** *Obras Seleccionadas & Proyectos* · *Diez Obras Seleccionadas · Colección 2024–2026*
-  - **Inglés:** *Selected Works & Projects* · *Ten Selected Works · 2024–2026 Collection*
-- Botón en la barra de navegación para alternar instantáneamente entre la **Esfera 3D** y la **Cuadrícula (Grid View)**.
+- Interacción táctil y con ratón: arrastra para orbitar con inercia física suave, rueda del ratón para zoom espacial, y auto-rotación cinemática.
+- Botón en la barra superior para alternar instantáneamente entre la **Esfera 3D** y la **Cuadrícula (Grid View)**.
 
-### 3. Ficha Técnica Completa y Selector de Idioma en el Lightbox
-- Al hacer clic en cualquiera de las 10 obras, se abre el visor curatorial:
-  - **Selector de Idioma en la Cabecera:** Permite al cliente alternar entre **ES / EN** en tiempo real *durante la revisión de la obra*, actualizando instantáneamente el título, la categoría, la nota conceptual y todos los datos de la ficha técnica sin cerrar el visor.
+### 3. Ficha Técnica Completa y Modos de Visualización en el Lightbox
+- Al hacer clic en cualquiera de las 10 obras, se abre el visor curatorial detallado:
   - **Ficha Técnica Detallada:** Rol Creativo, Técnica / Soporte, Tipografía de Autor, Cliente / Editorial, Año de Creación.
   - **Selector de Modos Visuales:**
     - ◉ **Obra Final:** Visualización completa de alta resolución.
     - ✎ **Boceto & Proceso:** Modo de análisis gráfico monocromático de alto contraste y retícula.
-    - 🔍 **Macro Textura:** Zoom de alta fidelidad (220%) para inspeccionar pinceladas y grano analógico.
-  - **Botón "Encargar Proyecto Similar":** Conecta directamente la obra seleccionada con el formulario de contacto, pre-rellenando el servicio y redactando un mensaje personalizado.
+    - 🔍 **Macro Textura:** Zoom de alta fidelidad (220%) para inspeccionar pinceladas, grano analógico y microdetalles.
+  - **Botón "Encargar Proyecto Similar":** Conecta directamente la obra seleccionada con el formulario de contacto, pre-rellenando el servicio y redactando un mensaje personalizado con el título y categoría de la obra.
   - **Navegación Fluida:** Botones de anterior/siguiente (❮ y ❯) y navegación mediante flechas del teclado (`←` y `→`).
 
-### 4. Imágenes Desacopladas en Carpeta `images/`
-- Todas las imágenes de las obras se encuentran en archivos independientes en `images/img1.webp` hasta `images/img10.webp`.
-- El código ya no contiene pesadas cadenas base64, lo que facilita subir el proyecto a GitHub, clonarlo y gestionar nuevos proyectos.
+### 4. Sistema Bilingüe (Español / Inglés) con Traductor Offline Integrado
+- **Traducción 100% Autónoma:** No requiere internet ni APIs externas. Incluye un motor léxico en JavaScript con vocabulario especializado en artes visuales, diseño editorial, fotografía y arte sacro.
+- **Sincronización Exacta de la Esfera 3D:**
+  - *Español:* **Obras Seleccionadas & Proyectos** · *Diez Obras Seleccionadas · Colección 2024–2026*
+  - *Inglés:* **Selected Works & Projects** · *Ten Selected Works · 2024–2026 Collection*
+- Al alternar entre `ES` y `EN`:
+  - Los titulares centrales de la esfera cambian en tiempo real.
+  - **Las 10 tarjetas dentro de la esfera 3D y en la cuadrícula** actualizan sus títulos y subtítulos al inglés.
+  - La ficha técnica, curaduría, manifiesto y formulario de contacto se traducen íntegramente.
 
-### 5. Consola Maestra de Personalización (100% Funcional)
-- Acceso seguro mediante contraseña (por defecto: `wilmar2026`).
-- **Gestión Completa de Obras (Añadir y Editar):**
-  - El modal de edición de proyectos ahora se superpone correctamente en primer plano (z-index corregido).
-  - Permite crear nuevas obras o editar las existentes con títulos, categorías y descripciones en español e inglés.
-  - Botón de auto-traducción offline dentro del editor de proyectos.
-  - Previsualización en tiempo real de la imagen.
-  - Reordenamiento ascendente y descendente (▲ / ▼) y eliminación.
-- Personalización de identidad visual, tipografías, colores de acento y parámetros de la esfera 3D.
-- Exportación y restauración de copias de seguridad en formato JSON.
+### 5. Consola Maestra de Autor (Studio Control V3.0)
+- **Acceso Exclusivo:** Haz clic en **⚙ Consola** en la barra superior (o triple clic en el logo de autor) e introduce la clave maestra (predeterminada: `wilmar2026`).
+- **Pestaña 1 (Perfil & Textos):** Modifica los títulos de la esfera 3D, cuadrícula, manifiesto y biografía en español e inglés, con botón de **"Auto-traducir a Inglés (Offline)"**.
+- **Pestaña 2 (Gestor de Proyectos):** Edita, añade o reordena las 10 obras con campos bilingües y previsualización en tiempo real.
+- **Pestaña 3 (Estilos & Motor 3D):** Personaliza el color de acento dorado, fondo, radio de la esfera y velocidad de rotación.
+- **Pestaña 4 (Contacto):** Actualiza WhatsApp, correo electrónico, Instagram y Behance.
+- **Pestaña 5 (Exportar & Copias):** Descarga una copia de seguridad en JSON o exporta el proyecto completo actualizado.
+
+---
+
+## 🎨 Obras Seleccionadas Incluidas (Colección 2024–2026)
+
+1. **Conflict in the Mind** — Arte Gráfico · Concepto de Portada de Álbum
+2. **Inevitable Ocaso** (*Inevitable Sunset*) — El Reino · Wilmar Machado 2025
+3. **Vuelo Urbano** (*Urban Flight*) — Fotografía Callejera · Retrato en Terreno
+4. **Conexión Íntima** (*Intimate Connection*) — Retrato de Estudio · Sesión Editorial
+5. **Complex Xpress** — Diseño Editorial · Tipografía Y2K
+6. **Serpent** — Diseño de Cartel · Archivo Heráldico 2024
+7. **Divino Angel** (*Divine Angel*) — Arte Sacro Contemporáneo · Cartel Digital 2024
+8. **Monster / Prisión Interior** (*Monster / Inner Prison*) — Fotografía Conceptual · Narrativa Visual
+9. **Journey / El Camino** (*Journey / The Way*) — Estética Manga · Cartel Narrativo
+10. **Amor Verdadero** (*True Love*) — Ensayo Visual · Diseño Editorial
+
+---
+
+© 2026 Wilmar Machado · Valledupar, Colombia · Alcance Global. Todos los derechos reservados.

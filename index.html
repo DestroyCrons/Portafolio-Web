@@ -3,6 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Portafolio Oficial y Archivo Visual de Wilmar Machado. Dirección de Arte, Diseño Editorial y Arte Sacro Contemporáneo. Valledupar, Colombia. Colección de Obras 2024–2026.">
+<meta name="author" content="Wilmar Machado">
+<meta name="theme-color" content="#07070a">
+<meta property="og:title" content="Wilmar Machado — Portafolio Oficial &amp; Archivo Visual">
+<meta property="og:description" content="Dirección de Arte, Diseño Editorial &amp; Arte Sacro Contemporáneo · Selección de Proyectos &amp; Perfil Profesional">
+<meta property="og:type" content="website">
+<meta property="og:image" content="images/obra-01.jpg">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2308080c'/%3E%3Cpath d='M14 46L22 18h4l6 18 6-18h4l8 28h-5l-5-18-6 18h-4l-6-18-5 18z' fill='%23d4a359'/%3E%3C/svg%3E">
 <title>Wilmar Machado &mdash; Portafolio de Proyectos &amp; Archivo Visual</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,17 +26,48 @@
     <span class="video-badge" id="ui-video-badge">PR&Oacute;LOGO INTERACTIVO</span>
   </div>
 
+  <!-- AMBIENT ILLUSION BACKDROP (Full-Bleed Dynamic Cinema Aura & Grid) -->
+  <div id="video-backdrop-wrapper" aria-hidden="true">
+    <video id="ambient-video" class="ambient-video-backdrop" playsinline muted preload="auto" src="video.mp4">
+      <source src="video.mp4" type="video/mp4">
+    </video>
+    <div class="video-backdrop-glow"></div>
+    <div class="video-backdrop-grid"></div>
+    <div class="video-backdrop-vignette"></div>
+  </div>
+
+  <!-- LATERAL EDITORIAL TELEMETRY (Fills Side Gutters with Curatorial Design) -->
+  <aside class="video-lateral-strip video-lateral-left" aria-hidden="true">
+    <div class="lateral-tag">ARCHIVAL MONOGRAPH</div>
+    <div class="lateral-line"></div>
+    <div class="lateral-meta">WM &middot; 2026 // 01&ndash;10</div>
+  </aside>
+
+  <aside class="video-lateral-strip video-lateral-right" aria-hidden="true">
+    <div class="lateral-tag">CURATORIAL PROLOGUE</div>
+    <div class="lateral-line"></div>
+    <div class="lateral-meta">10.46&deg; N &middot; VALLEDUPAR</div>
+  </aside>
+
   <div id="video-container">
     <div id="video-frame">
+      <div class="video-corner-mark top-left" aria-hidden="true"></div>
+      <div class="video-corner-mark top-right" aria-hidden="true"></div>
+      <div class="video-corner-mark bottom-left" aria-hidden="true"></div>
+      <div class="video-corner-mark bottom-right" aria-hidden="true"></div>
       <video id="intro-video" playsinline muted preload="auto" src="video.mp4" aria-label="Video interactivo de presentación">
         <source src="video.mp4" type="video/mp4">
       </video>
       <div class="video-vignette"></div>
       <div id="video-greeting" class="video-greeting" aria-live="polite">
         <div class="video-greeting-inner">
+          <div class="video-greeting-tag" id="ui-video-greeting-tag">Portafolio Oficial &middot; 2026</div>
           <h1 class="video-greeting-text" id="ui-video-greeting">Hola, Soy Wilmar</h1>
+          <p class="video-greeting-role" id="ui-video-greeting-role">Dise&ntilde;ador Gr&aacute;fico &amp; Director de Arte</p>
         </div>
       </div>
+      <!-- FLOATING WORK AREAS & SKILLS TAGS (Integrated inside video frame) -->
+      <div id="video-floating-tags" class="video-floating-tags" aria-hidden="true"></div>
     </div>
   </div>
 
@@ -45,6 +84,7 @@
     <div class="video-action-row">
       <span class="video-time" id="video-time-label">0:00 / 0:13 &middot; Vista General (0%)</span>
       <div class="video-btn-group">
+        <button type="button" class="video-btn secondary" id="video-sound-btn" aria-label="Activar sonido del video" title="Activar / Desactivar Sonido">&#128263; <span id="ui-video-sound-label">Silencio</span></button>
         <button type="button" class="video-btn" id="video-play-btn" aria-label="Reproducir autom&aacute;ticamente">&#9654; Reproducir</button>
         <button type="button" class="video-btn secondary" id="video-skip-btn" aria-label="Ir directo a la galer&iacute;a">Omitir &#10141;</button>
       </div>
@@ -52,9 +92,10 @@
   </div>
 </section>
 
-<!-- SCROLL TRACK & VEIL -->
+<!-- SCROLL TRACK, VEIL & DYNAMIC PORTAL FLARE -->
 <div id="scroll-track"></div>
 <div id="veil"></div>
+<div id="portal-flare" aria-hidden="true"></div>
 
 <!-- NAVIGATION -->
 <nav id="nav">
@@ -70,9 +111,6 @@
     <button type="button" class="view-toggle-btn" id="view-toggle" aria-label="Cambiar vista a cuadrícula">
       <span id="view-label">Cuadr&iacute;cula</span>
     </button>
-    <button type="button" class="master-trigger-btn" id="master-trigger-nav" aria-label="Consola Maestra de Personalización" title="Consola Maestra">
-      <span>&#9881;</span> <span id="ui-console-nav-label">Consola</span>
-    </button>
     <button type="button" class="burger-btn" id="burger-btn" aria-label="Abrir menú" aria-expanded="false">
       <span class="burger-line"></span>
       <span class="burger-line"></span>
@@ -84,8 +122,8 @@
 <main id="viewport" aria-label="Archivo tridimensional en esfera">
   <div id="world">
     <div id="headline">
-      <h1 id="ui-headline-title">Obras Seleccionadas &amp; Proyectos</h1>
-      <p id="ui-headline-subtitle">Diez Obras Seleccionadas &middot; Colecci&oacute;n 2024&ndash;2026</p>
+      <h1 id="ui-headline-title">Portafolio</h1>
+      <p id="ui-headline-subtitle">Direcci&oacute;n de Arte, Dise&ntilde;o Editorial &amp; Arte Sacro Contempor&aacute;neo &middot; Selecci&oacute;n de Proyectos &amp; Perfil Profesional</p>
     </div>
     <!-- Cards generated by JS -->
   </div>
@@ -106,19 +144,49 @@
   </div>
 </section>
 
+<!-- FLOATING CURATORIAL DISCIPLINE FILTER BAR -->
+<aside class="curatorial-filter-bar" id="curatorial-filter-bar" aria-label="Filtrar por disciplina">
+  <div class="filter-pills-container">
+    <button type="button" class="filter-pill active" data-filter="all" id="filter-pill-all">
+      <span class="filter-pill-name" id="ui-filter-all">Todas</span>
+      <span class="filter-pill-count">10</span>
+    </button>
+    <button type="button" class="filter-pill" data-filter="sacro" id="filter-pill-sacro">
+      <span class="filter-pill-name" id="ui-filter-sacro">Arte Sacro</span>
+      <span class="filter-pill-count">2</span>
+    </button>
+    <button type="button" class="filter-pill" data-filter="editorial" id="filter-pill-editorial">
+      <span class="filter-pill-name" id="ui-filter-editorial">Diseño Editorial</span>
+      <span class="filter-pill-count">3</span>
+    </button>
+    <button type="button" class="filter-pill" data-filter="foto" id="filter-pill-foto">
+      <span class="filter-pill-name" id="ui-filter-foto">Fotografía</span>
+      <span class="filter-pill-count">3</span>
+    </button>
+    <button type="button" class="filter-pill" data-filter="grafico" id="filter-pill-grafico">
+      <span class="filter-pill-name" id="ui-filter-grafico">Arte Gráfico</span>
+      <span class="filter-pill-count">2</span>
+    </button>
+  </div>
+</aside>
+
 <!-- LIGHTBOX -->
 <div id="lightbox" role="dialog" aria-modal="true" aria-label="Detalle de obra">
+  <!-- Topbar with Language Switcher accessible while reviewing any work -->
+  <div class="lightbox-topbar">
+    <span class="lightbox-top-badge" id="lightbox-top-badge">01 / 10 &middot; ARCHIVO</span>
+    <div class="lightbox-top-actions">
+      <button type="button" class="lang-toggle-btn lb-lang-toggle" id="lightbox-lang-toggle" aria-label="Cambiar idioma (Español / English)" title="Cambiar idioma / Switch language">
+        <span class="lang-opt" id="lb-lang-opt-es">ES</span>
+        <span class="lang-sep">/</span>
+        <span class="lang-opt" id="lb-lang-opt-en">EN</span>
+      </button>
+      <button type="button" class="lightbox-close" id="lightbox-close-btn">&times; <span id="ui-lb-close-label">Cerrar</span></button>
+    </div>
+  </div>
+
   <button type="button" class="lightbox-nav-btn prev" id="lightbox-prev-btn" aria-label="Obra anterior (Flecha Izquierda)" title="Obra anterior (←)">&#10094;</button>
   <button type="button" class="lightbox-nav-btn next" id="lightbox-next-btn" aria-label="Obra siguiente (Flecha Derecha)" title="Obra siguiente (→)">&#10095;</button>
-  <div class="lightbox-top-actions">
-    <!-- Selector de Idioma durante Revisión de Obra (ES / EN) -->
-    <button type="button" class="lang-toggle-btn lb-lang-toggle" id="lightbox-lang-toggle-btn" aria-label="Cambiar idioma (Español / English)" title="Cambiar idioma / Switch language">
-      <span class="lang-opt active" id="lb-lang-opt-es">ES</span>
-      <span class="lang-sep">/</span>
-      <span class="lang-opt" id="lb-lang-opt-en">EN</span>
-    </button>
-    <button type="button" class="lightbox-close" id="lightbox-close-btn">&times; <span id="ui-lb-close-label">Cerrar</span></button>
-  </div>
 
   <div class="lightbox-content">
     <div class="lightbox-visual">
@@ -167,6 +235,13 @@
       <div class="lightbox-actions-row">
         <a id="lightbox-drive-btn" href="#" target="_blank" rel="noopener noreferrer" class="lightbox-drive-link">Ver en Google Drive &#10138;</a>
         <button type="button" class="channel-btn" id="lightbox-inquire-btn">&#9993; <span id="ui-lb-inquire-label">Encargar Proyecto Similar</span></button>
+        <a id="lightbox-wa-btn" href="#" target="_blank" rel="noopener noreferrer" class="channel-btn lb-whatsapp-btn" title="Consultar obra por WhatsApp">&#128172; <span id="ui-lb-wa-label">WhatsApp</span></a>
+        <button type="button" class="channel-btn lb-share-btn" id="lightbox-share-btn" title="Copiar enlace de esta obra">&#128279; <span id="ui-lb-share-label">Compartir</span></button>
+      </div>
+
+      <!-- Quick Jump Artwork Strip -->
+      <div class="lightbox-quickstrip" id="lightbox-quickstrip" aria-label="Navegación directa entre obras">
+        <!-- Rendered by JS -->
       </div>
     </div>
   </div>
@@ -184,7 +259,6 @@
     <a href="#replay" class="menu-link replay-link" data-replay-video>&#9673; Ver Video Inicial &middot; Replay Video</a>
     <a href="#statement" class="menu-link" data-menu-action="statement">Manifiesto &middot; Statement</a>
     <a href="#contact" class="menu-link" data-menu-action="contact">Contacto &middot; Contacto Directo</a>
-    <a href="#master" class="menu-link master-link" data-menu-action="master">&#9881; Consola Maestra &middot; Studio Control</a>
   </div>
   <div class="menu-footer">
     <span id="ui-menu-footer-left">Valledupar &middot; Colombia &middot; Alcance Global</span>
@@ -197,9 +271,9 @@
   <div class="modal-inner-container">
     <div class="modal-header-bar">
       <div>
-        <span class="modal-tag">CONTRATACIONES &middot; COMISIONES 2026</span>
-        <h2 class="modal-heading">Iniciar Di&aacute;logo</h2>
-        <p class="modal-subtitle">Direcci&oacute;n de Arte &middot; Dise&ntilde;o Editorial &middot; Arte Sacro Contempor&aacute;neo</p>
+        <span class="modal-tag" id="ui-contact-tag">CONTRATACIONES &middot; COMISIONES 2026</span>
+        <h2 class="modal-heading" id="ui-contact-heading">Iniciar Di&aacute;logo</h2>
+        <p class="modal-subtitle" id="ui-contact-subtitle">Direcci&oacute;n de Arte &middot; Dise&ntilde;o Editorial &middot; Arte Sacro Contempor&aacute;neo</p>
       </div>
       <button type="button" class="lightbox-close" id="contact-close-btn">&times; Cerrar</button>
     </div>
@@ -221,7 +295,7 @@
           <!-- Email Card -->
           <div class="channel-card">
             <div class="channel-main">
-              <span class="channel-label">Correo Electr&oacute;nico Oficial</span>
+              <span class="channel-label" id="ui-ch-email-label">Correo Electr&oacute;nico Oficial</span>
               <a href="mailto:wamimcim2@gmail.com" class="channel-val" id="ui-contact-email-link">wamimcim2@gmail.com</a>
             </div>
             <div class="channel-actions">
@@ -233,7 +307,7 @@
           <!-- WhatsApp Card -->
           <div class="channel-card">
             <div class="channel-main">
-              <span class="channel-label">WhatsApp Directo</span>
+              <span class="channel-label" id="ui-ch-wa-label">WhatsApp Directo</span>
               <span class="channel-val" id="ui-whatsapp-display">+57 (Colombia)</span>
             </div>
             <div class="channel-actions">
@@ -244,7 +318,7 @@
           <!-- Instagram Card -->
           <div class="channel-card">
             <div class="channel-main">
-              <span class="channel-label">Instagram / Archivo Visual</span>
+              <span class="channel-label" id="ui-ch-ig-label">Instagram / Archivo Visual</span>
               <a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" class="channel-val" id="ui-instagram-display">@wilmar.machado</a>
             </div>
             <div class="channel-actions">
@@ -255,7 +329,7 @@
           <!-- Behance Card -->
           <div class="channel-card">
             <div class="channel-main">
-              <span class="channel-label">Behance Portfolio</span>
+              <span class="channel-label" id="ui-ch-be-label">Behance Portfolio</span>
               <a href="https://www.behance.net/" target="_blank" rel="noopener noreferrer" class="channel-val" id="ui-behance-display">behance.net/wilmarmachado</a>
             </div>
             <div class="channel-actions">
@@ -266,19 +340,17 @@
           <!-- Location & Scope Card -->
           <div class="channel-card">
             <div class="channel-main">
-              <span class="channel-label">Ubicaci&oacute;n &amp; Modalidad</span>
+              <span class="channel-label" id="ui-ch-loc-label">Ubicaci&oacute;n &amp; Modalidad</span>
               <span class="channel-val" id="ui-location-display">Valledupar, Cesar, Colombia</span>
-              <span style="font-family: var(--font-mono); font-size: 11px; color: var(--fg-secondary); margin-top: 4px;">Atenci&oacute;n remota internacional &middot; Presencial bajo agenda</span>
+              <span id="ui-loc-sub" style="font-family: var(--font-mono); font-size: 11px; color: var(--fg-secondary); margin-top: 4px;">Atenci&oacute;n remota internacional &middot; Presencial bajo agenda</span>
             </div>
-          
-
           </div>
         </div>
       </div>
 
       <!-- Right Column: Interactive Project Inquiry Form -->
       <div class="contact-form-panel">
-        <h3 style="font-family: var(--font-serif); font-size: 24px; font-style: italic; color: var(--fg-primary); margin-bottom: 20px;">Enviar Propuesta de Proyecto</h3>
+        <h3 id="ui-form-title" style="font-family: var(--font-serif); font-size: 24px; font-style: italic; color: var(--fg-primary); margin-bottom: 20px;">Enviar Propuesta de Proyecto</h3>
         
         <form id="contact-form" action="https://formsubmit.co/wamimcim2@gmail.com" method="POST">
           <input type="hidden" name="_template" value="table">
@@ -287,18 +359,18 @@
 
           <div class="form-group-grid">
             <div class="form-field">
-              <label class="form-label" for="form-name">Nombre / Estudio o Marca *</label>
+              <label class="form-label" for="form-name" id="ui-label-name">Nombre / Estudio o Marca *</label>
               <input type="text" id="form-name" name="name" class="form-input" required placeholder="Tu nombre o empresa">
             </div>
             <div class="form-field">
-              <label class="form-label" for="form-email">Correo Electr&oacute;nico *</label>
+              <label class="form-label" for="form-email" id="ui-label-email">Correo Electr&oacute;nico *</label>
               <input type="email" id="form-email" name="email" class="form-input" required placeholder="tu@correo.com">
             </div>
           </div>
 
           <div class="form-group-grid">
             <div class="form-field">
-              <label class="form-label" for="form-service">Tipo de Obra / Disciplina *</label>
+              <label class="form-label" for="form-service" id="ui-label-service">Tipo de Obra / Disciplina *</label>
               <select id="form-service" name="service" class="form-select" required>
                 <option value="Arte Gráfico &amp; Portada de Autor" id="opt-service-1">Arte Gr&aacute;fico &amp; Portada de Autor</option>
                 <option value="Diseño Editorial &amp; Maquetación" id="opt-service-2">Dise&ntilde;o Editorial &amp; Maquetaci&oacute;n</option>
@@ -310,18 +382,18 @@
               </select>
             </div>
             <div class="form-field">
-              <label class="form-label" for="form-budget">Presupuesto / Cronograma</label>
+              <label class="form-label" for="form-budget" id="ui-label-budget">Presupuesto / Cronograma</label>
               <input type="text" id="form-budget" name="budget" class="form-input" placeholder="Ej. Q4 2026 / Presupuesto estimado">
             </div>
           </div>
 
           <div class="form-field">
-            <label class="form-label" for="form-message">Descripci&oacute;n del Proyecto &amp; Visi&oacute;n *</label>
+            <label class="form-label" for="form-message" id="ui-label-message">Descripci&oacute;n del Proyecto &amp; Visi&oacute;n *</label>
             <textarea id="form-message" name="message" class="form-textarea" required placeholder="Cuéntame sobre la historia, concepto o necesidades del proyecto..."></textarea>
           </div>
 
           <button type="submit" class="form-submit-btn" id="form-submit-btn">
-            <span>Enviar Propuesta &middot; Iniciar Di&aacute;logo</span> &#10141;
+            <span id="ui-submit-btn-text">Enviar Propuesta &middot; Iniciar Di&aacute;logo</span> &#10141;
           </button>
 
           <div id="form-feedback-box" class="form-feedback" aria-live="polite">
@@ -385,6 +457,13 @@
       </div>
     </div>
 
+    <!-- Author Monogram & Signature -->
+    <div class="statement-signature-block">
+      <div class="signature-line"></div>
+      <div class="signature-name">Wilmar Machado</div>
+      <div class="signature-title" id="ui-signature-title">Director de Arte &amp; Dise&ntilde;ador Visual &middot; Valledupar, Colombia</div>
+    </div>
+
     <!-- Call to Action -->
     <div class="statement-cta-row">
       <button type="button" class="statement-cta-btn" id="statement-to-contact-btn">
@@ -394,428 +473,6 @@
   </div>
 </div>
 
-<!-- MASTER ADMIN STUDIO CONSOLE DRAWER -->
-<div id="master-console" role="dialog" aria-modal="true" aria-label="Consola Maestra de Personalización">
-  <div class="console-container">
-    <!-- Topbar -->
-    <div class="console-topbar">
-      <div class="console-title-group">
-        <span class="console-badge">STUDIO CONTROL V3.0</span>
-        <div class="console-status-indicator">
-          <span class="badge-pulse-dot"></span>
-          <span>MODO AUTOR ACTIVO &middot; Wilmar Machado</span>
-        </div>
-      </div>
-
-      <div class="console-actions-group">
-        <button type="button" class="console-btn" id="console-preview-btn" title="Ocultar consola momentáneamente">&#128065; Ver Portafolio</button>
-        <button type="button" class="console-btn primary" id="console-save-btn">&#128190; Guardar Cambios</button>
-        <button type="button" class="console-btn danger" id="console-logout-btn" title="Cerrar sesión de administrador">&#128274; Salir</button>
-        <button type="button" class="lightbox-close" id="console-close-btn" style="position: static; padding: 6px 14px;">&times; Cerrar</button>
-      </div>
-    </div>
-
-    <!-- Navigation Tabs -->
-    <div class="console-tabs" role="tablist">
-      <button type="button" class="console-tab-btn active" data-tab="tab-profile" role="tab">&#128100; 1. Perfil &amp; Textos</button>
-      <button type="button" class="console-tab-btn" data-tab="tab-projects" role="tab" id="tab-btn-projects">&#128444; 2. Proyectos (10)</button>
-      <button type="button" class="console-tab-btn" data-tab="tab-style" role="tab">&#127912; 3. Estilos &amp; 3D</button>
-      <button type="button" class="console-tab-btn" data-tab="tab-contact" role="tab">&#9993; 4. Contacto &amp; Canales</button>
-      <button type="button" class="console-tab-btn" data-tab="tab-backup" role="tab">&#128190; 5. Exportar &amp; Copias</button>
-    </div>
-
-    <!-- TAB 1: PERFIL & TEXTOS -->
-    <div class="console-tab-panel active" id="tab-profile" role="tabpanel">
-      <div class="panel-section-card">
-        <h4 class="panel-card-title">Identidad &amp; Titulares del Portafolio</h4>
-        <p class="panel-card-subtitle">Personaliza los títulos, el nombre del estudio y las frases principales</p>
-
-        <div class="form-group-grid">
-          <div class="form-field">
-            <label class="form-label" for="cfg-author-name">Nombre del Creador / Marca</label>
-            <input type="text" id="cfg-author-name" class="form-input">
-          </div>
-          <div class="form-field">
-            <label class="form-label" for="cfg-author-role">Especialidad / Título Profesional</label>
-            <input type="text" id="cfg-author-role" class="form-input">
-          </div>
-        </div>
-
-        <div class="form-group-grid">
-          <div class="form-field">
-            <label class="form-label" for="cfg-sphere-h1">Título Central Esfera 3D (Español)</label>
-            <input type="text" id="cfg-sphere-h1" class="form-input" placeholder="Obras Seleccionadas & Proyectos">
-          </div>
-          <div class="form-field">
-            <label class="form-label" for="cfg-sphere-h1-en">Título Central Esfera 3D (Inglés / English)</label>
-            <input type="text" id="cfg-sphere-h1-en" class="form-input" placeholder="Selected Works & Projects">
-          </div>
-        </div>
-
-        <div class="form-group-grid">
-          <div class="form-field">
-            <label class="form-label" for="cfg-sphere-sub">Subtítulo Esfera 3D (Español)</label>
-            <input type="text" id="cfg-sphere-sub" class="form-input" placeholder="Diez Obras Seleccionadas · Colección 2024–2026">
-          </div>
-          <div class="form-field">
-            <label class="form-label" for="cfg-sphere-sub-en">Subtítulo Esfera 3D (Inglés / English)</label>
-            <input type="text" id="cfg-sphere-sub-en" class="form-input" placeholder="Ten Selected Works · 2024–2026 Collection">
-          </div>
-        </div>
-
-        <div class="form-group-grid">
-          <div class="form-field">
-            <label class="form-label" for="cfg-grid-title">Título Cuadrícula / Grid (Español)</label>
-            <input type="text" id="cfg-grid-title" class="form-input" placeholder="Catálogo Completo · Archivo">
-          </div>
-          <div class="form-field">
-            <label class="form-label" for="cfg-grid-title-en">Título Cuadrícula (Inglés / English)</label>
-            <input type="text" id="cfg-grid-title-en" class="form-input" placeholder="Complete Catalog · Archive">
-          </div>
-        </div>
-
-        <div class="form-group-grid">
-          <div class="form-field">
-            <label class="form-label" for="cfg-grid-sub">Subtítulo Cuadrícula (Español)</label>
-            <input type="text" id="cfg-grid-sub" class="form-input" placeholder="Diez Obras Seleccionadas · Índice de 10 Obras">
-          </div>
-          <div class="form-field">
-            <label class="form-label" for="cfg-grid-sub-en">Subtítulo Cuadrícula (Inglés / English)</label>
-            <input type="text" id="cfg-grid-sub-en" class="form-input" placeholder="Ten Selected Works · 10 Works Index">
-          </div>
-        </div>
-
-        <div style="margin: 8px 0 18px 0; display: flex; gap: 12px; align-items: center; background: rgba(200, 169, 110, 0.08); padding: 10px 14px; border-radius: 4px; border: 1px solid rgba(200, 169, 110, 0.2);">
-          <button type="button" class="console-btn" id="btn-auto-translate-profile" style="background: var(--accent); color: #0a0a0c; font-weight: 600; font-size: 11px; padding: 6px 14px;">
-            ✦ Auto-traducir a Inglés (Modo Offline)
-          </button>
-          <span style="font-family: var(--font-mono); font-size: 11px; color: var(--fg-secondary);">
-            Traductor 100% autónomo en JavaScript · No requiere conexión a internet.
-          </span>
-        </div>
-
-        <div class="form-group-grid">
-          <div class="form-field">
-            <label class="form-label" for="cfg-video-brand">Texto Superior del Video Prólogo</label>
-            <input type="text" id="cfg-video-brand" class="form-input">
-          </div>
-          <div class="form-field">
-            <label class="form-label" for="cfg-video-badge">Distintivo / Badge del Video</label>
-            <input type="text" id="cfg-video-badge" class="form-input">
-          </div>
-        </div>
-
-        <div class="form-field">
-          <label class="form-label" for="cfg-statement-quote">Frase de Impacto (Cita del Manifiesto)</label>
-          <textarea id="cfg-statement-quote" class="form-textarea" style="min-height: 70px;"></textarea>
-        </div>
-
-        <div class="form-field">
-          <label class="form-label" for="cfg-statement-bio">Biografía &amp; Declaración Curatorial</label>
-          <textarea id="cfg-statement-bio" class="form-textarea" style="min-height: 140px;"></textarea>
-        </div>
-
-        <div class="form-group-grid">
-          <div class="form-field">
-            <label class="form-label" for="cfg-menu-footer-l">Pie de Menú (Izquierda)</label>
-            <input type="text" id="cfg-menu-footer-l" class="form-input">
-          </div>
-          <div class="form-field">
-            <label class="form-label" for="cfg-menu-footer-r">Pie de Menú (Derecha)</label>
-            <input type="text" id="cfg-menu-footer-r" class="form-input">
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB 2: PROYECTOS & OBRAS (CRUD) -->
-    <div class="console-tab-panel" id="tab-projects" role="tabpanel">
-      <div class="panel-section-card">
-        <div class="project-manager-toolbar">
-          <div>
-            <h4 class="panel-card-title">Gestor Integral de Obras &amp; Proyectos</h4>
-            <p class="panel-card-subtitle">Administra los 10 proyectos o agrega nuevas obras a la Esfera 3D y Cuadrícula</p>
-          </div>
-          <button type="button" class="console-btn primary" id="add-project-btn">&#65291; Añadir Nueva Obra</button>
-        </div>
-
-        <div class="projects-list-container" id="admin-projects-list">
-          <!-- Populated by JS -->
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB 3: ESTILOS & MOTOR 3D -->
-    <div class="console-tab-panel" id="tab-style" role="tabpanel">
-      <div class="panel-section-card">
-        <h4 class="panel-card-title">Paletas Cromáticas de Autor</h4>
-        <p class="panel-card-subtitle">Cambia instantáneamente la atmósfera y los colores de acento</p>
-
-        <div class="palette-preset-row">
-          <button type="button" class="palette-preset-btn" data-color="#d4a359" data-color-dim="#8b6b3a">
-            <span class="palette-color-dot" style="background: #d4a359;"></span> Oro Renacentista
-          </button>
-          <button type="button" class="palette-preset-btn" data-color="#43d692" data-color-dim="#16a766">
-            <span class="palette-color-dot" style="background: #43d692;"></span> Esmeralda Neón
-          </button>
-          <button type="button" class="palette-preset-btn" data-color="#4a86e8" data-color-dim="#1c4587">
-            <span class="palette-color-dot" style="background: #4a86e8;"></span> Cobalto Cyber
-          </button>
-          <button type="button" class="palette-preset-btn" data-color="#e66550" data-color-dim="#ac2b16">
-            <span class="palette-color-dot" style="background: #e66550;"></span> Carmesí Sacro
-          </button>
-          <button type="button" class="palette-preset-btn" data-color="#a479e2" data-color-dim="#653e9b">
-            <span class="palette-color-dot" style="background: #a479e2;"></span> Púrpura Místico
-          </button>
-          <button type="button" class="palette-preset-btn" data-color="#eae6df" data-color-dim="#9a9488">
-            <span class="palette-color-dot" style="background: #eae6df;"></span> Plata Monocromo
-          </button>
-        </div>
-
-        <div class="form-group-grid">
-          <div class="form-field">
-            <label class="form-label" for="cfg-color-accent">Color de Acento Personalizado</label>
-            <input type="color" id="cfg-color-accent" class="form-input" style="height: 48px; padding: 4px; cursor: pointer;">
-          </div>
-          <div class="form-field">
-            <label class="form-label" for="cfg-color-bg">Color de Fondo Principal</label>
-            <input type="color" id="cfg-color-bg" class="form-input" style="height: 48px; padding: 4px; cursor: pointer;">
-          </div>
-        </div>
-
-        <h4 class="panel-card-title" style="margin-top: 30px;">Calibración del Motor 3D &amp; Esfera</h4>
-        <p class="panel-card-subtitle">Ajusta la escala espacial y el comportamiento de la escena tridimensional</p>
-
-        <div class="slider-group">
-          <div class="slider-label-row">
-            <span>Radio de la Esfera 3D</span>
-            <span class="slider-val-tag" id="val-sphere-radius">950px</span>
-          </div>
-          <input type="range" min="500" max="1400" step="10" id="slider-sphere-radius" class="custom-slider">
-        </div>
-
-        <div class="slider-group">
-          <div class="slider-label-row">
-            <span>Distancia Focal / Cámara (Cam Z)</span>
-            <span class="slider-val-tag" id="val-cam-z">-180px</span>
-          </div>
-          <input type="range" min="-380" max="0" step="5" id="slider-cam-z" class="custom-slider">
-        </div>
-
-        <div class="slider-group">
-          <div class="slider-label-row">
-            <span>Velocidad de Rotación Automática</span>
-            <span class="slider-val-tag" id="val-rotation-speed">0.04</span>
-          </div>
-          <input type="range" min="0" max="0.15" step="0.005" id="slider-rotation-speed" class="custom-slider">
-        </div>
-
-        <div class="switch-row">
-          <div class="switch-label-group">
-            <span class="switch-title">Prólogo Interactivo de Video</span>
-            <span class="switch-desc">Si se desactiva, los visitantes ingresan directamente a la Esfera 3D sin el zoom de video inicial.</span>
-          </div>
-          <label class="toggle-switch">
-            <input type="checkbox" id="cfg-toggle-video">
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB 4: CONTACTO & CANALES -->
-    <div class="console-tab-panel" id="tab-contact" role="tabpanel">
-      <div class="panel-section-card">
-        <h4 class="panel-card-title">Canales de Enlace &amp; Contratación</h4>
-        <p class="panel-card-subtitle">Configura tus datos de contacto y cuentas de redes sociales</p>
-
-        <div class="form-group-grid">
-          <div class="form-field">
-            <label class="form-label" for="cfg-contact-email">Correo Electrónico</label>
-            <input type="email" id="cfg-contact-email" class="form-input">
-          </div>
-          <div class="form-field">
-            <label class="form-label" for="cfg-contact-whatsapp">Número de WhatsApp (con indicativo)</label>
-            <input type="text" id="cfg-contact-whatsapp" class="form-input" placeholder="+573001234567">
-          </div>
-        </div>
-
-        <div class="form-field">
-          <label class="form-label" for="cfg-whatsapp-msg">Mensaje Predeterminado de WhatsApp</label>
-          <input type="text" id="cfg-whatsapp-msg" class="form-input">
-        </div>
-
-        <div class="form-group-grid">
-          <div class="form-field">
-            <label class="form-label" for="cfg-contact-instagram">Usuario de Instagram</label>
-            <input type="text" id="cfg-contact-instagram" class="form-input" placeholder="@wilmar.machado">
-          </div>
-          <div class="form-field">
-            <label class="form-label" for="cfg-contact-behance">Enlace o Usuario de Behance</label>
-            <input type="text" id="cfg-contact-behance" class="form-input" placeholder="https://behance.net/...">
-          </div>
-        </div>
-
-        <div class="form-group-grid">
-          <div class="form-field">
-            <label class="form-label" for="cfg-contact-location">Ubicación Geográfica</label>
-            <input type="text" id="cfg-contact-location" class="form-input">
-          </div>
-          <div class="form-field">
-            <label class="form-label" for="cfg-contact-avail">Texto de Disponibilidad</label>
-            <input type="text" id="cfg-contact-avail" class="form-input">
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB 5: EXPORTAR, BACKUP & CLAVE -->
-    <div class="console-tab-panel" id="tab-backup" role="tabpanel">
-      <!-- HTML Exporter -->
-      <div class="panel-section-card">
-        <h4 class="panel-card-title">&#128190; Exportar Archivo HTML Completo (Descarga Standalone)</h4>
-        <p class="panel-card-subtitle">Descarga un archivo <code>index.html</code> 100% independiente con todos tus cambios guardados en el código fuente, incluyendo el video base64, listo para subir a producción o compartir.</p>
-
-        <button type="button" class="console-btn primary" id="btn-export-html" style="padding: 14px 28px; font-size: 13px;">
-          <span>&#11015; Descargar index.html Actualizado</span>
-        </button>
-      </div>
-
-      <!-- JSON Backup & Restore -->
-      <div class="panel-section-card">
-        <h4 class="panel-card-title">Copias de Seguridad (JSON)</h4>
-        <p class="panel-card-subtitle">Guarda o restaura tus proyectos y personalizaciones en un archivo liviano</p>
-
-        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-          <button type="button" class="console-btn" id="btn-export-json">&#11015; Descargar Backup JSON</button>
-          <label class="console-btn" style="cursor: pointer;">
-            &#11014; Restaurar Backup JSON
-            <input type="file" id="input-import-json" accept=".json" style="display: none;">
-          </label>
-          <button type="button" class="console-btn danger" id="btn-reset-defaults">&#8634; Restablecer Valores de Fábrica</button>
-        </div>
-      </div>
-
-      <!-- Change Password -->
-      <div class="panel-section-card">
-        <h4 class="panel-card-title">&#128274; Seguridad de Acceso Maestro</h4>
-        <p class="panel-card-subtitle">Modifica la clave de acceso a la Consola Maestra para que solo tú puedas ingresar</p>
-
-        <div class="form-group-grid">
-          <div class="form-field">
-            <label class="form-label" for="pwd-current">Contraseña Actual *</label>
-            <input type="password" id="pwd-current" class="form-input">
-          </div>
-          <div class="form-field">
-            <label class="form-label" for="pwd-new">Nueva Contraseña *</label>
-            <input type="password" id="pwd-new" class="form-input">
-          </div>
-        </div>
-
-        <button type="button" class="console-btn" id="btn-change-password">Actualizar Contraseña Maestra</button>
-        <span id="pwd-feedback" style="margin-left: 14px; font-family: var(--font-mono); font-size: 11px;"></span>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- PROJECT EDIT MODAL (Dentro de Consola) -->
-<div id="project-edit-modal" role="dialog" aria-modal="true" aria-label="Editor de Proyecto">
-  <div class="project-edit-card">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-      <h3 style="font-family: var(--font-serif); font-size: 24px; font-style: italic; color: #fff;" id="project-modal-mode-title">Editar Obra</h3>
-      <button type="button" class="lightbox-close" id="project-edit-close-btn" style="position: static; padding: 6px 12px;">&times; Cerrar</button>
-    </div>
-
-    <!-- Preview Box -->
-    <div style="display: flex; gap: 20px; align-items: flex-start; margin-bottom: 15px;">
-      <div class="project-preview-box">
-        <img id="project-preview-img" src="" alt="Vista previa">
-      </div>
-      <div style="font-family: var(--font-mono); font-size: 11px; color: var(--fg-secondary); line-height: 1.6;">
-        <strong style="color: var(--accent);">Vista previa de la imagen</strong><br>
-        Introduce un ID de Google Drive (ej. <code>1kUdMl7B...</code>) o un enlace URL directo. La vista previa se actualizará en tiempo real.
-      </div>
-    </div>
-
-    <input type="hidden" id="edit-project-index" value="-1">
-
-    <div class="form-group-grid">
-      <div class="form-field">
-        <label class="form-label" for="edit-project-title">Título de la Obra (Español) *</label>
-        <input type="text" id="edit-project-title" class="form-input" required placeholder="Ej. Inevitable Ocaso">
-      </div>
-      <div class="form-field">
-        <label class="form-label" for="edit-project-title-en">Título de la Obra (Inglés / English)</label>
-        <input type="text" id="edit-project-title-en" class="form-input" placeholder="e.g. Inevitable Sunset">
-      </div>
-    </div>
-
-    <div class="form-group-grid">
-      <div class="form-field">
-        <label class="form-label" for="edit-project-place">Categoría / Subtítulo (Español) *</label>
-        <input type="text" id="edit-project-place" class="form-input" required placeholder="Ej. El Reino · Wilmar Machado 2025">
-      </div>
-      <div class="form-field">
-        <label class="form-label" for="edit-project-place-en">Categoría / Subtítulo (Inglés / English)</label>
-        <input type="text" id="edit-project-place-en" class="form-input" placeholder="e.g. The Kingdom · Wilmar Machado 2025">
-      </div>
-    </div>
-
-    <div class="form-field">
-      <label class="form-label" for="edit-project-id">ID de Google Drive o URL Directa de Imagen *</label>
-      <input type="text" id="edit-project-id" class="form-input" required placeholder="1kUdMl7BScjHoLJLuKhEM9zcM0SWR4BrU o https://...">
-    </div>
-
-    <div class="form-field">
-      <label class="form-label" for="edit-project-drive">Enlace Completo de Google Drive</label>
-      <input type="text" id="edit-project-drive" class="form-input" placeholder="https://drive.google.com/file/d/.../view">
-    </div>
-
-    <div class="form-field">
-      <label class="form-label" for="edit-project-note">Nota Curatorial / Descripción Conceptual (Español) *</label>
-      <textarea id="edit-project-note" class="form-textarea" required placeholder="Describe el concepto visual, la técnica, tipografía e intencionalidad..."></textarea>
-    </div>
-
-    <div class="form-field">
-      <label class="form-label" for="edit-project-note-en">Nota Curatorial (Inglés / English)</label>
-      <textarea id="edit-project-note-en" class="form-textarea" placeholder="Descripción en inglés (se genera automáticamente con el traductor offline si se deja vacía)..."></textarea>
-    </div>
-
-    <div style="margin: 8px 0 14px 0; display: flex; gap: 10px; align-items: center; background: rgba(200, 169, 110, 0.08); padding: 8px 12px; border-radius: 4px; border: 1px solid rgba(200, 169, 110, 0.2);">
-      <button type="button" class="console-btn" id="btn-auto-translate-project" style="background: var(--accent); color: #0a0a0c; font-weight: 600; font-size: 11px; padding: 5px 12px;">
-        ✦ Auto-traducir Obra a Inglés (Offline)
-      </button>
-      <span style="font-family: var(--font-mono); font-size: 10px; color: var(--fg-secondary);">
-        Traduce automáticamente con el motor offline integrado sin internet.
-      </span>
-    </div>
-
-    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
-      <button type="button" class="console-btn" id="project-edit-cancel-btn">Cancelar</button>
-      <button type="button" class="console-btn primary" id="project-edit-save-btn">Guardar Obra &#10141;</button>
-    </div>
-  </div>
-</div>
-
-<!-- MASTER CONSOLE AUTHENTICATION MODAL -->
-<div id="master-auth-modal" role="dialog" aria-modal="true" aria-label="Acceso a la Consola Maestra">
-  <div class="auth-card" id="auth-card">
-    <div class="auth-icon" aria-hidden="true">&#128274;</div>
-    <h3 class="auth-title">Consola Maestra</h3>
-    <p class="auth-desc">Acceso exclusivo para el autor (Wilmar Machado) para gestionar contenidos, proyectos y estilos del portafolio.</p>
-    <form id="master-auth-form" onsubmit="return false;">
-      <div class="auth-input-wrapper" style="position: relative; margin-bottom: 20px;">
-        <input type="password" id="master-password-input" class="form-input" placeholder="Introduce la clave maestra..." autocomplete="current-password" required style="padding-right: 42px;">
-        <button type="button" id="auth-eye-toggle" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: var(--fg-secondary); cursor: pointer; font-size: 16px;" title="Ver / Ocultar contraseña">&#128065;</button>
-      </div>
-      <div style="display: flex; gap: 12px; justify-content: center;">
-        <button type="button" class="console-btn" id="auth-cancel-btn">Cancelar</button>
-        <button type="submit" class="console-btn primary" id="master-login-btn">Acceder a Consola</button>
-      </div>
-    </form>
-  </div>
-</div>
 <!-- TOAST MESSAGE NOTIFICATION -->
 <div id="toast-msg">Notificación</div>
 
