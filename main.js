@@ -1490,6 +1490,23 @@ function initCuratorialFilterBar() {
   window.addEventListener('resize', updateScrollState, { passive: true });
   setTimeout(updateScrollState, 100);
 
+  const btnPrev = document.getElementById('filter-scroll-prev');
+  const btnNext = document.getElementById('filter-scroll-next');
+
+  if (btnPrev) {
+    btnPrev.addEventListener('click', (e) => {
+      e.stopPropagation();
+      container.scrollBy({ left: -140, behavior: 'smooth' });
+    });
+  }
+
+  if (btnNext) {
+    btnNext.addEventListener('click', (e) => {
+      e.stopPropagation();
+      container.scrollBy({ left: 140, behavior: 'smooth' });
+    });
+  }
+
   // Smooth mouse drag on desktop & hybrid touch devices
   let isDown = false;
   let startX;
