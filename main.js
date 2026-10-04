@@ -1203,6 +1203,8 @@ function attachImageErrorFallback(imgEl, itemId) {
    DOM BINDING & LIVE UI UPDATE ENGINE
    ========================================================================== */
 function applyConfigToUI(cfg) {
+  const isEn = (currentLang === 'en');
+
   // Document title
   document.title = `${cfg.profile.name} — Portafolio de Proyectos & Archivo Visual`;
 
@@ -1219,7 +1221,6 @@ function applyConfigToUI(cfg) {
   if (videoGreetingEl) videoGreetingEl.textContent = cfg.profile.videoGreeting || 'Hola, Soy Wilmar';
 
   // Headlines with Language Awareness
-  const isEn = (currentLang === 'en');
   const hTitle = document.getElementById('ui-headline-title');
   if (hTitle) {
     hTitle.textContent = isEn ? I18N.en.headlineTitle : I18N.es.headlineTitle;
@@ -1337,7 +1338,7 @@ function rebuildSphereAndGrid(cfg) {
     const imageSrc = getProjectImageSrc(item);
     card.innerHTML = `
       <div class="card-inner">
-        <img class="card-img" src="${imageSrc}" alt="${item.title}" loading="lazy" decoding="async" draggable="false" oncontextmenu="return false;" referrerpolicy="no-referrer">
+        <img class="card-img" src="${imageSrc}" alt="${item.title}" loading="eager" decoding="async" draggable="false" oncontextmenu="return false;">
         <div class="card-overlay"></div>
         <div class="card-meta">
           <div class="card-idx">${String(i + 1).padStart(2, '0')} / ${String(N).padStart(2, '0')}</div>
@@ -1379,7 +1380,7 @@ function rebuildSphereAndGrid(cfg) {
     gridItem.setAttribute('tabindex', '0');
     gridItem.innerHTML = `
       <div class="grid-thumb">
-        <img src="${imageSrc}" alt="${item.title}" loading="lazy" decoding="async" draggable="false" oncontextmenu="return false;" referrerpolicy="no-referrer">
+        <img src="${imageSrc}" alt="${item.title}" loading="eager" decoding="async" draggable="false" oncontextmenu="return false;">
       </div>
       <div class="grid-info">
         <div class="grid-idx">${String(i + 1).padStart(2, '0')} / ${String(N).padStart(2, '0')}</div>

@@ -3247,7 +3247,7 @@ body.revealed .curatorial-filter-bar {
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    padding: 6px 36px;
+    padding: 6px 32px 6px 8px;
     gap: 7px;
     box-sizing: border-box;
     background: rgba(10, 10, 14, 0.92);
@@ -3256,6 +3256,11 @@ body.revealed .curatorial-filter-bar {
     border: 1px solid rgba(212, 163, 89, 0.4);
     border-radius: 40px;
     box-shadow: 0 16px 45px rgba(0, 0, 0, 0.9), 0 0 25px rgba(212, 163, 89, 0.12);
+    transition: padding 0.25s ease;
+  }
+
+  .curatorial-filter-bar.scrolled-left .filter-pills-container {
+    padding-left: 32px;
   }
 
   .filter-pills-container::-webkit-scrollbar {
