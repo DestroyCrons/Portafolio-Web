@@ -1674,35 +1674,22 @@ function layoutSphere() {
       return;
     }
     isSeeking = true;
-    if (typeof introVideo.fastSeek === 'function') {
-      try {
-        introVideo.fastSeek(time);
-      } catch (err) {
-        introVideo.currentTime = time;
-      }
-    } else {
-      introVideo.currentTime = time;
-    }
+    introVideo.currentTime = time;
 
     clearTimeout(seekWatchdogTimer);
     seekWatchdogTimer = setTimeout(() => {
-      if (isSeeking) {
-        isSeeking = false;
-        if (pendingSeekTime !== null) {
-          const next = pendingSeekTime;
-          pendingSeekTime = null;
-          seekVideoTo(next);
-        }
+      isSeeking = false;
+      if (pendingSeekTime !== null) {
+        const next = pendingSeekTime;
+        pendingSeekTime = null;
+        seekVideoTo(next);
       }
-    }, 60);
+    }, 20);
   }
 
   introVideo.addEventListener('seeked', () => {
     isSeeking = false;
     clearTimeout(seekWatchdogTimer);
-    if (ambientVideo && Math.abs(ambientVideo.currentTime - introVideo.currentTime) > 0.35) {
-      try { ambientVideo.currentTime = introVideo.currentTime; } catch(e) {}
-    }
     if (pendingSeekTime !== null) {
       const next = pendingSeekTime;
       pendingSeekTime = null;
@@ -1988,14 +1975,14 @@ function layoutSphere() {
     } else {
       // Symmetrical scroll scrubbing: smooth lerp to targetProgress
       const progressDiff = targetProgress - currentProgress;
-      if (Math.abs(progressDiff) > 0.0002) {
-        currentProgress += progressDiff * 0.35;
+      if (Math.abs(progressDiff) > 0.0001) {
+        currentProgress += progressDiff * 0.45;
       } else {
         currentProgress = targetProgress;
       }
 
       const targetTime = currentProgress * videoDuration;
-      if (Math.abs(introVideo.currentTime - targetTime) > 0.015) {
+      if (Math.abs(introVideo.currentTime - targetTime) > 0.005) {
         seekVideoTo(targetTime);
       }
 
