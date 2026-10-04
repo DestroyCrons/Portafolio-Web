@@ -16,8 +16,55 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
+<style>
+  /* Critical Instant Preloader Shield */
+  body.loading { overflow: hidden !important; height: 100vh !important; background: #050508; }
+  .experience-preloader { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; background: #050508; z-index: 99999999; display: flex; align-items: center; justify-content: center; }
+</style>
 </head>
-<body>
+<body class="loading">
+
+<!-- ==========================================================================
+     EXPERIENCE PRELOADER & ASSET CACHING SCREEN
+     ========================================================================== -->
+<div id="experience-preloader" class="experience-preloader" aria-live="polite" role="status">
+  <div class="preloader-backdrop"></div>
+  <div class="preloader-ambient-glow"></div>
+  <div class="preloader-content">
+    
+    <!-- Monogram with breathing gold aura -->
+    <div class="preloader-monogram">
+      <div class="preloader-pulse-ring"></div>
+      <svg viewBox="0 0 64 64" width="56" height="56" aria-hidden="true">
+        <rect width="64" height="64" rx="14" fill="#0c0c12" stroke="rgba(212,163,89,0.35)" stroke-width="1.5"/>
+        <path d="M14 46L22 18h4l6 18 6-18h4l8 28h-5l-5-18-6 18h-4l-6-18-5 18z" fill="#d4a359"/>
+      </svg>
+    </div>
+
+    <!-- Title & Brand -->
+    <div class="preloader-header">
+      <span class="preloader-badge">ARCHIVO VISUAL &middot; 2026</span>
+      <h2 class="preloader-title">Wilmar Machado</h2>
+      <p class="preloader-status" id="preloader-status-text">Iniciando archivo y preparando arquitectura...</p>
+    </div>
+
+    <!-- Precision Progress Bar & Counter -->
+    <div class="preloader-meter-box">
+      <div class="preloader-track">
+        <div class="preloader-fill" id="preloader-progress-fill" style="width: 0%;"></div>
+      </div>
+      <div class="preloader-meta">
+        <span class="preloader-detail" id="preloader-detail-text">Precargando recursos en caché del dispositivo</span>
+        <span class="preloader-percent" id="preloader-percent-num">0%</span>
+      </div>
+    </div>
+
+    <!-- Graceful Fallback / Skip after timeout -->
+    <button type="button" class="preloader-skip-btn" id="preloader-skip-btn" style="display: none;" aria-label="Ingresar directamente al portafolio">
+      Continuar de todos modos &rarr;
+    </button>
+  </div>
+</div>
 
 <!-- VIDEO PARALLAX INTRO -->
 <section id="video-stage" aria-label="Introducción interactiva en video">
@@ -593,9 +640,23 @@
 <!-- CUSTOM CURSOR -->
 <div id="custom-cursor"></div>
 
+<!-- High-Performance Asset Preloader & Caching Engine -->
+<script src="preloader.js"></script>
+
 <!-- Firebase Cloud Sync Bridge -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="main.js"></script>
+
+<!-- Service Worker Registration for Instant Offline Cache -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(err => {
+        console.warn('SW registration note:', err);
+      });
+    });
+  }
+</script>
 </body>
 </html>
