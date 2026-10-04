@@ -7,7 +7,7 @@ const OfflineTranslator = (function() {
   // 1. Specific Multi-word Expressions & Idiomatic Phrases (Checked First)
   const PHRASE_PAIRS = [
     ["Portafolio", "Portfolio"],
-    ["Dirección de Arte, Diseño Editorial & Arte Sacro Contemporáneo · Selección de Proyectos & Perfil Profesional", "Art Direction, Editorial Design & Contemporary Sacred Art · Selected Projects & Professional Profile"],
+    ["Diseño Gráfico, Diseño Editorial & Arte Sacro Contemporáneo · Selección de Proyectos & Perfil Profesional", "Graphic Design, Editorial Design & Contemporary Sacred Art · Selected Projects & Professional Profile"],
     ["Obras Seleccionadas & Proyectos", "Selected Works & Projects"],
     ["Obras Seleccionadas y Proyectos", "Selected Works & Projects"],
     ["Obras Seleccionadas", "Selected Works"],
@@ -32,7 +32,7 @@ const OfflineTranslator = (function() {
     ["Disponible para proyectos", "Available for projects"],
     ["Atención remota internacional", "International remote service"],
     ["Presencial bajo agenda", "In-person by appointment"],
-    ["Dirección de Arte", "Art Direction"],
+    ["Diseño Visual", "Visual Design"],
     ["Diseño Editorial & Tipografía", "Editorial Design & Typography"],
     ["Diseño Editorial", "Editorial Design"],
     ["Diseño Gráfico & Editorial", "Graphic & Editorial Design"],
@@ -260,7 +260,7 @@ const I18N = {
     videoBadge: "PRÓLOGO INTERACTIVO",
     videoGreetingTag: "Portafolio Oficial · 2026",
     videoGreeting: "Hola, Soy Wilmar",
-    videoGreetingRole: "Diseñador Gráfico & Director de Arte",
+    videoGreetingRole: "Diseñador Gráfico & Artista Visual",
     videoHint: "Gira la rueda del ratón o desliza para hacer zoom · Scroll to explore",
     videoPlay: "Reproducir",
     videoPause: "Pausar",
@@ -273,7 +273,7 @@ const I18N = {
       archive: "Hacia el Archivo"
     },
     headlineTitle: "Portafolio",
-    headlineSubtitle: "Dirección de Arte, Diseño Editorial & Arte Sacro Contemporáneo · Selección de Proyectos & Perfil Profesional",
+    headlineSubtitle: "Diseño Gráfico, Diseño Editorial & Arte Sacro Contemporáneo · Selección de Proyectos & Perfil Profesional",
     menuSphere: "Esfera 3D · The Archive",
     menuGrid: "Índice · Grid View",
     menuReplay: "◉ Ver Video Inicial · Replay Video",
@@ -281,7 +281,7 @@ const I18N = {
     menuContact: "Contacto · Contacto Directo",
     menuMaster: "⚙ Consola Maestra · Studio Control",
     menuFooterLeft: "Valledupar · Colombia · Alcance Global",
-    menuFooterRight: "Dirección de Arte · Diseño Editorial · Arte Sacro",
+    menuFooterRight: "Diseño Gráfico · Diseño Editorial · Arte Sacro",
     gridTitle: "Catálogo Completo · Archivo",
     gridSubtitle: "Diez Obras Seleccionadas · 10 Works Index",
     gridClose: "← Esfera 3D",
@@ -313,7 +313,7 @@ const I18N = {
     stmtCtaText: "Iniciar Colaboración con Wilmar",
     contactTag: "CONTRATACIONES · COMISIONES 2026",
     contactHeading: "Iniciar Diálogo",
-    contactSubtitle: "Dirección de Arte · Diseño Editorial · Arte Sacro Contemporáneo",
+    contactSubtitle: "Diseño Gráfico · Diseño Editorial · Arte Sacro Contemporáneo",
     availBadge: "DISPONIBLE PARA PROYECTOS · Q4 2026 / 2027",
     clockLabel: "Hora en Valledupar (UTC-5):",
     chEmailLabel: "Correo Electrónico Oficial",
@@ -339,7 +339,7 @@ const I18N = {
       "Arte Sacro Contemporáneo",
       "Identidad de Marca & Tipografía",
       "Fotografía Conceptual & Retrato",
-      "Dirección de Arte & Asesoría",
+      "Diseño Visual & Asesoría Creativa",
       "Otro Proyecto Personalizado"
     ],
     labelBudget: "Presupuesto / Cronograma",
@@ -368,7 +368,7 @@ const I18N = {
     filterGrafico: "Arte Gráfico (2)",
     lbWhatsApp: "Consultar por WhatsApp",
     lbShare: "Compartir Obra",
-    signatureRole: "Dirección de Arte & Diseño Visual · Valledupar, Colombia",
+    signatureRole: "Diseñador Gráfico & Artista Visual · Valledupar, Colombia",
     toastLinkCopied: "¡Enlace a la obra copiado al portapapeles!",
     searchBtn: "Buscar",
     searchPlaceholder: "Buscar por obra, disciplina, cliente, técnica...",
@@ -394,7 +394,7 @@ const I18N = {
     videoBadge: "INTERACTIVE PROLOGUE",
     videoGreetingTag: "Official Portfolio · 2026",
     videoGreeting: "Hello, I'm Wilmar",
-    videoGreetingRole: "Graphic Designer & Art Director",
+    videoGreetingRole: "Graphic Designer & Visual Artist",
     videoHint: "Scroll wheel or swipe to explore · Zoom to enter",
     videoPlay: "Play",
     videoPause: "Pause",
@@ -407,7 +407,7 @@ const I18N = {
       archive: "Into Archive"
     },
     headlineTitle: "Portfolio",
-    headlineSubtitle: "Art Direction, Editorial Design & Contemporary Sacred Art · Selected Projects & Professional Profile",
+    headlineSubtitle: "Graphic Design, Editorial Design & Contemporary Sacred Art · Selected Projects & Professional Profile",
     menuSphere: "3D Sphere · The Archive",
     menuGrid: "Index · Grid View",
     menuReplay: "◉ Play Intro Video · Replay Video",
@@ -415,7 +415,7 @@ const I18N = {
     menuContact: "Contact · Direct Inquiry",
     menuMaster: "⚙ Master Console · Studio Control",
     menuFooterLeft: "Valledupar · Colombia · Global Reach",
-    menuFooterRight: "Art Direction · Editorial Design · Sacred Art",
+    menuFooterRight: "Graphic Design · Editorial Design · Sacred Art",
     gridTitle: "Complete Catalog · Archive",
     gridSubtitle: "Ten Selected Works · 10 Works Index",
     gridClose: "← 3D Sphere",
@@ -447,7 +447,7 @@ const I18N = {
     stmtCtaText: "Start Collaboration with Wilmar",
     contactTag: "BOOKINGS & COMMISSIONS 2026",
     contactHeading: "Start a Dialogue",
-    contactSubtitle: "Art Direction · Editorial Design · Contemporary Sacred Art",
+    contactSubtitle: "Graphic Design · Editorial Design · Contemporary Sacred Art",
     availBadge: "AVAILABLE FOR PROJECTS · Q4 2026 / 2027",
     clockLabel: "Valledupar Time (UTC-5):",
     chEmailLabel: "Official Email Address",
@@ -473,7 +473,7 @@ const I18N = {
       "Contemporary Sacred Art",
       "Brand Identity & Typography",
       "Conceptual Photography & Portrait",
-      "Art Direction & Consultation",
+      "Visual Design & Creative Consultation",
       "Other Custom Project"
     ],
     labelBudget: "Budget / Timeline",
@@ -502,7 +502,7 @@ const I18N = {
     filterGrafico: "Graphic Art (2)",
     lbWhatsApp: "Inquire via WhatsApp",
     lbShare: "Share Artwork",
-    signatureRole: "Art Direction & Visual Design · Valledupar, Colombia",
+    signatureRole: "Graphic Designer & Visual Artist · Valledupar, Colombia",
     toastLinkCopied: "Artwork direct link copied to clipboard!",
     searchBtn: "Search",
     searchPlaceholder: "Search by work, discipline, client, technique...",
@@ -608,7 +608,7 @@ function updateLightboxLanguage(lang) {
       if (tEl) tEl.textContent = isEn ? (item.title_en || OfflineTranslator.toEn(item.title)) : item.title;
       if (pEl) pEl.textContent = isEn ? (item.place_en || OfflineTranslator.toEn(item.place)) : item.place;
       if (nEl) nEl.textContent = isEn ? (item.note_en || OfflineTranslator.toEn(item.note)) : item.note;
-      if (rEl) rEl.textContent = isEn ? (item.role_en || OfflineTranslator.toEn(item.role || 'Art Direction & Composition')) : (item.role || 'Dirección de Arte & Composición');
+      if (rEl) rEl.textContent = isEn ? (item.role_en || OfflineTranslator.toEn(item.role || 'Graphic Design & Composition')) : (item.role || 'Diseño Gráfico & Composición');
       if (mEl) mEl.textContent = isEn ? (item.medium_en || OfflineTranslator.toEn(item.medium || 'Digital Composition & Fine Art Print')) : (item.medium || 'Composición Digital & Impresión Fine Art');
       if (cEl) cEl.textContent = isEn ? (item.client_en || OfflineTranslator.toEn(item.client || "Author's Collection")) : (item.client || 'Colección Autoral');
     }
@@ -844,14 +844,14 @@ function applyLanguage(lang) {
 const DEFAULT_CONFIG = {
   "profile": {
     "name": "Wilmar Machado",
-    "role": "Dirección de Arte · Diseño Gráfico & Editorial",
-    "role_en": "Art Direction · Graphic & Editorial Design",
+    "role": "Diseño Gráfico & Editorial · Arte Sacro",
+    "role_en": "Graphic & Editorial Design · Sacred Art",
     "brandTitle": "Wilmar Machado · Archivo Visual",
     "brandSubtitle": "Colección de Obras & Proyectos · 2024–2026",
     "headlineTitle": "Portafolio",
     "headlineTitle_en": "Portfolio",
-    "headlineSubtitle": "Dirección de Arte, Diseño Editorial & Arte Sacro Contemporáneo · Selección de Proyectos & Perfil Profesional",
-    "headlineSubtitle_en": "Art Direction, Editorial Design & Contemporary Sacred Art · Selected Projects & Professional Profile",
+    "headlineSubtitle": "Diseño Gráfico, Diseño Editorial & Arte Sacro Contemporáneo · Selección de Proyectos & Perfil Profesional",
+    "headlineSubtitle_en": "Graphic Design, Editorial Design & Contemporary Sacred Art · Selected Projects & Professional Profile",
     "gridTitle": "Catálogo Completo · Archivo",
     "gridTitle_en": "Complete Catalog · Archive",
     "gridSubtitle": "Diez Obras Seleccionadas · Índice de 10 Obras",
@@ -878,7 +878,7 @@ const DEFAULT_CONFIG = {
     "behance": "behance.net/wilmarmachado",
     "behanceUrl": "https://www.behance.net/",
     "menuFooterLeft": "Valledupar · Colombia · Alcance Global",
-    "menuFooterRight": "Dirección de Arte · Diseño Editorial · Arte Sacro"
+    "menuFooterRight": "Diseño Gráfico · Diseño Editorial · Arte Sacro"
   },
   "projects": [
     {
@@ -892,8 +892,8 @@ const DEFAULT_CONFIG = {
       "place_en": "Graphic Art · Album Cover Concept",
       "note": "Surrealismo oscuro y composición tipográfica experimental. Exploración visual de la dualidad mental a través de texturas analógicas y modelado escultórico en alto contraste.",
       "note_en": "Dark surrealism and experimental typographic composition. Visual exploration of mental duality through analog textures and sculptural modeling in high contrast.",
-      "role": "Dirección de Arte & Composición Tipográfica",
-      "role_en": "Art Direction & Typographic Composition",
+      "role": "Diseño Gráfico & Composición Tipográfica",
+      "role_en": "Graphic Design & Typographic Composition",
       "medium": "Técnica Mixta Digital · Impresión Fine Art 310g",
       "medium_en": "Digital Mixed Media · 310g Fine Art Print",
       "typography": "Neue Haas Grotesk & Fraktur Custom",
@@ -1661,8 +1661,8 @@ function layoutSphere() {
      ========================================================================== */
   const FLOATING_SKILLS = [
     {
-      title_es: "Dirección de Arte",
-      title_en: "Art Direction",
+      title_es: "Diseño Gráfico",
+      title_en: "Graphic Design",
       start: 0.05,
       peak: 0.20,
       end: 0.35,
@@ -2349,7 +2349,7 @@ function openLightbox(index) {
 
   // Populate technical specifications
   if (lbRole) {
-    const rVal = isEn ? (item.role_en || OfflineTranslator.toEn(item.role || 'Art Direction & Composition')) : (item.role || 'Dirección de Arte & Composición');
+    const rVal = isEn ? (item.role_en || OfflineTranslator.toEn(item.role || 'Graphic Design & Composition')) : (item.role || 'Diseño Gráfico & Composición');
     lbRole.textContent = rVal;
   }
   if (lbMedium) {
@@ -2925,7 +2925,7 @@ function initSpotlightSearch() {
 
         const titleText = isEn ? (item.title_en || OfflineTranslator.toEn(item.title)) : item.title;
         const placeText = isEn ? (item.place_en || OfflineTranslator.toEn(item.place)) : item.place;
-        const roleText = isEn ? (item.role_en || OfflineTranslator.toEn(item.role || 'Direction')) : (item.role || 'Dirección de Arte');
+        const roleText = isEn ? (item.role_en || OfflineTranslator.toEn(item.role || 'Graphic Design')) : (item.role || 'Diseño Gráfico');
 
         row.innerHTML = `
           <div class="spotlight-item-thumb">
@@ -3143,8 +3143,8 @@ function openShareModal(index) {
   const currentPlace = isEn ? (item.place_en || OfflineTranslator.toEn(item.place)) : item.place;
   const shareUrl = `${window.location.origin}${window.location.pathname}#obra-${index + 1}`;
   const shareText = isEn
-    ? `Explore "${currentTitle}" (${currentPlace}) by art director Wilmar Machado:`
-    : `Explora la obra "${currentTitle}" (${currentPlace}) del director de arte Wilmar Machado:`;
+    ? `Explore "${currentTitle}" (${currentPlace}) by visual artist Wilmar Machado:`
+    : `Explora la obra "${currentTitle}" (${currentPlace}) del artista visual Wilmar Machado:`;
 
   const imgEl = document.getElementById('share-preview-img');
   const titleEl = document.getElementById('share-preview-title');

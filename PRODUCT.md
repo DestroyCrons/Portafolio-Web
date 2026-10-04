@@ -8,12 +8,12 @@ web
 
 ## Users
 
-- **Primary Audience**: High-end creative commissioners, including art directors at independent and major record labels, publishing houses, cultural editors, and contemporary art curators/collectors seeking bespoke artistic commissions, high-impact album cover concepts, typographic editorial layouts, and contemporary sacred art.
-- **Secondary Audience**: Creative agencies, authors, musicians, and brands seeking distinctive visual identity, book/fanzine design, or conceptual art direction that transcends generic digital minimalism.
+- **Primary Audience**: High-end creative commissioners, including creative directors at independent and major record labels, publishing houses, cultural editors, and contemporary art curators/collectors seeking bespoke artistic commissions, high-impact album cover concepts, typographic editorial layouts, and contemporary sacred art.
+- **Secondary Audience**: Creative agencies, authors, musicians, and brands seeking distinctive visual identity, book/fanzine design, or conceptual visual direction that transcends generic digital minimalism.
 
 ## Product Purpose
 
-- Serve as the official interactive digital monograph, visual archive, and commercial commission portal for multidisciplinary visual artist and art director Wilmar Machado.
+- Serve as the official interactive digital monograph, visual archive, and commercial commission portal for multidisciplinary visual artist and graphic designer Wilmar Machado.
 - Showcase an elite curated collection of 10 signature works (2024–2026) across contemporary sacred art, editorial design, conceptual photography, and graphic art.
 - Transform the visitor experience from a conventional static portfolio into an immersive, museum-grade virtual exhibition, facilitating immediate dialogue and high-value project inquiries.
 

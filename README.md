@@ -1,6 +1,6 @@
 # Wilmar Machado — Portafolio Oficial de Autor & Archivo Visual (Edición 2026)
 
-Portafolio interactivo tridimensional, bilingüe y modular para **Wilmar Machado** (Dirección de Arte, Diseño Editorial y Arte Sacro Contemporáneo).
+Portafolio interactivo tridimensional, bilingüe y modular para **Wilmar Machado** (Diseño Gráfico, Diseño Editorial y Arte Sacro Contemporáneo).
 
 ---
 
