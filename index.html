@@ -326,10 +326,10 @@
           <div class="channel-card">
             <div class="channel-main">
               <span class="channel-label" id="ui-ch-wa-label">WhatsApp Directo</span>
-              <span class="channel-val" id="ui-whatsapp-display">+57 (Colombia)</span>
+              <span class="channel-val" id="ui-whatsapp-display">+57 316 329 6958</span>
             </div>
             <div class="channel-actions">
-              <a href="https://wa.me/573000000000?text=Hola%20Wilmar,%20me%20gustar%C3%ADa%20conversar%20sobre%20un%20proyecto" target="_blank" rel="noopener noreferrer" class="channel-btn" id="whatsapp-link-btn">Abrir Chat</a>
+              <a href="https://wa.me/573163296958?text=Hola%20Wilmar,%20me%20gustar%C3%ADa%20conversar%20sobre%20un%20proyecto" target="_blank" rel="noopener noreferrer" class="channel-btn" id="whatsapp-link-btn">Abrir Chat</a>
             </div>
           </div>
 
@@ -507,6 +507,81 @@
     <div class="spotlight-results" id="spotlight-results" role="listbox"></div>
     <div class="spotlight-footer">
       <span id="ui-spotlight-hint">Enter para seleccionar &middot; Esc para cerrar</span>
+    </div>
+  </div>
+</div>
+
+<!-- SHARE ARTWORK MULTI-APP MODAL -->
+<div id="share-modal" class="share-modal" role="dialog" aria-modal="true" aria-label="Compartir obra en aplicaciones">
+  <div class="share-backdrop" id="share-backdrop"></div>
+  <div class="share-box">
+    <div class="share-header">
+      <div class="share-header-left">
+        <span class="share-badge" id="ui-share-badge">DIFUSIÓN CULTURAL</span>
+        <h3 class="share-title" id="ui-share-title">Compartir Obra</h3>
+      </div>
+      <button type="button" class="share-close-btn" id="share-close-btn" aria-label="Cerrar modal de compartir">&times;</button>
+    </div>
+
+    <!-- Artwork preview snippet -->
+    <div class="share-preview-card" id="share-preview-card">
+      <div class="share-preview-thumb">
+        <img id="share-preview-img" src="" alt="Miniatura de obra">
+      </div>
+      <div class="share-preview-info">
+        <h4 class="share-preview-title" id="share-preview-title">Título de la Obra</h4>
+        <p class="share-preview-meta" id="share-preview-meta">Wilmar Machado &middot; Dirección de Arte</p>
+      </div>
+    </div>
+
+    <!-- Direct App Share Options Grid -->
+    <div class="share-grid">
+      <!-- WhatsApp -->
+      <a href="#" target="_blank" rel="noopener noreferrer" class="share-channel-btn share-wa" id="share-app-wa">
+        <span class="share-channel-icon">&#128172;</span>
+        <span class="share-channel-name">WhatsApp</span>
+      </a>
+
+      <!-- Telegram -->
+      <a href="#" target="_blank" rel="noopener noreferrer" class="share-channel-btn share-tg" id="share-app-tg">
+        <span class="share-channel-icon">&#9992;&#65039;</span>
+        <span class="share-channel-name">Telegram</span>
+      </a>
+
+      <!-- X / Twitter -->
+      <a href="#" target="_blank" rel="noopener noreferrer" class="share-channel-btn share-x" id="share-app-x">
+        <span class="share-channel-icon">&#120143;</span>
+        <span class="share-channel-name">X (Twitter)</span>
+      </a>
+
+      <!-- LinkedIn -->
+      <a href="#" target="_blank" rel="noopener noreferrer" class="share-channel-btn share-li" id="share-app-li">
+        <span class="share-channel-icon">&#128188;</span>
+        <span class="share-channel-name">LinkedIn</span>
+      </a>
+
+      <!-- Facebook -->
+      <a href="#" target="_blank" rel="noopener noreferrer" class="share-channel-btn share-fb" id="share-app-fb">
+        <span class="share-channel-icon">&#127760;</span>
+        <span class="share-channel-name">Facebook</span>
+      </a>
+
+      <!-- Native Device Share Menu -->
+      <button type="button" class="share-channel-btn share-more" id="share-app-native">
+        <span class="share-channel-icon">&#128241;</span>
+        <span class="share-channel-name" id="ui-share-more-apps">Más Apps</span>
+      </button>
+    </div>
+
+    <!-- Direct Deep Link Copy Bar -->
+    <div class="share-link-wrapper">
+      <label class="share-link-label" id="ui-share-link-label">Enlace Directo a la Obra:</label>
+      <div class="share-input-group">
+        <input type="text" id="share-link-input" class="share-input" readonly value="">
+        <button type="button" class="share-copy-btn" id="share-copy-action-btn">
+          <span id="ui-share-copy-btn-text">Copiar</span>
+        </button>
+      </div>
     </div>
   </div>
 </div>

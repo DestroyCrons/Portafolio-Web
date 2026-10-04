@@ -377,7 +377,12 @@ const I18N = {
     focusMode: "Enfoque",
     focusModeDeactivate: "Salir de Enfoque",
     orbitPause: "Pausar Giro",
-    orbitResume: "Reanudar Giro"
+    orbitResume: "Reanudar Giro",
+    shareModalTitle: "Compartir Obra",
+    shareModalBadge: "DIFUSIÓN CULTURAL",
+    shareLinkLabel: "Enlace Directo a la Obra:",
+    shareBtnCopy: "Copiar",
+    shareMoreApps: "Más Apps"
   },
   en: {
     lang: "EN",
@@ -506,7 +511,12 @@ const I18N = {
     focusMode: "Focus",
     focusModeDeactivate: "Exit Focus",
     orbitPause: "Pause Orbit",
-    orbitResume: "Resume Orbit"
+    orbitResume: "Resume Orbit",
+    shareModalTitle: "Share Artwork",
+    shareModalBadge: "CULTURAL DISSEMINATION",
+    shareLinkLabel: "Direct Link to Artwork:",
+    shareBtnCopy: "Copy",
+    shareMoreApps: "More Apps"
   }
 };
 
@@ -649,6 +659,11 @@ function applyLanguage(lang) {
   setT('ui-nav-focus-label', dict.focusMode);
   setPh('spotlight-search-input', dict.searchPlaceholder);
   setT('ui-spotlight-hint', dict.spotlightHint);
+  setT('ui-share-title', dict.shareModalTitle);
+  setT('ui-share-badge', dict.shareModalBadge);
+  setT('ui-share-link-label', dict.shareLinkLabel);
+  setT('ui-share-copy-btn-text', dict.shareBtnCopy);
+  setT('ui-share-more-apps', dict.shareMoreApps);
   const orbitLabel = document.getElementById('ui-orbit-label');
   if (orbitLabel) {
     orbitLabel.textContent = STATE.orbitPaused ? dict.orbitResume : dict.orbitPause;
@@ -857,7 +872,7 @@ const DEFAULT_CONFIG = {
     "location": "Valledupar, Cesar, Colombia",
     "availability": "DISPONIBLE PARA PROYECTOS · Q4 2026 / 2027",
     "email": "wamimcim2@gmail.com",
-    "whatsapp": "+573001234567",
+    "whatsapp": "+57 316 329 6958",
     "whatsappMsg": "Hola Wilmar, me gustaría conversar sobre un proyecto editorial / visual.",
     "instagram": "@wilmar.machado",
     "instagramUrl": "https://www.instagram.com/",
@@ -2310,7 +2325,7 @@ function openLightbox(index) {
   // Populate WhatsApp Direct Inquiry link
   const waBtn = document.getElementById('lightbox-wa-btn');
   if (waBtn) {
-    const rawNumber = (cfg.profile.whatsapp || '+573001234567').replace(/[^0-9]/g, '');
+    const rawNumber = (cfg.profile.whatsapp || '+573163296958').replace(/[^0-9]/g, '');
     const currentTitle = isEn ? (item.title_en || item.title) : item.title;
     const currentPlace = isEn ? (item.place_en || item.place) : item.place;
     const waText = isEn
@@ -2319,27 +2334,12 @@ function openLightbox(index) {
     waBtn.href = rawNumber ? `https://wa.me/${rawNumber}?text=${encodeURIComponent(waText)}` : '#';
   }
 
-  // Populate Share Button (Native Web Share API with Clipboard Fallback)
+  // Populate Share Button (Opens Multi-App Share Modal)
   const shareBtn = document.getElementById('lightbox-share-btn');
   if (shareBtn) {
     shareBtn.onclick = () => {
-      const shareUrl = `${window.location.origin}${window.location.pathname}#obra-${index + 1}`;
-      if (navigator.share) {
-        navigator.share({
-          title: `Wilmar Machado · ${currentTitle}`,
-          text: `${currentTitle} (${currentPlace}) — Portafolio Oficial de Wilmar Machado`,
-          url: shareUrl
-        }).catch(() => {
-          navigator.clipboard.writeText(shareUrl).then(() => {
-            showToast(isEn ? 'Artwork link copied to clipboard!' : '¡Enlace a la obra copiado al portapapeles!');
-          });
-        });
-      } else {
-        navigator.clipboard.writeText(shareUrl).then(() => {
-          showToast(isEn ? 'Artwork link copied to clipboard!' : '¡Enlace a la obra copiado al portapapeles!');
-        }).catch(() => {
-          showToast(shareUrl);
-        });
+      if (typeof openShareModal === 'function') {
+        openShareModal(index);
       }
     };
   }
@@ -2708,27 +2708,40 @@ ${message}`;
 
       if (feedbackBox) {
         feedbackBox.classList.add('success');
+        const dict = I18N[currentLang] || I18N.es;
+        feedbackBox.innerHTML = `
+          <div class="feedback-success-inner">
+            <div class="feedback-badge-row">
+              <span class="feedback-check">✓</span>
+              <h4 class="feedback-title">${dict.feedbackTitle}</h4>
+            </div>
+            <p class="feedback-desc">${dict.feedbackSub}</p>
+            <div class="feedback-actions">
+              <a href="${preparedMailto}" class="channel-btn feedback-action-btn primary" id="open-mailto-btn">
+                ✉ ${dict.btnOpenMail}
+              </a>
+              <button type="button" class="channel-btn feedback-action-btn" id="copy-summary-btn">
+                📋 ${dict.btnCopySummary}
+              </button>
+            </div>
+          </div>
+        `;
+
+        const copyBtn = document.getElementById('copy-summary-btn');
+        if (copyBtn) {
+          copyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(preparedText).then(() => {
+              showToast(dict.toastMsgCopied || '¡Mensaje copiado al portapapeles!');
+              copyBtn.textContent = '✓ ' + (currentLang === 'en' ? 'Copied' : 'Copiado');
+              setTimeout(() => {
+                copyBtn.textContent = '📋 ' + dict.btnCopySummary;
+              }, 2500);
+            });
+          });
+        }
       }
 
-      showToast('¡Propuesta preparada correctamente!');
-    });
-  }
-
-  const openMailtoBtn = document.getElementById('open-mailto-btn');
-  if (openMailtoBtn) {
-    openMailtoBtn.addEventListener('click', () => {
-      if (preparedMailto) window.location.href = preparedMailto;
-    });
-  }
-
-  const copySummaryBtn = document.getElementById('copy-summary-btn');
-  if (copySummaryBtn) {
-    copySummaryBtn.addEventListener('click', () => {
-      if (preparedText) {
-        navigator.clipboard.writeText(preparedText).then(() => {
-          showToast('¡Mensaje copiado al portapapeles!');
-        });
-      }
+      showToast(I18N[currentLang]?.toastProposalReady || '¡Propuesta preparada correctamente!');
     });
   }
 })();
@@ -2799,6 +2812,7 @@ window.addEventListener('hashchange', handleUrlHash);
   if (typeof initSpotlightSearch === 'function') initSpotlightSearch();
   if (typeof initFocusMode === 'function') initFocusMode();
   if (typeof initOrbitControl === 'function') initOrbitControl();
+  if (typeof initShareModal === 'function') initShareModal();
   if (window.location.hash) {
     handleUrlHash();
   }
@@ -3025,6 +3039,123 @@ function initOrbitControl() {
       : (isEn ? '3D Orbit Resumed' : 'Giro 3D Reanudado')
     );
   });
+}
+
+/* ==========================================================================
+   MULTI-APP SHARE MODAL CONTROLLER (WhatsApp, Telegram, X, LinkedIn, FB & Native)
+   ========================================================================== */
+function initShareModal() {
+  const modal = document.getElementById('share-modal');
+  const backdrop = document.getElementById('share-backdrop');
+  const closeBtn = document.getElementById('share-close-btn');
+  const copyBtn = document.getElementById('share-copy-action-btn');
+
+  if (!modal) return;
+
+  function closeShare() {
+    modal.classList.remove('active');
+  }
+
+  if (backdrop) backdrop.addEventListener('click', closeShare);
+  if (closeBtn) closeBtn.addEventListener('click', closeShare);
+
+  if (copyBtn) {
+    copyBtn.addEventListener('click', () => {
+      const inputEl = document.getElementById('share-link-input');
+      const isEn = (currentLang === 'en');
+      if (inputEl && inputEl.value) {
+        navigator.clipboard.writeText(inputEl.value).then(() => {
+          showToast(isEn ? 'Link copied to clipboard!' : '¡Enlace copiado al portapapeles!');
+          const btnText = document.getElementById('ui-share-copy-btn-text');
+          if (btnText) {
+            btnText.textContent = isEn ? '✓ Copied' : '✓ Copiado';
+            setTimeout(() => {
+              btnText.textContent = isEn ? 'Copy' : 'Copiar';
+            }, 2000);
+          }
+        }).catch(() => {
+          showToast(inputEl.value);
+        });
+      }
+    });
+  }
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.classList.contains('active')) {
+      closeShare();
+    }
+  });
+}
+
+function openShareModal(index) {
+  const modal = document.getElementById('share-modal');
+  if (!modal) return;
+  const cfg = STATE.config || DEFAULT_CONFIG;
+  const items = cfg.projects || [];
+  const item = items[index];
+  if (!item) return;
+
+  const isEn = (currentLang === 'en');
+  const currentTitle = isEn ? (item.title_en || OfflineTranslator.toEn(item.title)) : item.title;
+  const currentPlace = isEn ? (item.place_en || OfflineTranslator.toEn(item.place)) : item.place;
+  const shareUrl = `${window.location.origin}${window.location.pathname}#obra-${index + 1}`;
+  const shareText = isEn
+    ? `Explore "${currentTitle}" (${currentPlace}) by art director Wilmar Machado:`
+    : `Explora la obra "${currentTitle}" (${currentPlace}) del director de arte Wilmar Machado:`;
+
+  const imgEl = document.getElementById('share-preview-img');
+  const titleEl = document.getElementById('share-preview-title');
+  const metaEl = document.getElementById('share-preview-meta');
+  const inputEl = document.getElementById('share-link-input');
+
+  if (imgEl) imgEl.src = item.thumb || item.image;
+  if (titleEl) titleEl.textContent = currentTitle;
+  if (metaEl) metaEl.textContent = `Wilmar Machado · ${currentPlace}`;
+  if (inputEl) inputEl.value = shareUrl;
+
+  const waBtn = document.getElementById('share-app-wa');
+  if (waBtn) {
+    waBtn.href = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`;
+  }
+
+  const tgBtn = document.getElementById('share-app-tg');
+  if (tgBtn) {
+    tgBtn.href = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
+  }
+
+  const xBtn = document.getElementById('share-app-x');
+  if (xBtn) {
+    xBtn.href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+  }
+
+  const liBtn = document.getElementById('share-app-li');
+  if (liBtn) {
+    liBtn.href = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
+  }
+
+  const fbBtn = document.getElementById('share-app-fb');
+  if (fbBtn) {
+    fbBtn.href = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+  }
+
+  const nativeBtn = document.getElementById('share-app-native');
+  if (nativeBtn) {
+    nativeBtn.onclick = () => {
+      if (navigator.share) {
+        navigator.share({
+          title: `Wilmar Machado · ${currentTitle}`,
+          text: `${currentTitle} (${currentPlace}) — Portafolio Oficial de Wilmar Machado`,
+          url: shareUrl
+        }).catch(() => {});
+      } else {
+        navigator.clipboard.writeText(shareUrl).then(() => {
+          showToast(isEn ? 'Direct link copied!' : '¡Enlace directo copiado!');
+        });
+      }
+    };
+  }
+
+  modal.classList.add('active');
 }
 
 /* ==========================================================================
