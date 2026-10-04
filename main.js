@@ -1474,7 +1474,7 @@ function layoutSphere() {
     ambientVideo.src = vSrc;
   }
 
-  let videoDuration = 13.07;
+  let videoDuration = 5.50;
   let targetProgress = 0.0;
   let currentProgress = 0.0;
   let videoEnded = false;
@@ -1669,8 +1669,8 @@ function layoutSphere() {
   introVideo.addEventListener('canplay', primeVideo, { once: true });
   if (introVideo.readyState >= 2) primeVideo();
 
-  const TOTAL_SCROLL_PIXELS = 1400; // Calibrated for 4-5 natural flicks across full 13s video (zero user fatigue)
-  const TOTAL_TOUCH_PIXELS = 850;   // Symmetrical travel for mobile swipe gestures
+  const TOTAL_SCROLL_PIXELS = 900;  // Calibrated for 3-4 natural flicks across 5.5s video (high retention & zero fatigue)
+  const TOTAL_TOUCH_PIXELS = 600;   // Symmetrical travel for mobile swipe gestures
 
   let isAutoPlaying = false;
   let isSeeking = false;
