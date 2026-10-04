@@ -2,6 +2,8 @@
 
 Portafolio interactivo tridimensional, bilingüe y modular para **Wilmar Machado** (Diseño Gráfico, Diseño Editorial y Arte Sacro Contemporáneo).
 
+- **Repositorio Oficial:** [github.com/DestroyCrons/portafolio-wilmar-machado](https://github.com/DestroyCrons/portafolio-wilmar-machado)
+
 ---
 
 ## 📁 Estructura del Proyecto
@@ -9,7 +11,7 @@ Portafolio interactivo tridimensional, bilingüe y modular para **Wilmar Machado
 El proyecto está organizado de manera completamente modular, separando estructura, estilos, interactividad y medios:
 
 ```
-portafolio_wilmar_machado/
+portafolio-wilmar-machado/
 │
 ├── index.html        # Estructura semántica HTML5 (Prólogo interactivo, Esfera 3D, Cuadrícula, Lightbox, Modales)
 ├── styles.css        # Sistema completo de diseño, variables CSS, tipografías y efectos visuales

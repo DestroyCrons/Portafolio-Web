@@ -1,0 +1,23 @@
+{
+  "name": "portafolio-wilmar-machado",
+  "version": "2.0.0",
+  "description": "Portafolio Oficial & Archivo Visual 2026 — Wilmar Machado · Diseñador Gráfico & Artista Visual",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8000"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DestroyCrons/portafolio-wilmar-machado.git"
+  },
+  "keywords": [
+    "portfolio",
+    "wilmar-machado",
+    "graphic-design",
+    "visual-artist",
+    "sacred-art",
+    "editorial-design"
+  ],
+  "author": "Wilmar Machado",
+  "license": "UNLICENSED"
+}
