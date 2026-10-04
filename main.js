@@ -1657,109 +1657,60 @@ function layoutSphere() {
 
   // Ensure video is strictly paused on load & refresh (never autoplay)
   introVideo.pause();
+  // Ensure video is strictly paused on load & refresh (never autoplay)
+  introVideo.pause();
   if (ambientVideo) ambientVideo.pause();
 
-  const TOTAL_SCROLL_PIXELS = 900;  // Calibrated for 3-4 natural flicks across 5.5s video (high retention & zero fatigue)
-  const TOTAL_TOUCH_PIXELS = 600;   // Symmetrical travel for mobile swipe gestures
-
   let isAutoPlaying = false;
-  let isSeeking = false;
-  let pendingSeekTime = null;
-  let seekWatchdogTimer = null;
 
-  function seekVideoTo(time) {
-    time = Math.max(0.001, Math.min(videoDuration - 0.001, time));
-    if (isSeeking) {
-      pendingSeekTime = time;
-      return;
-    }
-    isSeeking = true;
-    introVideo.currentTime = time;
-
-    clearTimeout(seekWatchdogTimer);
-    seekWatchdogTimer = setTimeout(() => {
-      isSeeking = false;
-      if (pendingSeekTime !== null) {
-        const next = pendingSeekTime;
-        pendingSeekTime = null;
-        seekVideoTo(next);
+  // Toggle play / pause on click
+  function startOrPauseVideo() {
+    if (videoEnded) return;
+    if (introVideo.paused) {
+      if (introVideo.currentTime >= videoDuration - 0.25) {
+        introVideo.currentTime = 0;
+        currentProgress = 0;
       }
-    }, 20);
-  }
-
-  introVideo.addEventListener('seeked', () => {
-    isSeeking = false;
-    clearTimeout(seekWatchdogTimer);
-    if (pendingSeekTime !== null) {
-      const next = pendingSeekTime;
-      pendingSeekTime = null;
-      seekVideoTo(next);
-    }
-  });
-
-  window.addEventListener('wheel', (e) => {
-    if (videoEnded || videoStage.style.display === 'none') return;
-    e.preventDefault();
-
-    let delta = e.deltaY;
-    if (e.deltaMode === 1) delta *= 32;
-    else if (e.deltaMode === 2) delta *= 600;
-
-    // Immediately stop auto-play so user has total manual tactile control
-    if (isAutoPlaying || !introVideo.paused) {
+      hideGreeting();
+      const playOverlay = document.getElementById('video-play-overlay');
+      if (playOverlay) playOverlay.classList.add('hidden');
+      isAutoPlaying = true;
+      introVideo.play().catch(err => console.warn('Play notice:', err));
+    } else {
       isAutoPlaying = false;
       introVideo.pause();
       if (ambientVideo && !ambientVideo.paused) ambientVideo.pause();
+      const playOverlay = document.getElementById('video-play-overlay');
+      if (playOverlay) playOverlay.classList.remove('hidden');
     }
+  }
 
-    // 100% Symmetrical speed in both directions (forward and rewind share the exact same step sensitivity)
-    targetProgress = Math.max(0, Math.min(1.0, targetProgress + (delta / TOTAL_SCROLL_PIXELS)));
-
-    if (targetProgress > 0.008) {
-      hideGreeting();
-    } else {
-      showGreeting();
+  // Wheel & touch: If the user scrolls down on the video intro, transition directly to the 3D sphere archive
+  window.addEventListener('wheel', (e) => {
+    if (videoEnded || videoStage.style.display === 'none') return;
+    if (e.deltaY > 20) {
+      e.preventDefault();
+      completeVideoAndEnterArchive();
     }
   }, { passive: false });
 
   let touchStartY = 0;
-  let isTouching = false;
-
   window.addEventListener('touchstart', (e) => {
     if (videoEnded || videoStage.style.display === 'none') return;
     if (e.touches.length === 1) {
       touchStartY = e.touches[0].clientY;
-      isTouching = true;
     }
   }, { passive: true });
 
   window.addEventListener('touchmove', (e) => {
-    if (videoEnded || !isTouching || videoStage.style.display === 'none') return;
+    if (videoEnded || videoStage.style.display === 'none') return;
     if (e.touches.length === 1) {
       const curY = e.touches[0].clientY;
-      const deltaY = touchStartY - curY; // swipe up (forward > 0), swipe down (rewind < 0)
-      touchStartY = curY;
-
-      if (isAutoPlaying || !introVideo.paused) {
-        isAutoPlaying = false;
-        introVideo.pause();
-        if (ambientVideo && !ambientVideo.paused) ambientVideo.pause();
+      const deltaY = touchStartY - curY; // swipe up
+      if (deltaY > 35) {
+        completeVideoAndEnterArchive();
       }
-
-      // 100% Symmetrical touch sensitivity
-      targetProgress = Math.max(0, Math.min(1.0, targetProgress + (deltaY / TOTAL_TOUCH_PIXELS)));
-
-      if (targetProgress > 0.008) {
-        hideGreeting();
-      } else {
-        showGreeting();
-      }
-      e.preventDefault();
     }
-  }, { passive: false });
-
-  window.addEventListener('touchend', () => {
-    isTouching = false;
   }, { passive: true });
 
   window.addEventListener('mousemove', (e) => {
@@ -1770,74 +1721,53 @@ function layoutSphere() {
 
   if (progressTrack) {
     progressTrack.addEventListener('click', (e) => {
-      hideGreeting();
-      if (isAutoPlaying || !introVideo.paused) {
-        isAutoPlaying = false;
-        introVideo.pause();
-        if (ambientVideo && !ambientVideo.paused) ambientVideo.pause();
-      }
       const rect = progressTrack.getBoundingClientRect();
       const clickRatio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
       const targetTime = Math.min(videoDuration - 0.05, clickRatio * videoDuration);
-      targetProgress = clickRatio;
       currentProgress = clickRatio;
-      seekVideoTo(targetTime);
+      introVideo.currentTime = targetTime;
+      if (ambientVideo) { try { ambientVideo.currentTime = targetTime; } catch(e) {} }
       updateFloatingTags(currentProgress);
       if (progressBar) progressBar.style.transform = `scaleX(${currentProgress})`;
     });
   }
 
   if (playBtn) {
-    playBtn.addEventListener('click', () => {
-      hideGreeting();
-      if (introVideo.paused) {
-        if (introVideo.currentTime >= videoDuration - 0.25) {
-          introVideo.currentTime = 0.001;
-          targetProgress = 0.0;
-          currentProgress = 0.0;
-        }
-        isAutoPlaying = true;
-        introVideo.playbackRate = 1.0;
-        introVideo.play().catch(err => console.warn('Play notice:', err));
-      } else {
-        isAutoPlaying = false;
-        introVideo.pause();
-      }
+    playBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      startOrPauseVideo();
     });
   }
 
   introVideo.addEventListener('play', () => {
     isAutoPlaying = true;
-    if (playBtn) { const d = I18N[currentLang] || I18N.es; playBtn.innerHTML = '&#10074;&#10074; <span id="ui-video-play-label">' + d.videoPause + '</span>'; }
+    if (playBtn) {
+      const d = I18N[currentLang] || I18N.es;
+      playBtn.innerHTML = '&#10074;&#10074; <span id="ui-video-play-label">' + d.videoPause + '</span>';
+    }
     if (ambientVideo && ambientVideo.paused) ambientVideo.play().catch(() => {});
     hideGreeting();
+    const playOverlay = document.getElementById('video-play-overlay');
+    if (playOverlay) playOverlay.classList.add('hidden');
   });
 
   introVideo.addEventListener('pause', () => {
     isAutoPlaying = false;
-    if (playBtn) { const d = I18N[currentLang] || I18N.es; playBtn.innerHTML = '&#9654; <span id="ui-video-play-label">' + d.videoPlay + '</span>'; }
+    if (playBtn) {
+      const d = I18N[currentLang] || I18N.es;
+      playBtn.innerHTML = '&#9654; <span id="ui-video-play-label">' + d.videoPlay + '</span>';
+    }
     if (ambientVideo && !ambientVideo.paused) ambientVideo.pause();
+    const playOverlay = document.getElementById('video-play-overlay');
+    if (playOverlay) playOverlay.classList.remove('hidden');
     if (currentProgress <= 0.008 && !videoEnded) showGreeting();
   });
 
-  // Video click & error fallbacks
+  // Clicking on video frame toggles play/pause
   if (videoFrame) {
     videoFrame.addEventListener('click', (e) => {
       if (e.target.closest('.video-controls') || e.target.closest('.video-topbar') || e.target.closest('#video-greeting')) return;
-      hideGreeting();
-      if (introVideo.paused) {
-        if (introVideo.currentTime >= videoDuration - 0.25) {
-          introVideo.currentTime = 0.001;
-          targetProgress = 0.0;
-          currentProgress = 0.0;
-        }
-        isAutoPlaying = true;
-        introVideo.playbackRate = 1.0;
-        introVideo.play().catch(err => console.warn('Play error:', err));
-      } else {
-        isAutoPlaying = false;
-        introVideo.pause();
-      }
+      startOrPauseVideo();
     });
   }
 
@@ -1890,13 +1820,15 @@ function layoutSphere() {
     targetProgress = 0.0;
     currentProgress = 0.0;
     isAutoPlaying = false;
-    introVideo.currentTime = 0.001;
+    introVideo.currentTime = 0;
     introVideo.pause();
     if (ambientVideo) {
       ambientVideo.pause();
-      try { ambientVideo.currentTime = 0.001; } catch(e) {}
+      try { ambientVideo.currentTime = 0; } catch(e) {}
     }
     showGreeting();
+    const playOverlay = document.getElementById('video-play-overlay');
+    if (playOverlay) playOverlay.classList.remove('hidden');
     updateFloatingTags(0.0);
 
     const menu = document.getElementById('menu');
@@ -1962,39 +1894,23 @@ function layoutSphere() {
   function renderVideoLoop() {
     if (videoEnded || videoStage.style.display === 'none') return;
 
-    if (isAutoPlaying && !introVideo.paused) {
+    if (!introVideo.paused) {
       // Natural playback: follow video element currentTime
       currentProgress = Math.max(0, Math.min(1.0, introVideo.currentTime / videoDuration));
       targetProgress = currentProgress;
       hideGreeting();
+      const playOverlay = document.getElementById('video-play-overlay');
+      if (playOverlay) playOverlay.classList.add('hidden');
 
-      if (introVideo.currentTime >= videoDuration - 0.25 || currentProgress >= 0.985) {
+      if (introVideo.currentTime >= videoDuration - 0.12 || currentProgress >= 0.985) {
         window.completeVideoAndEnterArchive();
         return;
       }
     } else {
-      // Symmetrical scroll scrubbing: smooth lerp to targetProgress
-      const progressDiff = targetProgress - currentProgress;
-      if (Math.abs(progressDiff) > 0.0001) {
-        currentProgress += progressDiff * 0.45;
-      } else {
-        currentProgress = targetProgress;
-      }
-
-      const targetTime = currentProgress * videoDuration;
-      if (Math.abs(introVideo.currentTime - targetTime) > 0.005) {
-        seekVideoTo(targetTime);
-      }
-
-      if (currentProgress >= 0.985 || targetProgress >= 0.995) {
-        window.completeVideoAndEnterArchive();
-        return;
-      }
-
-      if (currentProgress > 0.008) {
-        hideGreeting();
-      } else if (!videoEnded) {
+      if (currentProgress <= 0.01 && !videoEnded) {
         showGreeting();
+        const playOverlay = document.getElementById('video-play-overlay');
+        if (playOverlay) playOverlay.classList.remove('hidden');
       }
     }
 

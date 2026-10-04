@@ -404,6 +404,77 @@ input, textarea, select, button {
   .video-greeting-role { font-size: 10px; }
 }
 
+/* Center Play Button Overlay on #video-frame */
+.video-play-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) translateZ(35px);
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 10;
+  transition: opacity 0.35s ease, transform 0.35s ease, visibility 0.35s ease;
+}
+
+.video-play-circle {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: rgba(10, 10, 14, 0.78);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 25px rgba(212, 163, 89, 0.35);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+#video-frame:hover .video-play-circle {
+  transform: scale(1.1);
+  background: rgba(212, 163, 89, 0.22);
+  color: #ffffff;
+  border-color: #ffffff;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.9), 0 0 35px rgba(212, 163, 89, 0.6);
+}
+
+.video-play-circle svg {
+  margin-left: 3px;
+  transition: transform 0.25s ease;
+}
+
+#video-frame:hover .video-play-circle svg {
+  transform: scale(1.08);
+}
+
+.video-play-pulse {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1.5px solid var(--accent);
+  opacity: 0.6;
+  animation: playPulse 2.4s cubic-bezier(0.25, 1, 0.5, 1) infinite;
+}
+
+@keyframes playPulse {
+  0% { transform: scale(0.92); opacity: 0.75; }
+  100% { transform: scale(1.45); opacity: 0; }
+}
+
+.video-play-overlay.hidden {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  transform: translate(-50%, -50%) scale(0.7) translateZ(35px) !important;
+  pointer-events: none !important;
+}
+
 /* ==========================================================================
    VIDEO INTRO FLOATING SKILLS & WORK AREAS (Subtle, Minimal & Non-Obtrusive)
    ========================================================================== */

@@ -68,13 +68,22 @@
       </div>
       <!-- FLOATING WORK AREAS & SKILLS TAGS (Integrated inside video frame) -->
       <div id="video-floating-tags" class="video-floating-tags" aria-hidden="true"></div>
+      <!-- CENTER PLAY BUTTON OVERLAY -->
+      <div id="video-play-overlay" class="video-play-overlay" aria-hidden="true">
+        <div class="video-play-pulse"></div>
+        <div class="video-play-circle">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
+            <polygon points="7 4 19 12 7 20 7 4"></polygon>
+          </svg>
+        </div>
+      </div>
     </div>
   </div>
 
   <div class="video-controls">
     <div class="video-hint-bar">
-      <span class="video-hint-icon">&#8693;</span>
-      <span class="video-hint-text">Gira la rueda del rat&oacute;n o desliza para hacer zoom &middot; Scroll to explore</span>
+      <span class="video-hint-icon">&#9654;</span>
+      <span class="video-hint-text" id="ui-video-hint-text">Haz clic para reproducir o pulsa Omitir para entrar &middot; Click to play</span>
     </div>
 
     <div class="video-progress-track" id="video-progress-track" title="L&iacute;nea de tiempo">
