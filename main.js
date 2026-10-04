@@ -589,7 +589,6 @@ function updateLightboxLanguage(lang) {
   setT('ui-spec-medium-label', dict.specMedium);
   setT('ui-spec-typo-label', dict.specTypo);
   setT('ui-spec-client-label', dict.specClient);
-  setHtml('lightbox-drive-btn', dict.lbDrive);
   setT('ui-lb-inquire-label', dict.inquireSimilar);
   setT('ui-lb-wa-label', dict.lbWhatsApp);
   setT('ui-lb-share-label', dict.lbShare);
@@ -1420,8 +1419,10 @@ function rebuildSphereAndGrid(cfg) {
 }
 
 // Curatorial Discipline Filter Controller
+// Curatorial Discipline Filter Controller
 function setCategoryFilter(category) {
   STATE.currentFilter = category || 'all';
+  const isAll = (STATE.currentFilter === 'all');
   const pills = document.querySelectorAll('.filter-pill');
   pills.forEach(pill => {
     const filterVal = pill.getAttribute('data-filter');
@@ -1437,8 +1438,12 @@ function setCategoryFilter(category) {
   const cards = document.querySelectorAll('#world .card');
   cards.forEach(card => {
     const cardCat = card.getAttribute('data-category') || 'all';
-    const matches = (STATE.currentFilter === 'all' || cardCat === STATE.currentFilter);
-    if (matches) {
+    const matches = (isAll || cardCat === STATE.currentFilter);
+    if (isAll) {
+      card.classList.remove('filtered-out');
+      card.classList.remove('filtered-in');
+      card.style.pointerEvents = 'auto';
+    } else if (matches) {
       card.classList.remove('filtered-out');
       card.classList.add('filtered-in');
       card.style.pointerEvents = 'auto';
@@ -1452,8 +1457,17 @@ function setCategoryFilter(category) {
   const gridItems = document.querySelectorAll('#grid-container .grid-item');
   gridItems.forEach(item => {
     const itemCat = item.getAttribute('data-category') || 'all';
-    const matches = (STATE.currentFilter === 'all' || itemCat === STATE.currentFilter);
-    item.classList.toggle('filtered-out', !matches);
+    const matches = (isAll || itemCat === STATE.currentFilter);
+    if (isAll) {
+      item.classList.remove('filtered-out');
+      item.classList.remove('filtered-in');
+    } else if (matches) {
+      item.classList.remove('filtered-out');
+      item.classList.add('filtered-in');
+    } else {
+      item.classList.add('filtered-out');
+      item.classList.remove('filtered-in');
+    }
   });
 }
 window.setCategoryFilter = setCategoryFilter;
@@ -1462,16 +1476,21 @@ window.applyCurrentCategoryFilter = function() {
 };
 
 // Wire curatorial discipline filter pills
-document.querySelectorAll('.filter-pill').forEach(pill => {
-  pill.addEventListener('click', () => {
-    const filter = pill.getAttribute('data-filter');
-    setCategoryFilter(filter);
-    pill.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-    const isEn = (currentLang === 'en');
-    const label = pill.querySelector('span')?.textContent || filter;
-    showToast(`✦ ${isEn ? 'Filter' : 'Filtro'}: ${label}`);
+function setupFilterPillEvents() {
+  const pills = document.querySelectorAll('.filter-pill');
+  pills.forEach(pill => {
+    pill.onclick = (e) => {
+      e.stopPropagation();
+      const filter = pill.getAttribute('data-filter');
+      setCategoryFilter(filter);
+      pill.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      const isEn = (currentLang === 'en');
+      const label = pill.querySelector('.filter-pill-name')?.textContent || filter;
+      showToast(`✦ ${isEn ? 'Filter' : 'Filtro'}: ${label}`);
+    };
   });
-});
+}
+setupFilterPillEvents();
 
 // Curatorial Filter Bar Mobile Scroll Controller
 function initCuratorialFilterBar() {
@@ -1494,35 +1513,46 @@ function initCuratorialFilterBar() {
   const btnNext = document.getElementById('filter-scroll-next');
 
   if (btnPrev) {
-    btnPrev.addEventListener('click', (e) => {
+    btnPrev.onclick = (e) => {
       e.stopPropagation();
       container.scrollBy({ left: -140, behavior: 'smooth' });
-    });
+    };
   }
 
   if (btnNext) {
-    btnNext.addEventListener('click', (e) => {
+    btnNext.onclick = (e) => {
       e.stopPropagation();
       container.scrollBy({ left: 140, behavior: 'smooth' });
-    });
+    };
   }
 
-  // Smooth mouse drag on desktop & hybrid touch devices
+  // Smooth mouse drag on desktop (never blocks pill taps or click events)
   let isDown = false;
-  let startX;
-  let scrollLeft;
+  let startX = 0;
+  let scrollLeft = 0;
+  let hasDragged = false;
+
   container.addEventListener('mousedown', (e) => {
+    if (e.target.closest('.filter-pill, .filter-scroll-arrow')) return;
     isDown = true;
+    hasDragged = false;
     startX = e.pageX - container.offsetLeft;
     scrollLeft = container.scrollLeft;
   });
-  window.addEventListener('mouseup', () => { isDown = false; });
+
+  window.addEventListener('mouseup', () => {
+    isDown = false;
+  });
+
   container.addEventListener('mousemove', (e) => {
     if (!isDown) return;
-    e.preventDefault();
     const x = e.pageX - container.offsetLeft;
     const walk = (x - startX) * 1.5;
-    container.scrollLeft = scrollLeft - walk;
+    if (Math.abs(walk) > 8) {
+      hasDragged = true;
+      e.preventDefault();
+      container.scrollLeft = scrollLeft - walk;
+    }
   });
 }
 
@@ -2275,7 +2305,6 @@ function openLightbox(index) {
   const lbMedium = document.getElementById('lightbox-medium');
   const lbTypo = document.getElementById('lightbox-typography');
   const lbClient = document.getElementById('lightbox-client');
-  const driveBtn = document.getElementById('lightbox-drive-btn');
 
   // Reset visual mode to 'final'
   setLightboxProcessMode('final');
@@ -2333,10 +2362,6 @@ function openLightbox(index) {
   if (lbClient) {
     const cVal = isEn ? (item.client_en || OfflineTranslator.toEn(item.client || "Author's Collection")) : (item.client || 'Colección Autoral');
     lbClient.textContent = cVal;
-  }
-
-  if (driveBtn) {
-    driveBtn.href = item.driveUrl || (item.id && !item.id.startsWith('http') ? `https://drive.google.com/file/d/${item.id}/view?usp=drivesdk` : (item.url || '#'));
   }
 
   // Populate WhatsApp Direct Inquiry link
@@ -2825,6 +2850,7 @@ window.addEventListener('hashchange', handleUrlHash);
   STATE.config = loadStoredConfig();
   applyConfigToUI(STATE.config);
   applyLanguage(currentLang);
+  if (typeof setupFilterPillEvents === 'function') setupFilterPillEvents();
   if (typeof initCuratorialFilterBar === 'function') initCuratorialFilterBar();
   if (typeof initSpotlightSearch === 'function') initSpotlightSearch();
   if (typeof initFocusMode === 'function') initFocusMode();
