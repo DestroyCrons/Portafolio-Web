@@ -1655,19 +1655,9 @@ function layoutSphere() {
     });
   }
 
-  // Pre-warm the media decoder so paused seeking is instantaneous
-  const primeVideo = () => {
-    if (introVideo.paused && introVideo.currentTime <= 0.02) {
-      const p = introVideo.play();
-      if (p && typeof p.then === 'function') {
-        p.then(() => {
-          if (!isAutoPlaying) introVideo.pause();
-        }).catch(() => {});
-      }
-    }
-  };
-  introVideo.addEventListener('canplay', primeVideo, { once: true });
-  if (introVideo.readyState >= 2) primeVideo();
+  // Ensure video is strictly paused on load & refresh (never autoplay)
+  introVideo.pause();
+  if (ambientVideo) ambientVideo.pause();
 
   const TOTAL_SCROLL_PIXELS = 900;  // Calibrated for 3-4 natural flicks across 5.5s video (high retention & zero fatigue)
   const TOTAL_TOUCH_PIXELS = 600;   // Symmetrical travel for mobile swipe gestures
