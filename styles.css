@@ -2916,6 +2916,10 @@ body.revealed .curatorial-filter-bar {
   pointer-events: auto;
 }
 
+.filter-scroll-arrow {
+  display: none;
+}
+
 .filter-pills-container {
   display: flex;
   align-items: center;
@@ -2973,23 +2977,161 @@ body.revealed .curatorial-filter-bar {
   color: #fff;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .curatorial-filter-bar {
     bottom: 16px;
-    width: 94vw;
+    width: min(94vw, 440px);
+    display: flex;
+    align-items: center;
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    box-sizing: border-box;
   }
+
+  /* Fade masks on the edges to show more content exists */
+  .curatorial-filter-bar::before,
+  .curatorial-filter-bar::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    bottom: 2px;
+    width: 34px;
+    pointer-events: none;
+    z-index: 8;
+    border-radius: 40px;
+    transition: opacity 0.3s ease;
+  }
+
+  .curatorial-filter-bar::before {
+    left: 0;
+    background: linear-gradient(to right, rgba(10, 10, 14, 0.96) 20%, transparent);
+    opacity: 0;
+  }
+
+  .curatorial-filter-bar::after {
+    right: 0;
+    background: linear-gradient(to left, rgba(10, 10, 14, 0.96) 20%, transparent);
+    opacity: 1;
+  }
+
+  .curatorial-filter-bar.scrolled-left::before {
+    opacity: 1;
+  }
+
+  .curatorial-filter-bar.scrolled-end::after {
+    opacity: 0;
+  }
+
   .filter-pills-container {
+    width: 100%;
     overflow-x: auto;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
     justify-content: flex-start;
+    padding: 6px 36px 8px 12px;
+    gap: 7px;
+    box-sizing: border-box;
   }
+
+  /* Sleek gold micro-scrollbar indicator */
   .filter-pills-container::-webkit-scrollbar {
-    display: none;
+    height: 2.5px !important;
+    display: block !important;
   }
+  .filter-pills-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    margin: 0 34px;
+  }
+  .filter-pills-container::-webkit-scrollbar-thumb {
+    background: rgba(212, 163, 89, 0.55);
+    border-radius: 4px;
+  }
+
   .filter-pill {
-    padding: 6px 10px;
+    padding: 6px 11px;
     font-size: 10px;
+    flex-shrink: 0;
+  }
+
+  /* Compact floating micro-chevrons */
+  .filter-scroll-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(14, 14, 20, 0.92);
+    border: 1px solid rgba(212, 163, 89, 0.45);
+    color: var(--accent);
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 12;
+    transition: opacity 0.25s ease, transform 0.25s ease, background 0.2s ease;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+    padding: 0;
+  }
+
+  .filter-scroll-arrow.prev {
+    left: 4px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .filter-scroll-arrow.next {
+    right: 4px;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .curatorial-filter-bar.scrolled-left .filter-scroll-arrow.prev {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .curatorial-filter-bar.scrolled-end .filter-scroll-arrow.next {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .filter-scroll-arrow:active {
+    transform: translateY(-50%) scale(0.9);
+    background: rgba(212, 163, 89, 0.25);
+  }
+
+  /* Toast Notification: Repositioned to top-center on mobile to NEVER cover the filter bar */
+  #toast-msg {
+    top: 76px !important;
+    bottom: auto !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) translateY(-20px) !important;
+    padding: 9px 20px !important;
+    font-size: 11px !important;
+    letter-spacing: 0.12em !important;
+    border-radius: 24px !important;
+    background: rgba(12, 12, 16, 0.96) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(212, 163, 89, 0.5) !important;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.85), 0 0 16px var(--accent-glow) !important;
+    max-width: 88vw !important;
+    white-space: nowrap !important;
+    text-align: center !important;
+    pointer-events: none !important;
+  }
+
+  #toast-msg.show {
+    transform: translateX(-50%) translateY(0) !important;
+    opacity: 1 !important;
   }
 }
 

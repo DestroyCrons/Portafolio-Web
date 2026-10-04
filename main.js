@@ -1132,7 +1132,7 @@ function showToast(message) {
   clearTimeout(toast._timeout);
   toast._timeout = setTimeout(() => {
     toast.classList.remove('show');
-  }, 3200);
+  }, 2200);
 }
 
 // Helper: Resolve image src (Local separate image files first, fallback to URL/Drive)
@@ -1375,7 +1375,13 @@ function setCategoryFilter(category) {
   const pills = document.querySelectorAll('.filter-pill');
   pills.forEach(pill => {
     const filterVal = pill.getAttribute('data-filter');
-    pill.classList.toggle('active', filterVal === STATE.currentFilter);
+    const isActive = (filterVal === STATE.currentFilter);
+    pill.classList.toggle('active', isActive);
+    if (isActive && window.innerWidth <= 900) {
+      try {
+        pill.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      } catch(e) {}
+    }
   });
 
   const cards = document.querySelectorAll('#world .card');
@@ -1412,9 +1418,75 @@ document.querySelectorAll('.filter-pill').forEach(pill => {
     setCategoryFilter(filter);
     const isEn = (currentLang === 'en');
     const label = pill.querySelector('span')?.textContent || filter;
-    showToast(`${isEn ? 'Filter' : 'Filtro'}: ${label}`);
+    showToast(`✦ ${isEn ? 'Filter' : 'Filtro'}: ${label}`);
   });
 });
+
+// Curatorial Filter Bar Mobile Scroll, Chevrons & Edge Fade Controller
+function initCuratorialFilterBar() {
+  const bar = document.getElementById('curatorial-filter-bar');
+  const container = document.getElementById('filter-pills-container');
+  const btnPrev = document.getElementById('filter-scroll-prev');
+  const btnNext = document.getElementById('filter-scroll-next');
+  if (!bar || !container) return;
+
+  function updateScrollState() {
+    const sl = container.scrollLeft;
+    const maxScroll = container.scrollWidth - container.clientWidth;
+    bar.classList.toggle('scrolled-left', sl > 6);
+    bar.classList.toggle('scrolled-end', sl >= maxScroll - 6 || maxScroll <= 0);
+  }
+
+  container.addEventListener('scroll', updateScrollState, { passive: true });
+  window.addEventListener('resize', updateScrollState, { passive: true });
+  setTimeout(updateScrollState, 100);
+
+  if (btnPrev) {
+    btnPrev.addEventListener('click', (e) => {
+      e.stopPropagation();
+      container.scrollBy({ left: -140, behavior: 'smooth' });
+    });
+  }
+
+  if (btnNext) {
+    btnNext.addEventListener('click', (e) => {
+      e.stopPropagation();
+      container.scrollBy({ left: 140, behavior: 'smooth' });
+    });
+  }
+
+  // Smooth mouse drag on hybrid touch devices
+  let isDown = false;
+  let startX;
+  let scrollLeft;
+  container.addEventListener('mousedown', (e) => {
+    isDown = true;
+    startX = e.pageX - container.offsetLeft;
+    scrollLeft = container.scrollLeft;
+  });
+  window.addEventListener('mouseup', () => { isDown = false; });
+  container.addEventListener('mousemove', (e) => {
+    if (!isDown) return;
+    e.preventDefault();
+    const x = e.pageX - container.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    container.scrollLeft = scrollLeft - walk;
+  });
+}
+
+// Kinetic peek hint for mobile filter bar to visually demonstrate scrollability
+function hintFilterBarScroll() {
+  const container = document.getElementById('filter-pills-container');
+  if (!container) return;
+  if (window.innerWidth <= 900 && container.scrollWidth > container.clientWidth) {
+    setTimeout(() => {
+      container.scrollTo({ left: 45, behavior: 'smooth' });
+      setTimeout(() => {
+        container.scrollTo({ left: 0, behavior: 'smooth' });
+      }, 550);
+    }, 750);
+  }
+}
 
 function layoutSphere() {
   const style = getComputedStyle(document.documentElement);
@@ -2121,6 +2193,10 @@ function layoutSphere() {
         }, 1200 + idx * 45);
       });
     }
+
+    setTimeout(() => {
+      if (typeof hintFilterBarScroll === 'function') hintFilterBarScroll();
+    }, 850);
   });
 
   function toggleGrid() {
@@ -2780,6 +2856,7 @@ window.addEventListener('hashchange', handleUrlHash);
   STATE.config = loadStoredConfig();
   applyConfigToUI(STATE.config);
   applyLanguage(currentLang);
+  if (typeof initCuratorialFilterBar === 'function') initCuratorialFilterBar();
   if (window.location.hash) {
     handleUrlHash();
   }
