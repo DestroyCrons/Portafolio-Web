@@ -1128,7 +1128,7 @@ const DEFAULT_CONFIG = {
 const STATE = {
   config: null,
   isAuthenticated: false,
-  orbitPaused: false,
+  orbitPaused: (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) ? true : false,
   cards: [],
   spherePositions: [],
   yaw: 0,
@@ -3066,7 +3066,27 @@ function initOrbitControl() {
   const label = document.getElementById('ui-orbit-label');
   if (!btn) return;
 
-  STATE.orbitPaused = false;
+  const prefersReduced = (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  if (prefersReduced) {
+    STATE.orbitPaused = true;
+    btn.classList.add('paused');
+    const dict = I18N[currentLang] || I18N.es;
+    if (icon) icon.innerHTML = '&#9658;';
+    if (label) label.textContent = dict.orbitResume;
+  }
+
+  if (typeof window !== 'undefined' && window.matchMedia) {
+    const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (motionQuery.addEventListener) {
+      motionQuery.addEventListener('change', (e) => {
+        STATE.orbitPaused = e.matches;
+        btn.classList.toggle('paused', STATE.orbitPaused);
+        const dict = I18N[currentLang] || I18N.es;
+        if (icon) icon.innerHTML = STATE.orbitPaused ? '&#9658;' : '&#10074;&#10074;';
+        if (label) label.textContent = STATE.orbitPaused ? dict.orbitResume : dict.orbitPause;
+      });
+    }
+  }
 
   btn.addEventListener('click', () => {
     STATE.orbitPaused = !STATE.orbitPaused;
