@@ -1,5 +1,5 @@
 // Service Worker for Wilmar Machado Portfolio & PWA Console 2026
-const CACHE_NAME = 'wm-portfolio-v2026-v2';
+const CACHE_NAME = 'wm-portfolio-v2026-v4';
 
 const ASSETS = [
   './',
@@ -53,9 +53,15 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
-  // Video or byte-range requests should bypass service worker cache
-  // to preserve native browser HTTP streaming (partial content 206) in iOS and Chrome
-  if (event.request.destination === 'video' || event.request.headers.get('range') || event.request.url.includes('.mp4')) {
+  // Video, audio, or byte-range streaming requests should bypass service worker cache
+  // to preserve native browser HTTP streaming (partial content 206) in iOS, Android, and Chrome
+  if (
+    event.request.destination === 'video' ||
+    event.request.destination === 'audio' ||
+    event.request.headers.get('range') ||
+    event.request.url.includes('.mp4') ||
+    event.request.url.includes('.mp3')
+  ) {
     return;
   }
 

@@ -1888,7 +1888,8 @@ function layoutSphere() {
       if (playOverlay) playOverlay.classList.add('hidden');
       isAutoPlaying = true;
       introVideo.play().catch(err => console.warn('Play notice:', err));
-      if (window.AmbientMusicEngine && localStorage.getItem('wilmar_ambient_music') !== 'muted') {
+      // Explicitly start ambient music on play
+      if (window.AmbientMusicEngine) {
         window.AmbientMusicEngine.start(false);
       }
     } else {
@@ -1900,6 +1901,17 @@ function layoutSphere() {
         window.AmbientMusicEngine.pauseVideoSync();
       }
     }
+  }
+
+  // Center Play Overlay: Direct click binding
+  const playOverlayEl = document.getElementById('video-play-overlay');
+  if (playOverlayEl) {
+    playOverlayEl.style.pointerEvents = 'auto';
+    playOverlayEl.style.cursor = 'pointer';
+    playOverlayEl.addEventListener('click', (e) => {
+      e.stopPropagation();
+      startOrPauseVideo();
+    });
   }
 
   // Mousemove: gentle tilt parallax for desktop viewing
@@ -1914,7 +1926,7 @@ function layoutSphere() {
     hideGreeting();
     const playOverlay = document.getElementById('video-play-overlay');
     if (playOverlay) playOverlay.classList.add('hidden');
-    if (window.AmbientMusicEngine && localStorage.getItem('wilmar_ambient_music') !== 'muted') {
+    if (window.AmbientMusicEngine) {
       window.AmbientMusicEngine.start(false);
     }
   });
@@ -1929,10 +1941,10 @@ function layoutSphere() {
     }
   });
 
-  // Clicking on video frame toggles play/pause (never skipping unintentionally)
+  // Clicking on video frame toggles play/pause (allows greeting click as well)
   if (videoFrame) {
     videoFrame.addEventListener('click', (e) => {
-      if (e.target.closest('.video-topbar-actions') || e.target.closest('.video-topbar') || e.target.closest('#video-greeting')) return;
+      if (e.target.closest('.video-topbar-actions') || e.target.closest('.video-topbar')) return;
       startOrPauseVideo();
     });
   }
@@ -3451,14 +3463,13 @@ function openShareModal(index) {
    ========================================================================== */
 const AmbientMusicEngine = (function() {
   const AUDIO_SRC = 'Midnight_Blueprint.mp3';
-  const TARGET_VOLUME = 0.88; // Noticeably louder and punchy as requested
+  const TARGET_VOLUME = 0.88; // Noticeably boosted, punchy & rich
   const DUCK_VOLUME = 0.28;   // Subtle volume during lightbox inspection
   
   let audioEl = null;
   let isPlaying = false;
   let isVideoPausedByUser = false;
   let isDucked = false;
-  let fadeInterval = null;
 
   function getAudioElement() {
     if (!audioEl) {
@@ -3479,34 +3490,12 @@ const AmbientMusicEngine = (function() {
     return audioEl;
   }
 
-  function fadeVolume(targetVol, durationMs = 380, callback = null) {
+  function setAudioVolume(vol) {
     const el = getAudioElement();
     if (!el) return;
-    if (fadeInterval) {
-      clearInterval(fadeInterval);
-      fadeInterval = null;
-    }
-    const startVol = (typeof el.volume === 'number' && !isNaN(el.volume)) ? el.volume : 0;
-    const diff = targetVol - startVol;
-    if (Math.abs(diff) < 0.02) {
-      el.volume = Math.max(0, Math.min(1, targetVol));
-      if (callback) callback();
-      return;
-    }
-    const steps = 16;
-    const stepTime = Math.max(10, Math.floor(durationMs / steps));
-    let currentStep = 0;
-    fadeInterval = setInterval(() => {
-      currentStep++;
-      const current = startVol + diff * (currentStep / steps);
-      el.volume = Math.max(0, Math.min(1, current));
-      if (currentStep >= steps) {
-        clearInterval(fadeInterval);
-        fadeInterval = null;
-        el.volume = Math.max(0, Math.min(1, targetVol));
-        if (callback) callback();
-      }
-    }, stepTime);
+    try {
+      el.volume = Math.max(0, Math.min(1, vol));
+    } catch(e) {}
   }
 
   function updateButtonUI(active) {
@@ -3566,30 +3555,30 @@ const AmbientMusicEngine = (function() {
       updateButtonUI(true);
 
       const targetVol = isDucked ? DUCK_VOLUME : TARGET_VOLUME;
+      el.muted = false;
+      setAudioVolume(targetVol);
 
-      if (el.paused) {
-        el.volume = 0.05;
-        const playPromise = el.play();
-        if (playPromise !== undefined) {
-          playPromise.then(() => {
-            fadeVolume(targetVol, 450);
-          }).catch(err => {
-            console.warn('Audio auto-unlock pending user gesture:', err);
-            const unlockAudio = () => {
-              if (isPlaying) {
-                el.play().then(() => fadeVolume(targetVol, 400)).catch(() => {});
-              }
-              window.removeEventListener('click', unlockAudio);
-              window.removeEventListener('keydown', unlockAudio);
-              window.removeEventListener('touchstart', unlockAudio);
-            };
-            window.addEventListener('click', unlockAudio, { once: true });
-            window.addEventListener('keydown', unlockAudio, { once: true });
-            window.addEventListener('touchstart', unlockAudio, { once: true });
-          });
-        }
-      } else {
-        fadeVolume(targetVol, 300);
+      const playPromise = el.play();
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          el.muted = false;
+          setAudioVolume(targetVol);
+        }).catch(err => {
+          console.warn('Audio waiting for user gesture unlock:', err);
+          const resumeOnTouch = () => {
+            if (isPlaying) {
+              el.muted = false;
+              setAudioVolume(targetVol);
+              el.play().catch(() => {});
+            }
+          };
+          window.addEventListener('pointerdown', resumeOnTouch, { once: true, passive: true });
+          window.addEventListener('click', resumeOnTouch, { once: true, passive: true });
+          window.addEventListener('touchstart', resumeOnTouch, { once: true, passive: true });
+          window.addEventListener('keydown', resumeOnTouch, { once: true, passive: true });
+          window.addEventListener('scroll', resumeOnTouch, { once: true, passive: true });
+          window.addEventListener('wheel', resumeOnTouch, { once: true, passive: true });
+        });
       }
 
       if (showNotice) {
@@ -3598,13 +3587,12 @@ const AmbientMusicEngine = (function() {
       }
     },
     pauseVideoSync: function() {
-      // Pauses audio synchronously when user pauses video during the intro stage
       const el = getAudioElement();
-      if (!el || el.paused) return;
+      if (!el) return;
       isVideoPausedByUser = true;
-      fadeVolume(0, 250, () => {
-        if (isVideoPausedByUser) el.pause();
-      });
+      try {
+        el.pause();
+      } catch(e) {}
     },
     stop: function(showNotice = false) {
       const el = getAudioElement();
@@ -3616,10 +3604,10 @@ const AmbientMusicEngine = (function() {
 
       updateButtonUI(false);
 
-      if (el && !el.paused) {
-        fadeVolume(0, 300, () => {
+      if (el) {
+        try {
           el.pause();
-        });
+        } catch(e) {}
       }
 
       if (showNotice) {
@@ -3628,7 +3616,8 @@ const AmbientMusicEngine = (function() {
       }
     },
     toggle: function() {
-      if (isPlaying) {
+      const el = getAudioElement();
+      if (isPlaying && el && !el.paused) {
         this.stop(true);
       } else {
         this.start(true);
@@ -3638,9 +3627,9 @@ const AmbientMusicEngine = (function() {
       isDucked = !!shouldDuck;
       if (!isPlaying) return;
       const el = getAudioElement();
-      if (!el || el.paused) return;
+      if (!el) return;
       const target = isDucked ? DUCK_VOLUME : TARGET_VOLUME;
-      fadeVolume(target, 450);
+      setAudioVolume(target);
     },
     modulate: function(speed) {
       // Maintained for API compatibility
@@ -3682,45 +3671,29 @@ function initAmbientMusic() {
     }
   });
 
-  // Check saved state: default is ENABLED
-  let isMutedPref = false;
-  try {
-    isMutedPref = (localStorage.getItem('wilmar_ambient_music') === 'muted');
-  } catch(e) {}
+  // Ensure UI is active by default
+  AmbientMusicEngine.updateLang();
+  const btnEl = document.getElementById('ambient-music-btn');
+  if (btnEl) btnEl.classList.add('playing');
+  const vBtn = document.getElementById('video-sound-btn');
+  if (vBtn) vBtn.classList.add('playing');
 
-  if (!isMutedPref) {
-    AmbientMusicEngine.updateLang();
-    const btnEl = document.getElementById('ambient-music-btn');
-    if (btnEl) btnEl.classList.add('playing');
-    const vBtn = document.getElementById('video-sound-btn');
-    if (vBtn) vBtn.classList.add('playing');
+  // Global user interaction listener: starts music on ANY first user gesture
+  // (click, tap, scroll, key), unless the user has explicitly muted the sound
+  const tryStartAudioOnUserGesture = () => {
+    if (localStorage.getItem('wilmar_ambient_music') !== 'muted') {
+      AmbientMusicEngine.start(false);
+    }
+  };
 
-    // Global interaction unlocker for browser autoplay policy
-    const unlockAudioOnGesture = () => {
-      if (localStorage.getItem('wilmar_ambient_music') !== 'muted') {
-        const introVid = document.getElementById('intro-video');
-        const vStage = document.getElementById('video-stage');
-        if (!introVid || !introVid.paused || (vStage && vStage.style.display === 'none')) {
-          AmbientMusicEngine.start(false);
-        }
-      }
-      window.removeEventListener('pointerdown', unlockAudioOnGesture);
-      window.removeEventListener('touchstart', unlockAudioOnGesture);
-      window.removeEventListener('scroll', unlockAudioOnGesture);
-      window.removeEventListener('wheel', unlockAudioOnGesture);
-      window.removeEventListener('keydown', unlockAudioOnGesture);
-    };
+  window.addEventListener('pointerdown', tryStartAudioOnUserGesture, { passive: true, once: true });
+  window.addEventListener('click', tryStartAudioOnUserGesture, { passive: true, once: true });
+  window.addEventListener('touchstart', tryStartAudioOnUserGesture, { passive: true, once: true });
+  window.addEventListener('keydown', tryStartAudioOnUserGesture, { passive: true, once: true });
+  window.addEventListener('scroll', tryStartAudioOnUserGesture, { passive: true, once: true });
+  window.addEventListener('wheel', tryStartAudioOnUserGesture, { passive: true, once: true });
 
-    window.addEventListener('pointerdown', unlockAudioOnGesture, { passive: true, once: true });
-    window.addEventListener('touchstart', unlockAudioOnGesture, { passive: true, once: true });
-    window.addEventListener('scroll', unlockAudioOnGesture, { passive: true, once: true });
-    window.addEventListener('wheel', unlockAudioOnGesture, { passive: true, once: true });
-    window.addEventListener('keydown', unlockAudioOnGesture, { passive: true, once: true });
-  } else {
-    AmbientMusicEngine.updateLang();
-  }
-
-  // When entering archive, sustain and ensure audio continues seamlessly!
+  // When entering archive (video finished, skipped, or direct navigation), ensure music plays sustained!
   window.addEventListener('enter-archive', () => {
     if (localStorage.getItem('wilmar_ambient_music') !== 'muted') {
       AmbientMusicEngine.start(false);
