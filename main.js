@@ -1673,13 +1673,15 @@ function layoutSphere() {
    ========================================================================== */
 var AmbientMusicEngine = (function() {
   const AUDIO_SRC = 'Midnight_Blueprint.mp3';
-  const TARGET_VOLUME = 0.88; // Noticeably boosted, punchy & rich
-  const DUCK_VOLUME = 0.28;   // Subtle volume during lightbox inspection
+  const TARGET_VOLUME = 0.74; // Adjusted comfortably (-15% from 0.88, warm, gentle & comfortable)
+  const DUCK_VOLUME = 0.22;   // Subtle whisper during lightbox inspection
   
   let audioEl = null;
   let isPlaying = false;
   let isVideoPausedByUser = false;
   let isDucked = false;
+  let isFadingIn = false;
+  let fadeAnimId = null;
 
   function getAudioElement() {
     if (!audioEl) {
@@ -1700,12 +1702,52 @@ var AmbientMusicEngine = (function() {
     return audioEl;
   }
 
-  function setAudioVolume(vol) {
+  // Smooth, gentle volume interpolation (Quadratic ease-in-out curve)
+  function fadeTo(targetVol, durationMs = 2600, onDone = null) {
     const el = getAudioElement();
     if (!el) return;
-    try {
-      el.volume = Math.max(0, Math.min(1, vol));
-    } catch(e) {}
+    if (fadeAnimId) {
+      cancelAnimationFrame(fadeAnimId);
+      fadeAnimId = null;
+    }
+
+    const startVol = (typeof el.volume === 'number' && !isNaN(el.volume)) ? el.volume : 0;
+    const diff = targetVol - startVol;
+    if (Math.abs(diff) < 0.005) {
+      try { el.volume = targetVol; } catch(e) {}
+      if (onDone) onDone();
+      return;
+    }
+
+    const startTime = performance.now();
+
+    function step(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(1, Math.max(0, elapsed / durationMs));
+      
+      // Smooth gentle S-curve (Quadratic ease-in-out)
+      const ease = progress < 0.5 
+        ? 2 * progress * progress 
+        : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+        
+      const current = startVol + diff * ease;
+
+      try {
+        el.volume = Math.max(0, Math.min(1, current));
+      } catch(e) {}
+
+      if (progress < 1) {
+        fadeAnimId = requestAnimationFrame(step);
+      } else {
+        try {
+          el.volume = Math.max(0, Math.min(1, targetVol));
+        } catch(e) {}
+        fadeAnimId = null;
+        if (onDone) onDone();
+      }
+    }
+
+    fadeAnimId = requestAnimationFrame(step);
   }
 
   function updateButtonUI(active) {
@@ -1715,7 +1757,14 @@ var AmbientMusicEngine = (function() {
     const videoBtn = document.getElementById('video-sound-btn');
     const videoLabel = document.getElementById('ui-video-sound-label');
     const videoIcon = videoBtn ? videoBtn.querySelector('.sound-icon') : null;
-    const dict = I18N[currentLang] || I18N.es;
+    const dict = (typeof I18N !== 'undefined' && I18N[currentLang]) ? I18N[currentLang] : (typeof I18N !== 'undefined' ? I18N.es : {
+      ambientSoundOn: 'Sonido',
+      ambientSoundOff: 'Silenciado',
+      ambientSoundTipPlaying: 'Música Jazz Hop de fondo · Clic para silenciar (M)',
+      ambientSoundTipMuted: 'Música silenciada · Clic para activar (M)',
+      ambientToastOn: 'Música ambiental activada (Midnight Blueprint)',
+      ambientToastOff: 'Música ambiental silenciada'
+    });
 
     const iconStr = active ? '🔊' : '🔇';
     const textStr = active ? dict.ambientSoundOn : dict.ambientSoundOff;
@@ -1764,49 +1813,80 @@ var AmbientMusicEngine = (function() {
 
       updateButtonUI(true);
 
-      const targetVol = isDucked ? DUCK_VOLUME : TARGET_VOLUME;
-      el.muted = false;
-      setAudioVolume(targetVol);
+      // If a progressive fade-in is already actively swelling, let it finish gracefully without reset
+      if (isFadingIn) return;
 
-      const playPromise = el.play();
-      if (playPromise !== undefined) {
-        playPromise.then(() => {
+      const targetVol = isDucked ? DUCK_VOLUME : TARGET_VOLUME;
+
+      if (el.paused) {
+        // Start whisper-quiet at 0.001 to completely eliminate sudden loudness / startle
+        try {
+          el.volume = 0.001;
           el.muted = false;
-          setAudioVolume(targetVol);
-        }).catch(err => {
-          console.warn('Audio waiting for user gesture unlock:', err);
-          const resumeOnTouch = () => {
-            if (isPlaying) {
-              el.muted = false;
-              setAudioVolume(targetVol);
-              el.play().catch(() => {});
-            }
-          };
-          window.addEventListener('pointerdown', resumeOnTouch, { once: true, passive: true });
-          window.addEventListener('click', resumeOnTouch, { once: true, passive: true });
-          window.addEventListener('touchstart', resumeOnTouch, { once: true, passive: true });
-          window.addEventListener('keydown', resumeOnTouch, { once: true, passive: true });
-          window.addEventListener('scroll', resumeOnTouch, { once: true, passive: true });
-          window.addEventListener('wheel', resumeOnTouch, { once: true, passive: true });
-        });
+        } catch(e) {}
+
+        isFadingIn = true;
+        const playPromise = el.play();
+        if (playPromise !== undefined) {
+          playPromise.then(() => {
+            el.muted = false;
+            // Gentle 2.6-second progressive volume swell (degradado suave de a poquito)
+            fadeTo(targetVol, 2600, () => {
+              isFadingIn = false;
+            });
+          }).catch(err => {
+            isFadingIn = false;
+            console.warn('Audio waiting for user gesture unlock:', err);
+            const resumeOnTouch = () => {
+              if (isPlaying) {
+                el.muted = false;
+                el.volume = 0.001;
+                isFadingIn = true;
+                el.play().then(() => {
+                  fadeTo(targetVol, 2600, () => {
+                    isFadingIn = false;
+                  });
+                }).catch(() => {
+                  isFadingIn = false;
+                });
+              }
+            };
+            window.addEventListener('pointerdown', resumeOnTouch, { once: true, passive: true });
+            window.addEventListener('click', resumeOnTouch, { once: true, passive: true });
+            window.addEventListener('touchstart', resumeOnTouch, { once: true, passive: true });
+            window.addEventListener('keydown', resumeOnTouch, { once: true, passive: true });
+            window.addEventListener('scroll', resumeOnTouch, { once: true, passive: true });
+            window.addEventListener('wheel', resumeOnTouch, { once: true, passive: true });
+          });
+        } else {
+          isFadingIn = false;
+        }
+      } else {
+        // If already playing (e.g. un-ducking from lightbox), ease gently over 800ms
+        fadeTo(targetVol, 800);
       }
 
-      if (showNotice) {
-        const dict = I18N[currentLang] || I18N.es;
-        showToast(dict.ambientToastOn);
+      if (showNotice && typeof showToast === 'function') {
+        const dict = (typeof I18N !== 'undefined' && I18N[currentLang]) ? I18N[currentLang] : (typeof I18N !== 'undefined' ? I18N.es : {});
+        showToast(dict.ambientToastOn || 'Música ambiental activada');
       }
     },
     pauseVideoSync: function() {
       const el = getAudioElement();
-      if (!el) return;
+      if (!el || el.paused) return;
+      isFadingIn = false;
       isVideoPausedByUser = true;
-      try {
-        el.pause();
-      } catch(e) {}
+      // Gentle fade down before pausing on video pause
+      fadeTo(0, 350, () => {
+        if (isVideoPausedByUser) {
+          try { el.pause(); } catch(e) {}
+        }
+      });
     },
     stop: function(showNotice = false) {
       const el = getAudioElement();
       isPlaying = false;
+      isFadingIn = false;
       isVideoPausedByUser = false;
       try {
         localStorage.setItem('wilmar_ambient_music', 'muted');
@@ -1814,15 +1894,15 @@ var AmbientMusicEngine = (function() {
 
       updateButtonUI(false);
 
-      if (el) {
-        try {
-          el.pause();
-        } catch(e) {}
+      if (el && !el.paused) {
+        fadeTo(0, 350, () => {
+          try { el.pause(); } catch(e) {}
+        });
       }
 
-      if (showNotice) {
-        const dict = I18N[currentLang] || I18N.es;
-        showToast(dict.ambientToastOff);
+      if (showNotice && typeof showToast === 'function') {
+        const dict = (typeof I18N !== 'undefined' && I18N[currentLang]) ? I18N[currentLang] : (typeof I18N !== 'undefined' ? I18N.es : {});
+        showToast(dict.ambientToastOff || 'Música ambiental silenciada');
       }
     },
     toggle: function() {
@@ -1837,9 +1917,10 @@ var AmbientMusicEngine = (function() {
       isDucked = !!shouldDuck;
       if (!isPlaying) return;
       const el = getAudioElement();
-      if (!el) return;
+      if (!el || el.paused) return;
+      isFadingIn = false;
       const target = isDucked ? DUCK_VOLUME : TARGET_VOLUME;
-      setAudioVolume(target);
+      fadeTo(target, isDucked ? 500 : 750);
     },
     modulate: function(speed) {
       // Maintained for API compatibility
