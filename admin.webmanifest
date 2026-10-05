@@ -1,9 +1,9 @@
 {
-  "name": "Wilmar Machado — Portafolio Oficial 2026",
-  "short_name": "Wilmar Machado",
-  "description": "Portafolio de Autor · Diseño Gráfico, Diseño Editorial & Arte Sacro Contemporáneo · Valledupar, Colombia",
-  "start_url": "./index.html",
-  "scope": "./",
+  "name": "Consola Maestra — Wilmar Machado",
+  "short_name": "Consola WM",
+  "description": "Consola Móvil de Gestión, Pedidos y Personalización del Portafolio Wilmar Machado",
+  "start_url": "./admin.html",
+  "scope": "./admin.html",
   "display": "standalone",
   "background_color": "#07070a",
   "theme_color": "#07070a",
@@ -34,5 +34,5 @@
       "purpose": "any"
     }
   ],
-  "categories": ["design", "portfolio", "art"]
+  "categories": ["productivity", "utilities", "business"]
 }

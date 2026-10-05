@@ -11,6 +11,7 @@ const ASSETS = [
   './admin.css',
   './admin.js',
   './manifest.json',
+  './admin.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-192.svg',
@@ -77,3 +78,48 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
+// Push Notifications & Interaction Support
+self.addEventListener('push', (event) => {
+  let data = { title: 'Nuevo Pedido · Wilmar Machado', body: 'Has recibido una nueva cotización en tu portafolio.' };
+  try {
+    if (event.data) {
+      data = event.data.json();
+    }
+  } catch(e) {
+    if (event.data) data.body = event.data.text();
+  }
+
+  const options = {
+    body: data.body,
+    icon: 'icons/icon-192.png',
+    badge: 'icons/icon-192.png',
+    vibrate: [200, 100, 200],
+    data: {
+      url: data.url || 'admin.html#tab-inquiries'
+    }
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = (event.notification.data && event.notification.data.url) ? event.notification.data.url : 'admin.html#tab-inquiries';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url.includes('admin.html') && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
+      }
+    })
+  );
+});
+

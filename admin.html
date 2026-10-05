@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#07070a">
 <meta name="description" content="Consola Móvil de Administración y Personalización del Portafolio Wilmar Machado">
 <title>Consola Maestra &middot; Wilmar Machado</title>
-<link rel="manifest" href="manifest.json">
+<link rel="manifest" href="admin.webmanifest">
 <link rel="icon" type="image/svg+xml" href="icons/icon-192.svg">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 
@@ -18,6 +18,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
 <link rel="stylesheet" href="admin.css">
+
+<!-- Supabase Client for Cloud Database & Realtime Sync -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <!-- Firebase Compat Libraries for Direct Zero-Bundler Cloud Integration -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -28,78 +31,107 @@
 <body class="admin-body">
 
 <!-- ==========================================================================
-     1. SHIELD SCREEN: BIOMETRIC & GOOGLE AUTHENTICATION
+     1. SHIELD SCREEN: ENTERPRISE AUTHENTICATION
      ========================================================================== -->
 <div id="screen-auth" class="auth-screen">
   <div class="auth-ambient-glow"></div>
   <div class="auth-card">
     <div class="auth-brand-monogram">
-      <svg viewBox="0 0 64 64" width="46" height="46">
-        <rect width="64" height="64" rx="14" fill="#0c0c12" stroke="rgba(212,163,89,0.3)" stroke-width="1.5"/>
-        <path d="M14 46L22 18h4l6 18 6-18h4l8 28h-5l-5-18-6 18h-4l-6-18-5 18z" fill="#d4a359"/>
-      </svg>
+      <div class="auth-monogram-ring">
+        <svg viewBox="0 0 64 64" width="42" height="42" aria-hidden="true">
+          <rect width="64" height="64" rx="14" fill="#0c0c12" stroke="rgba(212,163,89,0.35)" stroke-width="1.5"/>
+          <path d="M14 46L22 18h4l6 18 6-18h4l8 28h-5l-5-18-6 18h-4l-6-18-5 18z" fill="#d4a359"/>
+        </svg>
+      </div>
     </div>
     
     <div class="auth-header">
       <span class="auth-badge">PANEL PRIVADO &middot; 2026</span>
-      <h1 class="auth-title">Consola Maestra</h1>
-      <p class="auth-subtitle">Acceso exclusivo para Wilmar Machado</p>
+      <h1 class="auth-title">Consola de Autor</h1>
+      <p class="auth-subtitle">Wilmar Machado &middot; Studio OS</p>
     </div>
 
-    <!-- Biometric Sensor Action Box -->
-    <div class="biometric-box" id="biometric-box">
-      <button type="button" class="biometric-btn" id="btn-biometric-unlock" aria-label="Desbloquear con Huella Dactilar">
-        <div class="biometric-pulse"></div>
-        <div class="biometric-icon-wrap">
-          <svg class="fingerprint-svg" viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M2 12C2 6.5 6.5 2 12 2a10 10 0 0 1 8 4"/>
-            <path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"/>
-            <path d="M8.65 22c.21-.66.45-1.32.75-2"/>
-            <path d="M9 6.8a6 6 0 0 1 9 5.2v2"/>
-            <path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/>
-            <path d="M14 13.1a2 2 0 0 0 .5-1.1"/>
-            <path d="M17 12c0 2.5-1 4.5-2 6.5"/>
-            <path d="M19 17.5a14 14 0 0 0 1-5.5 8 8 0 0 0-1.6-4.8"/>
-            <path d="M2 16.5c.7-1.3 1.6-2.5 2.5-3.5"/>
-            <path d="M12 18v4"/>
+    <!-- Enterprise Login Form -->
+    <form id="enterprise-login-form" class="auth-form" autocomplete="on">
+      <div class="auth-field">
+        <label for="auth-input-email" class="auth-label">Correo electrónico / Usuario</label>
+        <div class="auth-input-wrap">
+          <svg class="auth-field-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
           </svg>
+          <input type="text" id="auth-input-email" class="auth-input" placeholder="wamimcim2@gmail.com" autocomplete="username" required value="wamimcim2@gmail.com">
         </div>
-      </button>
-      <div class="biometric-status" id="biometric-status">Toca para desbloquear o registrar huella</div>
-      <button type="button" class="biometric-register-link" id="btn-register-passkey-prompt" style="display:none;">
-        &#128070; Registrar nueva llave en Google Llaves
-      </button>
-    </div>
+      </div>
 
-    <!-- Alternative Google Sign-in -->
-    <div class="auth-actions">
-      <button type="button" class="google-auth-btn" id="btn-google-login">
-        <svg class="google-svg" viewBox="0 0 24 24" width="18" height="18">
-          <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.04h3.88c2.27-2.09 3.66-5.17 3.66-9.14z"/>
-          <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.04c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.24v3.13C3.26 21.36 7.33 24 12 24z"/>
-          <path fill="#FBBC05" d="M5.28 14.28c-.25-.72-.38-1.49-.38-2.28s.13-1.56.38-2.28V6.59H1.24C.45 8.16 0 9.93 0 12s.45 3.84 1.24 5.41l4.04-3.13z"/>
-          <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.24 6.59l4.04 3.13c.95-2.83 3.6-4.97 6.72-4.97z"/>
+      <div class="auth-field">
+        <div class="auth-label-row">
+          <label for="auth-input-password" class="auth-label">Contraseña</label>
+          <button type="button" class="auth-forgot-link" id="btn-forgot-password" tabindex="-1">¿Ayuda con clave?</button>
+        </div>
+        <div class="auth-input-wrap">
+          <svg class="auth-field-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          <input type="password" id="auth-input-password" class="auth-input" placeholder="Introduce tu contraseña" autocomplete="current-password" required>
+          <button type="button" class="auth-toggle-eye" id="btn-toggle-eye" aria-label="Mostrar u ocultar contraseña">
+            <svg class="eye-icon-show" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            <svg class="eye-icon-hide hidden" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+              <line x1="1" y1="1" x2="23" y2="23"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Remember device & session -->
+      <div class="auth-remember-row">
+        <label class="auth-remember-label">
+          <input type="checkbox" id="auth-remember-device" checked>
+          <span>Recordar sesión en este dispositivo</span>
+        </label>
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" class="auth-btn-submit" id="btn-auth-submit">
+        <span class="auth-btn-text">Iniciar Sesión</span>
+        <span class="auth-btn-spinner hidden" id="auth-spinner"></span>
+      </button>
+
+      <!-- Biometric Instant Shortcut (Passkey / Face ID / Touch ID) -->
+      <div class="auth-alt-divider" id="auth-alt-divider">
+        <span>o acceso biométrico</span>
+      </div>
+
+      <button type="button" class="auth-btn-passkey" id="btn-biometric-unlock">
+        <svg class="fingerprint-svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M2 12C2 6.5 6.5 2 12 2a10 10 0 0 1 8 4"/>
+          <path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"/>
+          <path d="M8.65 22c.21-.66.45-1.32.75-2"/>
+          <path d="M9 6.8a6 6 0 0 1 9 5.2v2"/>
+          <path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/>
+          <path d="M14 13.1a2 2 0 0 0 .5-1.1"/>
+          <path d="M17 12c0 2.5-1 4.5-2 6.5"/>
+          <path d="M19 17.5a14 14 0 0 0 1-5.5 8 8 0 0 0-1.6-4.8"/>
+          <path d="M2 16.5c.7-1.3 1.6-2.5 2.5-3.5"/>
+          <path d="M12 18v4"/>
         </svg>
-        <span>Continuar con Google</span>
+        <span id="biometric-status">Entrar con Face ID / Huella</span>
       </button>
-
-      <!-- Toggle Master Password Backup -->
-      <button type="button" class="backup-toggle-btn" id="btn-toggle-backup">
-        Acceso de respaldo con contraseña &darr;
-      </button>
-
-      <form id="backup-auth-form" class="backup-form hidden">
-        <div class="input-row">
-          <input type="password" id="input-backup-password" class="admin-input" placeholder="Clave de administrador" autocomplete="current-password">
-          <button type="submit" class="admin-btn-primary" id="btn-backup-submit">Entrar</button>
-        </div>
-      </form>
-    </div>
+    </form>
 
     <div id="auth-alert" class="auth-alert hidden"></div>
 
     <div class="auth-footer-note">
-      <span>Cifrado biométrico local y protección de sesión activa</span>
+      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+      <span>Conexión protegida &middot; Cifrado criptográfico SHA-256</span>
     </div>
   </div>
 </div>
@@ -169,6 +201,16 @@
           <button type="button" class="chip active" data-inquiry-filter="all">Todos (<span id="inquiry-count-all">0</span>)</button>
           <button type="button" class="chip" data-inquiry-filter="unread">Nuevos (<span id="inquiry-count-unread">0</span>)</button>
           <button type="button" class="chip" data-inquiry-filter="contacted">Atendidos (<span id="inquiry-count-contacted">0</span>)</button>
+        </div>
+
+        <!-- Phone Alerts Prompt Banner (conditionally displayed if permission is default) -->
+        <div class="notifications-promo-banner" id="notif-promo-banner">
+          <div class="promo-banner-icon">&#128276;</div>
+          <div class="promo-banner-text">
+            <strong>Alertas en tu Teléfono</strong>
+            <span>Activa las notificaciones para recibir sonido y aviso push instantáneo al recibir pedidos</span>
+          </div>
+          <button type="button" class="promo-banner-btn" id="btn-enable-phone-alerts">Activar</button>
         </div>
       </div>
 

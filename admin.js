@@ -11,6 +11,9 @@
   const FIREBASE_KEY = 'wilmar_firebase_config_v1';
   const BIO_CRED_KEY = 'wilmar_biometric_cred_id';
   const OWNER_EMAIL_DEFAULT = 'wamimcim2@gmail.com';
+  const SB_URL = 'https://kigexuraqzhplvacghcq.supabase.co';
+  const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpZ2V4dXJhcXpocGx2YWNnaGNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA5MTE4NjcsImV4cCI6MjEwNjQ4Nzg2N30.JI69bv1oBpv0_11J3XRyv7FI8obkXzqDdQWMeF_kgA0';
+  const SESSION_TOKEN_KEY = 'wm_admin_session_token_v1';
   // Hashed admin pass (SHA-256) - Never exposed in plaintext
   const MASTER_BACKUP_HASH = '9723f7d2f440d29d038c38275d5aea00492072dc5c7334ddb9d57d918a74e3e9';
 
@@ -469,7 +472,7 @@
   }
 
   /* ==========================================================================
-     3. GOOGLE AUTH & WHITELIST SECURITY
+     3. ENTERPRISE AUTHENTICATION CONTROLLER & SESSION ENGINE
      ========================================================================== */
   function getOwnerEmail() {
     const input = document.getElementById('cfg-ownerEmail');
@@ -478,53 +481,113 @@
     return stored ? stored.toLowerCase() : OWNER_EMAIL_DEFAULT;
   }
 
-  async function loginWithGoogle() {
-    triggerHaptic(25);
-    const ownerEmail = getOwnerEmail();
+  function initEnterpriseAuth() {
+    const loginForm = document.getElementById('enterprise-login-form');
+    const emailInput = document.getElementById('auth-input-email');
+    const passwordInput = document.getElementById('auth-input-password');
+    const rememberCheckbox = document.getElementById('auth-remember-device');
+    const toggleEyeBtn = document.getElementById('btn-toggle-eye');
+    const forgotBtn = document.getElementById('btn-forgot-password');
+    const spinner = document.getElementById('auth-spinner');
+    const btnSubmit = document.getElementById('btn-auth-submit');
+    const btnBioUnlock = document.getElementById('btn-biometric-unlock');
 
-    // If Firebase is initialized with Auth
-    if (firebaseAuth) {
-      try {
-        const provider = new firebase.auth.GoogleAuthProvider();
-        provider.setCustomParameters({ prompt: 'select_account' });
-        const result = await firebaseAuth.signInWithPopup(provider);
-        const user = result.user;
+    // Restore remembered email if exists
+    const rememberedEmail = localStorage.getItem('wm_admin_remembered_email');
+    if (rememberedEmail && emailInput) {
+      emailInput.value = rememberedEmail;
+    }
 
-        if (user && user.email && user.email.toLowerCase() === ownerEmail) {
-          triggerHaptic(50);
-          unlockAppShell(`Bienvenido, ${user.displayName || user.email}`);
-        } else {
-          await firebaseAuth.signOut();
-          triggerHaptic([80, 80, 80]);
-          showAuthAlert(`Acceso denegado: El correo (${user ? user.email : 'desconocido'}) no tiene permisos de administrador. Solo "${ownerEmail}".`, "error");
+    // Toggle Eye Password Visibility
+    if (toggleEyeBtn && passwordInput) {
+      toggleEyeBtn.addEventListener('click', () => {
+        triggerHaptic(10);
+        const isPass = passwordInput.getAttribute('type') === 'password';
+        passwordInput.setAttribute('type', isPass ? 'text' : 'password');
+        const showIcon = toggleEyeBtn.querySelector('.eye-icon-show');
+        const hideIcon = toggleEyeBtn.querySelector('.eye-icon-hide');
+        if (showIcon && hideIcon) {
+          showIcon.classList.toggle('hidden', isPass);
+          hideIcon.classList.toggle('hidden', !isPass);
         }
-      } catch (err) {
-        console.error('Google Auth Error:', err);
-        showAuthAlert(`Error al conectar con Google: ${err.message}`, "error");
-      }
-    } else {
-      // Professional feedback when Firebase is not yet connected in this browser
-      showAuthAlert("Para usar el inicio de sesión oficial con Google, ingresa primero tus credenciales de Firebase en la pestaña Seguridad. Despliega abajo el acceso con contraseña temporal.", "error");
-      const backupForm = document.getElementById('backup-auth-form');
-      if (backupForm) {
-        backupForm.classList.remove('hidden');
-        const passInput = document.getElementById('input-backup-password');
-        if (passInput) passInput.focus();
-      }
+      });
+    }
+
+    // Forgot / Help Password Guidance
+    if (forgotBtn) {
+      forgotBtn.addEventListener('click', () => {
+        triggerHaptic(15);
+        showAuthAlert("Clave predeterminada de autor: 'wilmar2026'. Puedes modificarla en Ajustes > Seguridad una vez dentro.", "success");
+      });
+    }
+
+    // Biometric Instant Unlock Button
+    if (btnBioUnlock) {
+      btnBioUnlock.addEventListener('click', handleBiometricClick);
+    }
+
+    // Handle Enterprise Login Form Submit
+    if (loginForm) {
+      loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        triggerHaptic(20);
+        const email = emailInput ? emailInput.value.trim().toLowerCase() : '';
+        const password = passwordInput ? passwordInput.value : '';
+
+        if (!password) {
+          showAuthAlert("Por favor introduce tu contraseña de acceso.", "error");
+          return;
+        }
+
+        if (spinner) spinner.classList.remove('hidden');
+        if (btnSubmit) btnSubmit.disabled = true;
+
+        try {
+          const hashed = await sha256(password);
+          const isCorrect = (hashed === MASTER_BACKUP_HASH);
+
+          if (isCorrect) {
+            triggerHaptic([40, 60, 40]);
+            if (rememberCheckbox && rememberCheckbox.checked) {
+              const sessionPayload = {
+                user: email || 'wilmar',
+                hash: hashed,
+                expires: Date.now() + (30 * 24 * 60 * 60 * 1000) // 30 days
+              };
+              localStorage.setItem(SESSION_TOKEN_KEY, JSON.stringify(sessionPayload));
+              if (email) localStorage.setItem('wm_admin_remembered_email', email);
+            }
+
+            unlockAppShell("Bienvenido, Wilmar Machado");
+          } else {
+            triggerHaptic([60, 60, 60]);
+            showAuthAlert("Credenciales incorrectas. Verifica tu contraseña.", "error");
+          }
+        } catch(err) {
+          console.error('Auth verification error:', err);
+          showAuthAlert("Error al procesar acceso: " + err.message, "error");
+        } finally {
+          if (spinner) spinner.classList.add('hidden');
+          if (btnSubmit) btnSubmit.disabled = false;
+        }
+      });
     }
   }
 
-  async function loginWithBackupPassword(password) {
-    const hashed = await sha256(password);
-    if (hashed === MASTER_BACKUP_HASH) {
-      triggerHaptic(40);
-      unlockAppShell("Acceso con Clave Maestra");
-      return true;
-    } else {
-      triggerHaptic([60, 60, 60]);
-      showAuthAlert("Contraseña de administrador incorrecta.", "error");
-      return false;
-    }
+  function checkExistingSession() {
+    try {
+      const raw = localStorage.getItem(SESSION_TOKEN_KEY);
+      if (raw) {
+        const session = JSON.parse(raw);
+        if (session && session.hash === MASTER_BACKUP_HASH && session.expires > Date.now()) {
+          unlockAppShell("Sesión Restaurada");
+          return true;
+        } else {
+          localStorage.removeItem(SESSION_TOKEN_KEY);
+        }
+      }
+    } catch(e) {}
+    return false;
   }
 
   /* ==========================================================================
@@ -542,15 +605,17 @@
     showToast(welcomeMsg || "Consola Desbloqueada");
 
     // Populate data into UI
-    renderInquiriesList();
+    fetchCloudInquiries(true);
     renderWorksList();
     populatePortfolioForm();
     populateStyleForm();
     populateSecurityForm();
+    updateNotificationsUI();
   }
 
   function lockAppShell() {
     triggerHaptic(30);
+    localStorage.removeItem(SESSION_TOKEN_KEY);
     const authScreen = document.getElementById('screen-auth');
     const appShell = document.getElementById('app-shell');
     if (appShell) appShell.classList.add('hidden');
@@ -653,6 +718,8 @@
      5.5 INQUIRIES & ORDERS CONTROLLER (NOTIFICATIONS & LIVE INBOX)
      ========================================================================== */
   let currentInquiryFilter = 'all';
+  let knownInquiryIds = new Set();
+  let isFetchingCloud = false;
 
   function getStoredInquiries() {
     try {
@@ -672,32 +739,178 @@
   function playOrderNotificationChime() {
     try {
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.type = 'sine';
       osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
       osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15); // A5
-      gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.45);
+      gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
       osc.connect(gain);
       gain.connect(audioCtx.destination);
       osc.start();
-      osc.stop(audioCtx.currentTime + 0.5);
+      osc.stop(audioCtx.currentTime + 0.52);
     } catch(e) {}
   }
 
-  function triggerOrderAlert(order) {
-    triggerHaptic([50, 70, 50]);
+  async function showSystemPushNotification(title, options = {}) {
+    if (!('Notification' in window)) return;
+    if (Notification.permission !== 'granted') return;
+
+    try {
+      if ('serviceWorker' in navigator) {
+        const reg = await navigator.serviceWorker.ready;
+        if (reg && reg.showNotification) {
+          await reg.showNotification(title, {
+            body: options.body || '',
+            icon: options.icon || 'icons/icon-192.png',
+            badge: options.badge || 'icons/icon-192.png',
+            vibrate: [200, 100, 200],
+            data: { url: 'admin.html#tab-inquiries' }
+          });
+          return;
+        }
+      }
+    } catch(err) {
+      console.warn('SW notification fallback:', err);
+    }
+
+    try {
+      new Notification(title, {
+        body: options.body || '',
+        icon: options.icon || 'icons/icon-192.png'
+      });
+    } catch(err) {
+      console.warn('Native notification failed:', err);
+    }
+  }
+
+  async function triggerOrderAlert(order) {
+    triggerHaptic([60, 80, 60]);
     playOrderNotificationChime();
-    showToast(`🔔 ¡Nuevo pedido de ${order.name}!`);
+    showToast(`🔔 ¡Nuevo pedido de ${order.name || 'un cliente'}!`);
+
+    await showSystemPushNotification(`Nuevo Pedido: ${order.name || 'Cliente'}`, {
+      body: `${order.service || 'Cotización'} · ${order.budget || ''}\n"${(order.message || '').slice(0, 90)}..."`,
+      icon: 'icons/icon-192.png'
+    });
+  }
+
+  async function fetchCloudInquiries(silent = false) {
+    if (isFetchingCloud) return;
+    isFetchingCloud = true;
+
+    try {
+      const res = await fetch(`${SB_URL}/rest/v1/inquiries?order=created_at.desc`, {
+        headers: {
+          'apikey': SB_KEY,
+          'Authorization': `Bearer ${SB_KEY}`,
+          'Accept': 'application/json'
+        }
+      });
+
+      if (res.ok) {
+        const cloudData = await res.json();
+        if (Array.isArray(cloudData)) {
+          const localOrders = getStoredInquiries();
+          const localMap = new Map(localOrders.map(o => [o.id, o]));
+          let hasNewOrders = false;
+          let latestNewOrder = null;
+
+          const merged = cloudData.map(item => {
+            const existing = localMap.get(item.id);
+            const status = item.status || (existing ? existing.status : 'unread');
+            const orderObj = {
+              id: item.id,
+              timestamp: item.created_at || (existing ? existing.timestamp : new Date().toISOString()),
+              dateFormatted: item.date_formatted || (existing ? existing.dateFormatted : 'Reciente'),
+              name: item.name || 'Cliente Anónimo',
+              email: item.email || '',
+              service: item.service || 'Diseño & Arte',
+              budget: item.budget || 'A convenir',
+              message: item.message || '',
+              status: status,
+              read: status !== 'unread'
+            };
+
+            if (!knownInquiryIds.has(item.id)) {
+              knownInquiryIds.add(item.id);
+              if (!silent && (status === 'unread' || !existing)) {
+                hasNewOrders = true;
+                latestNewOrder = orderObj;
+              }
+            }
+            return orderObj;
+          });
+
+          // Retain any pending local inquiries not yet present in cloud
+          localOrders.forEach(lo => {
+            if (!merged.find(m => m.id === lo.id)) {
+              merged.push(lo);
+            }
+          });
+
+          saveStoredInquiries(merged);
+          renderInquiriesList();
+
+          if (hasNewOrders && latestNewOrder) {
+            triggerOrderAlert(latestNewOrder);
+          }
+        }
+      }
+    } catch(err) {
+      console.warn('Cloud inquiries fetch note:', err);
+    } finally {
+      isFetchingCloud = false;
+    }
+  }
+
+  function updateNotificationsUI() {
+    const banner = document.getElementById('notif-promo-banner');
+    const btnReq = document.getElementById('btn-request-notifications');
 
     if ('Notification' in window && Notification.permission === 'granted') {
-      try {
-        new Notification(`Nuevo Pedido: ${order.name}`, {
-          body: `${order.service} · ${order.budget}\n"${(order.message || '').slice(0, 90)}..."`,
-          icon: 'icons/icon-192.svg'
+      if (banner) banner.classList.add('hidden');
+      if (btnReq) {
+        btnReq.innerHTML = '<span>✓ Alertas Activas</span>';
+        btnReq.style.opacity = '0.7';
+      }
+    } else {
+      if (banner) banner.classList.remove('hidden');
+      if (btnReq) {
+        btnReq.innerHTML = '<span>🔔 Activar Avisos</span>';
+        btnReq.style.opacity = '1';
+      }
+    }
+  }
+
+  async function requestPushPermissions() {
+    triggerHaptic(20);
+    if (!('Notification' in window)) {
+      showToast('Este navegador no soporta notificaciones de sistema');
+      return;
+    }
+
+    try {
+      const perm = await Notification.requestPermission();
+      updateNotificationsUI();
+
+      if (perm === 'granted') {
+        showToast('✓ Alertas activadas correctamente');
+        playOrderNotificationChime();
+        await showSystemPushNotification('Consola Wilmar Machado', {
+          body: '¡Todo listo! Recibirás sonido y avisos en pantalla cada vez que un cliente envíe una propuesta.',
+          icon: 'icons/icon-192.png'
         });
-      } catch(e) {}
+      } else if (perm === 'denied') {
+        showToast('Permiso bloqueado. Habilita las notificaciones en el icono de candado del navegador.');
+      }
+    } catch(err) {
+      console.warn('Request notification error:', err);
+      showToast('Error al solicitar permiso de notificaciones');
     }
   }
 
@@ -784,6 +997,26 @@
           saveStoredInquiries(cur);
           triggerOrderAlert(sample);
           renderInquiriesList();
+
+          // Upload demo order to Supabase cloud
+          fetch(`${SB_URL}/rest/v1/inquiries`, {
+            method: 'POST',
+            headers: {
+              'apikey': SB_KEY,
+              'Authorization': `Bearer ${SB_KEY}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              id: sample.id,
+              name: sample.name,
+              email: sample.email,
+              service: sample.service,
+              budget: sample.budget,
+              message: sample.message,
+              date_formatted: sample.dateFormatted,
+              status: 'unread'
+            })
+          }).catch(e => console.warn('Supabase sample order note:', e));
         };
       }
       return;
@@ -882,29 +1115,53 @@ Valledupar · Colombia`);
     });
   }
 
-  function toggleInquiryStatus(id) {
+  async function toggleInquiryStatus(id) {
     const orders = getStoredInquiries();
     const target = orders.find(o => o.id === id);
     if (!target) return;
-    if (target.status === 'unread' || !target.read) {
-      target.status = 'contacted';
-      target.read = true;
-      showToast('Propuesta marcada como atendida');
-    } else {
-      target.status = 'unread';
-      target.read = false;
-      showToast('Propuesta marcada como nueva');
-    }
+    const newStatus = (target.status === 'unread' || !target.read) ? 'contacted' : 'unread';
+    target.status = newStatus;
+    target.read = (newStatus === 'contacted');
     saveStoredInquiries(orders);
     renderInquiriesList();
+    showToast(newStatus === 'contacted' ? 'Propuesta marcada como atendida' : 'Propuesta marcada como nueva');
+
+    // Cloud Database update
+    try {
+      await fetch(`${SB_URL}/rest/v1/inquiries?id=eq.${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': SB_KEY,
+          'Authorization': `Bearer ${SB_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+    } catch(err) {
+      console.warn('Supabase status patch note:', err);
+    }
   }
 
-  function deleteInquiry(id) {
+  async function deleteInquiry(id) {
     let orders = getStoredInquiries();
     orders = orders.filter(o => o.id !== id);
+    knownInquiryIds.delete(id);
     saveStoredInquiries(orders);
     renderInquiriesList();
     showToast('Propuesta eliminada de la bandeja');
+
+    // Cloud Database delete
+    try {
+      await fetch(`${SB_URL}/rest/v1/inquiries?id=eq.${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        headers: {
+          'apikey': SB_KEY,
+          'Authorization': `Bearer ${SB_KEY}`
+        }
+      });
+    } catch(err) {
+      console.warn('Supabase delete note:', err);
+    }
   }
 
   function escapeHtml(str) {
@@ -1635,34 +1892,16 @@ Valledupar · Colombia`);
     // Request Web Push Notifications for incoming orders
     const btnReqNotif = document.getElementById('btn-request-notifications');
     if (btnReqNotif) {
-      if ('Notification' in window && Notification.permission === 'granted') {
-        btnReqNotif.innerHTML = '<span>✓ Avisos Activos</span>';
-        btnReqNotif.style.opacity = '0.7';
-      }
-      btnReqNotif.addEventListener('click', async () => {
-        triggerHaptic(20);
-        if ('Notification' in window) {
-          try {
-            const permission = await Notification.requestPermission();
-            if (permission === 'granted') {
-              showToast('✓ Notificaciones activadas para nuevos pedidos');
-              btnReqNotif.innerHTML = '<span>✓ Avisos Activos</span>';
-              btnReqNotif.style.opacity = '0.7';
-              new Notification('Consola Wilmar Machado', {
-                body: 'Avisos configurados correctamente. Recibirás una notificación cuando un cliente envíe una propuesta.',
-                icon: 'icons/icon-192.svg'
-              });
-            } else {
-              showToast('Permiso de notificaciones denegado en el navegador');
-            }
-          } catch(e) {
-            showToast('No se pudieron activar las notificaciones');
-          }
-        } else {
-          showToast('Tu navegador móvil no soporta notificaciones de sistema');
-        }
-      });
+      btnReqNotif.addEventListener('click', requestPushPermissions);
     }
+
+    const btnEnablePhoneAlerts = document.getElementById('btn-enable-phone-alerts');
+    if (btnEnablePhoneAlerts) {
+      btnEnablePhoneAlerts.addEventListener('click', requestPushPermissions);
+    }
+
+    // Enterprise Auth listeners
+    initEnterpriseAuth();
 
     // Cross-tab real-time sync for orders
     if (typeof BroadcastChannel !== 'undefined') {
@@ -1671,7 +1910,7 @@ Valledupar · Colombia`);
         bc.onmessage = (event) => {
           if (event.data && event.data.type === 'NEW_ORDER') {
             triggerOrderAlert(event.data.order);
-            renderInquiriesList();
+            fetchCloudInquiries(false);
           }
         };
       } catch(e) {}
@@ -1683,6 +1922,26 @@ Valledupar · Colombia`);
         renderInquiriesList();
       }
     });
+
+    // Supabase Realtime Subscription for instantaneous delivery
+    if (window.supabase) {
+      try {
+        const sbClient = window.supabase.createClient(SB_URL, SB_KEY);
+        sbClient
+          .channel('public:inquiries')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'inquiries' }, () => {
+            fetchCloudInquiries(false);
+          })
+          .subscribe();
+      } catch(e) {
+        console.warn('Supabase Realtime subscription note:', e);
+      }
+    }
+
+    // Heartbeat cloud polling every 10 seconds (ensures orders arrive even if websockets sleep on mobile)
+    setInterval(() => {
+      fetchCloudInquiries(false);
+    }, 10000);
   }
 
   /* ==========================================================================
@@ -1693,21 +1952,27 @@ Valledupar · Colombia`);
     initFirebaseIfConfigured();
     initEvents();
     updateInquiriesBadge();
+    updateNotificationsUI();
     await checkBiometricSupport();
 
-    // Register Service Worker for PWA
+    // Register Service Worker for dedicated PWA
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').catch(err => {
         console.warn('SW registration:', err);
       });
     }
 
-    // Auto-prompt biometrics on launch if credential exists
-    const hasBiometricCred = localStorage.getItem(BIO_CRED_KEY);
-    if (hasBiometricCred && window.PublicKeyCredential) {
-      setTimeout(() => {
-        authenticateWithBiometrics();
-      }, 500);
+    // Check persistent enterprise session
+    const hasActiveSession = checkExistingSession();
+
+    // Auto-prompt biometrics if not yet logged in and credential exists
+    if (!hasActiveSession) {
+      const hasBiometricCred = localStorage.getItem(BIO_CRED_KEY);
+      if (hasBiometricCred && window.PublicKeyCredential) {
+        setTimeout(() => {
+          authenticateWithBiometrics();
+        }, 400);
+      }
     }
   }
 

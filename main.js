@@ -2859,6 +2859,29 @@ ${message}`;
           bc.close();
         }
 
+        // Direct Cloud Sync to Supabase Database (Guarantees instant global delivery to Wilmar's phone)
+        const SB_URL = 'https://kigexuraqzhplvacghcq.supabase.co';
+        const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpZ2V4dXJhcXpocGx2YWNnaGNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA5MTE4NjcsImV4cCI6MjEwNjQ4Nzg2N30.JI69bv1oBpv0_11J3XRyv7FI8obkXzqDdQWMeF_kgA0';
+        fetch(`${SB_URL}/rest/v1/inquiries`, {
+          method: 'POST',
+          headers: {
+            'apikey': SB_KEY,
+            'Authorization': `Bearer ${SB_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({
+            id: newInquiry.id,
+            name: newInquiry.name,
+            email: newInquiry.email,
+            service: newInquiry.service,
+            budget: newInquiry.budget,
+            message: newInquiry.message,
+            date_formatted: newInquiry.dateFormatted,
+            status: 'unread'
+          })
+        }).catch(err => console.warn('Supabase order upload note:', err));
+
         if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length) {
           try {
             firebase.firestore().collection('inquiries').add(newInquiry).catch(e => console.warn(e));
