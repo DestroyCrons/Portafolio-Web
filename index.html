@@ -141,7 +141,10 @@
 
 <!-- NAVIGATION -->
 <nav id="nav">
-  <a href="#home" class="brand" id="ui-brand-logo" title="Wilmar Machado &middot; Click para inicio o Consola Maestra">Wilmar Machado</a>
+  <a href="#home" class="brand" id="ui-brand-logo" title="Wilmar Machado &middot; Click para inicio o Consola Maestra">
+    <span class="brand-first">Wilmar</span>
+    <span class="brand-last">Machado</span>
+  </a>
   <div class="nav-actions">
     <!-- Spotlight Search Trigger -->
     <button type="button" class="nav-icon-btn" id="search-trigger-btn" aria-label="Buscar obras (Ctrl+K)" title="Buscar en el catálogo / Search (Ctrl+K)">
@@ -221,18 +224,9 @@
 <section id="grid-view" aria-label="Vista en cuadrícula del archivo">
   <div class="grid-header">
     <div>
-      <h2 id="ui-grid-title">Cat&aacute;logo Completo &middot; Archivo</h2>
+      <h2 id="ui-grid-title">Cat&aacute;logo Completo</h2>
       <p id="ui-grid-subtitle">Diez Obras Seleccionadas &middot; 10 Works Index</p>
     </div>
-    <button type="button" class="grid-back-to-sphere-btn" id="grid-close-btn" aria-label="Volver a la Esfera 3D" title="Volver a la Esfera 3D">
-      <span class="btn-arrow">&larr;</span>
-      <svg class="view-mode-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <circle cx="12" cy="12" r="9"/>
-        <ellipse cx="12" cy="12" rx="9" ry="3.6"/>
-        <ellipse cx="12" cy="12" rx="3.6" ry="9"/>
-      </svg>
-      <span id="ui-grid-close-label">Esfera 3D</span>
-    </button>
   </div>
 
   <div class="grid-container" id="grid-container">

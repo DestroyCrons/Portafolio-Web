@@ -285,7 +285,7 @@ const I18N = {
     menuMaster: "⚙ Consola Maestra",
     menuFooterLeft: "Valledupar · Colombia · Alcance Global",
     menuFooterRight: "Diseño Gráfico · Diseño Editorial · Arte Sacro",
-    gridTitle: "Catálogo Completo · Archivo",
+    gridTitle: "Catálogo Completo",
     gridSubtitle: "Diez Obras Seleccionadas · 10 Works Index",
     gridClose: "← Esfera 3D",
     lbClose: "× Cerrar",
@@ -419,7 +419,7 @@ const I18N = {
     menuMaster: "⚙ Master Console",
     menuFooterLeft: "Valledupar · Colombia · Global Reach",
     menuFooterRight: "Graphic Design · Editorial Design · Sacred Art",
-    gridTitle: "Complete Catalog · Archive",
+    gridTitle: "Complete Catalog",
     gridSubtitle: "Ten Selected Works · 10 Works Index",
     gridClose: "← 3D Sphere",
     lbClose: "× Close",
@@ -733,14 +733,13 @@ function applyLanguage(lang) {
   if (gTitle) {
     gTitle.textContent = isEn
       ? (cfg.profile.gridTitle_en || OfflineTranslator.toEn(cfg.profile.gridTitle) || dict.gridTitle)
-      : (cfg.profile.gridTitle || 'Catálogo Completo · Archivo');
+      : (cfg.profile.gridTitle || 'Catálogo Completo');
   }
   if (gSub) {
     gSub.textContent = isEn
       ? (cfg.profile.gridSubtitle_en || OfflineTranslator.toEn(cfg.profile.gridSubtitle) || dict.gridSubtitle)
       : (cfg.profile.gridSubtitle || 'Diez Obras Seleccionadas · 10 Works Index');
   }
-  setT('grid-close-btn', dict.gridClose);
   setT('ui-filter-all-label', dict.filterAll);
   setT('ui-filter-sacro-label', dict.filterSacro);
   setT('ui-filter-editorial-label', dict.filterEditorial);
@@ -855,8 +854,8 @@ const DEFAULT_CONFIG = {
     "headlineTitle_en": "Portfolio",
     "headlineSubtitle": "Diseño Gráfico, Diseño Editorial & Arte Sacro Contemporáneo · Selección de Proyectos & Perfil Profesional",
     "headlineSubtitle_en": "Graphic Design, Editorial Design & Contemporary Sacred Art · Selected Projects & Professional Profile",
-    "gridTitle": "Catálogo Completo · Archivo",
-    "gridTitle_en": "Complete Catalog · Archive",
+    "gridTitle": "Catálogo Completo",
+    "gridTitle_en": "Complete Catalog",
     "gridSubtitle": "Diez Obras Seleccionadas · Índice de 10 Obras",
     "gridSubtitle_en": "Ten Selected Works · 10 Works Index",
     "videoBrand": "ARCHIVO VISUAL",
@@ -1237,7 +1236,17 @@ function applyConfigToUI(cfg) {
 
   // Logos & Brands
   const logo = document.getElementById('ui-brand-logo');
-  if (logo) logo.textContent = cfg.profile.name;
+  if (logo) {
+    const rawName = cfg.profile.name || 'Wilmar Machado';
+    const parts = rawName.split(' ');
+    if (parts.length >= 2) {
+      const first = parts[0];
+      const rest = parts.slice(1).join(' ');
+      logo.innerHTML = `<span class="brand-first">${first}</span> <span class="brand-last">${rest}</span>`;
+    } else {
+      logo.textContent = rawName;
+    }
+  }
   const menuBrand = document.getElementById('ui-menu-brand');
   if (menuBrand) menuBrand.textContent = cfg.profile.name;
   const videoBrand = document.getElementById('ui-video-brand');
@@ -1258,7 +1267,11 @@ function applyConfigToUI(cfg) {
   }
 
   const gTitle = document.getElementById('ui-grid-title');
-  if (gTitle) gTitle.textContent = cfg.profile.gridTitle;
+  if (gTitle) {
+    gTitle.textContent = isEn
+      ? (cfg.profile.gridTitle_en || OfflineTranslator.toEn(cfg.profile.gridTitle) || 'Complete Catalog')
+      : (cfg.profile.gridTitle || 'Catálogo Completo');
+  }
   const gSub = document.getElementById('ui-grid-subtitle');
   if (gSub) gSub.textContent = cfg.profile.gridSubtitle;
 
@@ -2316,7 +2329,9 @@ function layoutSphere() {
     });
   }
 
-  gridCloseBtn.addEventListener('click', toggleGrid);
+  if (gridCloseBtn) {
+    gridCloseBtn.addEventListener('click', toggleGrid);
+  }
   window.toggleGridView = toggleGrid;
 
   window.addEventListener('resize', () => {

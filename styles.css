@@ -1343,28 +1343,33 @@ body.revealed #headline {
 
 .grid-header {
   max-width: 1300px;
-  margin: 0 auto 50px;
+  margin: 0 auto 40px;
   border-bottom: 1px solid var(--fg-tertiary);
-  padding-bottom: 24px;
+  padding-bottom: 20px;
   display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
 }
 
 .grid-header h2 {
   font-family: var(--font-serif);
-  font-size: 38px;
+  font-size: clamp(26px, 4.5vw, 40px);
   font-weight: 300;
   font-style: italic;
   letter-spacing: 0.02em;
+  white-space: nowrap;
+  line-height: 1.15;
+  margin: 0;
 }
 
 .grid-header p {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: clamp(10px, 1.2vw, 11px);
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--accent);
+  margin: 0;
 }
 
 .grid-container {
@@ -1705,10 +1710,28 @@ body.revealed #headline {
   text-decoration: none;
   cursor: pointer;
   transition: color 0.25s ease;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35em;
+}
+
+.brand .brand-first {
+  font-weight: 600;
+  color: var(--fg-primary);
+}
+
+.brand .brand-last {
+  font-weight: 400;
+  color: var(--accent);
+  transition: color 0.25s ease;
 }
 
 .brand:hover {
   color: var(--accent);
+}
+
+.brand:hover .brand-last {
+  color: #ffffff;
 }
 
 .nav-actions {
@@ -4225,14 +4248,61 @@ body.revealed .curatorial-filter-bar {
   }
 
   .brand {
-    font-size: 11px !important;
-    letter-spacing: 0.12em !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: flex-start !important;
+    line-height: 1.12 !important;
+    max-width: none !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
     white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    max-width: 140px !important;
     margin-right: auto !important;
-    flex-shrink: 1 !important;
+    flex-shrink: 0 !important;
+    gap: 1px !important;
+  }
+
+  .brand .brand-first {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.14em !important;
+    color: var(--fg-primary, #ffffff) !important;
+    text-transform: uppercase !important;
+  }
+
+  .brand .brand-last {
+    font-size: 9.5px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.20em !important;
+    color: var(--accent, #d4a359) !important;
+    text-transform: uppercase !important;
+  }
+
+  #grid-view {
+    padding: 76px 16px 80px !important;
+  }
+
+  .grid-header {
+    margin: 0 0 24px !important;
+    padding-bottom: 14px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 4px !important;
+  }
+
+  .grid-header h2 {
+    font-size: clamp(19px, 5.8vw, 24px) !important;
+    white-space: nowrap !important;
+    letter-spacing: 0.01em !important;
+    margin: 0 !important;
+    line-height: 1.15 !important;
+  }
+
+  .grid-header p {
+    font-size: 9.5px !important;
+    letter-spacing: 0.12em !important;
+    margin: 0 !important;
   }
 
   .nav-actions {
@@ -4261,8 +4331,7 @@ body.revealed .curatorial-filter-bar {
   }
 
   .grid-back-to-sphere-btn {
-    padding: 5px 10px !important;
-    font-size: 10px !important;
+    display: none !important;
   }
 
   .nav-icon-btn {
@@ -4303,9 +4372,28 @@ body.revealed .curatorial-filter-bar {
   }
 
   .brand {
-    font-size: 10.5px !important;
+    max-width: none !important;
+    gap: 0px !important;
+  }
+
+  .brand .brand-first {
+    font-size: 10px !important;
+    letter-spacing: 0.12em !important;
+  }
+
+  .brand .brand-last {
+    font-size: 8.5px !important;
+    letter-spacing: 0.18em !important;
+  }
+
+  .grid-header h2 {
+    font-size: clamp(17px, 5.2vw, 21px) !important;
+    white-space: nowrap !important;
+  }
+
+  .grid-header p {
+    font-size: 8.5px !important;
     letter-spacing: 0.10em !important;
-    max-width: 125px !important;
   }
 
   /* On narrow phones, hide focus toggle to give maximum breathing room between brand and language switcher */
