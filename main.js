@@ -2206,19 +2206,75 @@ function layoutSphere() {
     }, 600);
   });
 
-  function toggleGrid() {
-    const isGrid = gridView.classList.toggle('active');
+  function syncViewModeUI(isGrid) {
+    const btnSphere = document.getElementById('btn-view-sphere');
+    const btnGrid = document.getElementById('btn-view-grid');
+    if (btnSphere && btnGrid) {
+      if (isGrid) {
+        btnSphere.classList.remove('active');
+        btnGrid.classList.add('active');
+        btnSphere.setAttribute('aria-pressed', 'false');
+        btnGrid.setAttribute('aria-pressed', 'true');
+      } else {
+        btnSphere.classList.add('active');
+        btnGrid.classList.remove('active');
+        btnSphere.setAttribute('aria-pressed', 'true');
+        btnGrid.setAttribute('aria-pressed', 'false');
+      }
+    }
     const dict = I18N[currentLang] || I18N.es;
-    viewLabel.textContent = isGrid ? dict.viewSphere : dict.viewGrid;
-    if (isGrid) {
-      document.body.style.overflowY = 'auto';
-    } else {
-      document.body.style.overflowY = 'hidden';
-      layoutSphere();
+    if (viewLabel) {
+      viewLabel.textContent = isGrid ? dict.viewSphere : dict.viewGrid;
     }
   }
 
-  viewToggle.addEventListener('click', toggleGrid);
+  function toggleGrid(forceGrid) {
+    const isGrid = (typeof forceGrid === 'boolean') ? forceGrid : !gridView.classList.contains('active');
+    if (isGrid) {
+      gridView.classList.add('active');
+      document.body.style.overflowY = 'auto';
+    } else {
+      gridView.classList.remove('active');
+      document.body.style.overflowY = 'hidden';
+      layoutSphere();
+    }
+    syncViewModeUI(isGrid);
+    if (navigator.vibrate) {
+      try { navigator.vibrate(18); } catch(e) {}
+    }
+  }
+
+  // Segmented Switch event listeners (100% Icon-Based)
+  const btnViewSphere = document.getElementById('btn-view-sphere');
+  const btnViewGrid = document.getElementById('btn-view-grid');
+  if (btnViewSphere) {
+    btnViewSphere.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleGrid(false);
+    });
+  }
+  if (btnViewGrid) {
+    btnViewGrid.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleGrid(true);
+    });
+  }
+
+  if (viewToggle) {
+    viewToggle.addEventListener('click', (e) => {
+      if (!e.target.closest('.view-mode-btn')) {
+        toggleGrid();
+      }
+    });
+  }
+
+  // Quick-action grid toggle in bottom orbit bar
+  const btnOrbitGridToggle = document.getElementById('btn-orbit-grid-toggle');
+  if (btnOrbitGridToggle) {
+    btnOrbitGridToggle.addEventListener('click', () => {
+      toggleGrid(true);
+    });
+  }
 
   // Bilingual toggle button listener
   const langToggleBtn = document.getElementById('lang-toggle-btn');

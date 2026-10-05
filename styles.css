@@ -1718,6 +1718,134 @@ body.revealed #headline {
   pointer-events: auto;
 }
 
+/* ==========================================================================
+   VIEW MODE TOGGLE (DUAL-ICON SEGMENTED SWITCH: 3D SPHERE vs GRID CATALOG)
+   100% Icon-Based, Zero Text, Universal Clarity
+   ========================================================================== */
+.view-mode-toggle {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(14, 14, 20, 0.88);
+  border: 1px solid rgba(212, 163, 89, 0.35);
+  border-radius: 24px;
+  padding: 3px;
+  box-sizing: border-box;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.65), 0 0 12px rgba(212, 163, 89, 0.12);
+  gap: 2px;
+  flex-shrink: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.view-mode-toggle:hover {
+  border-color: rgba(212, 163, 89, 0.6);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.75), 0 0 16px rgba(212, 163, 89, 0.24);
+}
+
+.view-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 29px;
+  border-radius: 18px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--fg-secondary);
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 0;
+  outline: none !important;
+  position: relative;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+.view-mode-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.view-mode-btn.active {
+  background: linear-gradient(135deg, rgba(212, 163, 89, 0.32), rgba(212, 163, 89, 0.14));
+  border-color: rgba(212, 163, 89, 0.65);
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(212, 163, 89, 0.45);
+}
+
+.view-mode-icon {
+  width: 15px;
+  height: 15px;
+  stroke: currentColor;
+  stroke-width: 2;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), stroke 0.22s ease, filter 0.22s ease;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.view-mode-btn.active .view-mode-icon {
+  stroke: var(--accent);
+  filter: drop-shadow(0 0 5px rgba(212, 163, 89, 0.65));
+  transform: scale(1.08);
+}
+
+.view-mode-btn:not(.active):active {
+  transform: scale(0.92);
+}
+
+/* Grid View Back Button to return to 3D Sphere */
+.grid-back-to-sphere-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(14, 14, 20, 0.88);
+  border: 1px solid rgba(212, 163, 89, 0.45);
+  border-radius: 24px;
+  padding: 7px 14px;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6), 0 0 12px rgba(212, 163, 89, 0.15);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+.grid-back-to-sphere-btn:hover {
+  background: rgba(212, 163, 89, 0.22);
+  border-color: var(--accent);
+  color: #ffffff;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.75), 0 0 18px var(--accent-glow);
+  transform: translateX(-2px);
+}
+
+.grid-back-to-sphere-btn .btn-arrow {
+  font-size: 13px;
+  transition: transform 0.22s ease;
+}
+
+.grid-back-to-sphere-btn:hover .btn-arrow {
+  transform: translateX(-3px);
+}
+
+.mobile-orbit-grid-btn {
+  padding: 7px 10px !important;
+  color: var(--accent) !important;
+  border-color: rgba(212, 163, 89, 0.4) !important;
+}
+
+.mobile-orbit-grid-btn:hover {
+  background: rgba(212, 163, 89, 0.25) !important;
+  color: #fff !important;
+}
+
 .view-toggle-btn {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -4114,9 +4242,27 @@ body.revealed .curatorial-filter-bar {
     flex-shrink: 0 !important;
   }
 
-  /* Hide view-toggle on mobile: Grid View is accessible in full via burger menu, freeing over 100px of negative space */
-  .view-toggle-btn {
-    display: none !important;
+  /* View Mode Switcher: ALWAYS visible on mobile with crisp icons */
+  .view-mode-toggle {
+    display: inline-flex !important;
+    padding: 2px !important;
+    border-radius: 20px !important;
+    gap: 1px !important;
+  }
+
+  .view-mode-btn {
+    width: 29px !important;
+    height: 27px !important;
+  }
+
+  .view-mode-icon {
+    width: 14px !important;
+    height: 14px !important;
+  }
+
+  .grid-back-to-sphere-btn {
+    padding: 5px 10px !important;
+    font-size: 10px !important;
   }
 
   .nav-icon-btn {
@@ -4168,7 +4314,17 @@ body.revealed .curatorial-filter-bar {
   }
 
   .nav-actions {
-    gap: 5px !important;
+    gap: 4px !important;
+  }
+
+  .view-mode-btn {
+    width: 27px !important;
+    height: 25px !important;
+  }
+
+  .view-mode-icon {
+    width: 13px !important;
+    height: 13px !important;
   }
 }
 
@@ -4181,6 +4337,9 @@ body.revealed .curatorial-filter-bar {
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.5s var(--ease-cinematic);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 body.revealed .orbit-control-bar {
