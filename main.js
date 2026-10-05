@@ -364,11 +364,11 @@ const I18N = {
     authCancelBtn: "Cancelar",
     videoSoundMute: "Silenciar",
     videoSoundUnmute: "Sonido",
-    filterAll: "Todas (10)",
-    filterSacro: "Arte Sacro (2)",
-    filterEditorial: "Diseño Editorial (3)",
-    filterFoto: "Fotografía (3)",
-    filterGrafico: "Arte Gráfico (2)",
+    filterAll: "Todas",
+    filterSacro: "Arte Sacro",
+    filterEditorial: "Diseño Editorial",
+    filterFoto: "Fotografía",
+    filterGrafico: "Arte Gráfico",
     lbWhatsApp: "Consultar por WhatsApp",
     lbShare: "Compartir Obra",
     signatureRole: "Diseñador Gráfico & Artista Visual · Valledupar, Colombia",
@@ -498,11 +498,11 @@ const I18N = {
     authCancelBtn: "Cancel",
     videoSoundMute: "Mute",
     videoSoundUnmute: "Sound",
-    filterAll: "All (10)",
-    filterSacro: "Sacred Art (2)",
-    filterEditorial: "Editorial Design (3)",
-    filterFoto: "Photography (3)",
-    filterGrafico: "Graphic Art (2)",
+    filterAll: "All",
+    filterSacro: "Sacred Art",
+    filterEditorial: "Editorial Design",
+    filterFoto: "Photography",
+    filterGrafico: "Graphic Art",
     lbWhatsApp: "Inquire via WhatsApp",
     lbShare: "Share Artwork",
     signatureRole: "Graphic Designer & Visual Artist · Valledupar, Colombia",
@@ -739,11 +739,26 @@ function applyLanguage(lang) {
       ? (cfg.profile.gridSubtitle_en || OfflineTranslator.toEn(cfg.profile.gridSubtitle) || dict.gridSubtitle)
       : (cfg.profile.gridSubtitle || 'Diez Obras Seleccionadas · 10 Works Index');
   }
-  setT('ui-filter-all-label', dict.filterAll);
-  setT('ui-filter-sacro-label', dict.filterSacro);
-  setT('ui-filter-editorial-label', dict.filterEditorial);
-  setT('ui-filter-foto-label', dict.filterFoto);
-  setT('ui-filter-grafico-label', dict.filterGrafico);
+  setT('ui-filter-all', dict.filterAll);
+  setT('ui-filter-sacro', dict.filterSacro);
+  setT('ui-filter-editorial', dict.filterEditorial);
+  setT('ui-filter-foto', dict.filterFoto);
+  setT('ui-filter-grafico', dict.filterGrafico);
+
+  const filterBar = document.getElementById('curatorial-filter-bar');
+  if (filterBar) {
+    filterBar.setAttribute('aria-label', isEn ? 'Filter by discipline' : 'Filtrar por disciplina');
+  }
+  const fPrev = document.getElementById('filter-scroll-prev');
+  if (fPrev) {
+    fPrev.setAttribute('aria-label', isEn ? 'View previous filters' : 'Ver filtros anteriores');
+    fPrev.setAttribute('title', isEn ? 'Scroll filters left' : 'Desplazar filtros a la izquierda');
+  }
+  const fNext = document.getElementById('filter-scroll-next');
+  if (fNext) {
+    fNext.setAttribute('aria-label', isEn ? 'View more filters' : 'Ver más filtros');
+    fNext.setAttribute('title', isEn ? 'Scroll filters right' : 'Desplazar filtros a la derecha');
+  }
 
   // Lightbox
   updateLightboxLanguage(currentLang);
