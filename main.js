@@ -1137,7 +1137,7 @@ const DEFAULT_CONFIG = {
     "bgSurface": "#0e0e12",
     "sphereRadius": 950,
     "camZ": -180,
-    "rotationSpeed": 0.003,
+    "rotationSpeed": 0.11,
     "showVideoIntro": true
   },
   "styles": {
@@ -1150,7 +1150,7 @@ const DEFAULT_CONFIG = {
     "sphereRadius": 950,
     "cameraZ": -180,
     "sphereFriction": 0.94,
-    "sphereRotateSpeed": 0.003
+    "sphereRotateSpeed": 0.11
   }
 };
 
@@ -1182,13 +1182,17 @@ function loadStoredConfig() {
     const saved = localStorage.getItem('wilmar_portfolio_config_v3');
     if (saved) {
       const parsed = JSON.parse(saved);
-      return {
+      const merged = {
         ...DEFAULT_CONFIG,
         ...parsed,
         profile: { ...DEFAULT_CONFIG.profile, ...(parsed.profile || {}) },
         style: { ...DEFAULT_CONFIG.style, ...(parsed.style || {}) },
         projects: (parsed.projects && parsed.projects.length) ? parsed.projects : DEFAULT_CONFIG.projects
       };
+      if (merged.style && (typeof merged.style.rotationSpeed !== 'number' || merged.style.rotationSpeed < 0.08)) {
+        merged.style.rotationSpeed = 0.11;
+      }
+      return merged;
     }
   } catch(e) {
     console.warn('Could not read stored config:', e);
@@ -2602,9 +2606,13 @@ function initAmbientMusic() {
   }, { passive: true });
 
   function animateSphereLoop() {
-    const currentSpeed = (STATE.config && STATE.config.style && STATE.config.style.rotationSpeed !== undefined)
+    let currentSpeed = (STATE.config && STATE.config.style && STATE.config.style.rotationSpeed !== undefined)
       ? STATE.config.style.rotationSpeed
-      : 0.04;
+      : 0.11;
+
+    if (typeof currentSpeed === 'number' && currentSpeed < 0.08) {
+      currentSpeed = 0.11;
+    }
 
     if (!STATE.isDragging) {
       STATE.velX *= 0.94;

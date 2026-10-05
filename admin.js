@@ -262,7 +262,7 @@
       "bgPrimary": "#060608",
       "bgSurface": "#0e0e13",
       "sphereRadius": 950,
-      "rotationSpeed": 0.003
+      "rotationSpeed": 0.11
     }
   };
 
@@ -283,13 +283,17 @@
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        return {
+        const merged = {
           ...DEFAULT_CONFIG,
           ...parsed,
           profile: { ...DEFAULT_CONFIG.profile, ...(parsed.profile || {}) },
           style: { ...DEFAULT_CONFIG.style, ...(parsed.style || {}) },
           projects: (parsed.projects && parsed.projects.length) ? parsed.projects : DEFAULT_CONFIG.projects
         };
+        if (merged.style && (typeof merged.style.rotationSpeed !== 'number' || merged.style.rotationSpeed < 0.08)) {
+          merged.style.rotationSpeed = 0.11;
+        }
+        return merged;
       }
     } catch (e) {
       console.warn('Error reading stored config:', e);
@@ -1521,13 +1525,14 @@ Valledupar · Colombia`);
     setVal('cfg-accent-picker', accent);
     setVal('cfg-accent-text', accent);
     setVal('cfg-sphereRadius', s.sphereRadius || 950);
-    setVal('cfg-rotationSpeed', s.rotationSpeed || 0.003);
+    const rotationSpeed = (s.rotationSpeed && s.rotationSpeed >= 0.08) ? s.rotationSpeed : 0.11;
+    setVal('cfg-rotationSpeed', rotationSpeed);
 
     const radiusLabel = document.getElementById('label-sphere-radius');
     if (radiusLabel) radiusLabel.textContent = `${s.sphereRadius || 950} px`;
 
     const speedLabel = document.getElementById('label-sphere-speed');
-    if (speedLabel) speedLabel.textContent = s.rotationSpeed || '0.003';
+    if (speedLabel) speedLabel.textContent = rotationSpeed;
   }
 
   function saveStyleForm() {
@@ -1535,7 +1540,7 @@ Valledupar · Colombia`);
     appConfig.style = appConfig.style || {};
     appConfig.style.accent = getVal('cfg-accent-picker') || '#d4a359';
     appConfig.style.sphereRadius = parseInt(getVal('cfg-sphereRadius'), 10) || 950;
-    appConfig.style.rotationSpeed = parseFloat(getVal('cfg-rotationSpeed')) || 0.003;
+    appConfig.style.rotationSpeed = parseFloat(getVal('cfg-rotationSpeed')) || 0.11;
 
     saveConfigToCloudAndLocal(appConfig);
   }
