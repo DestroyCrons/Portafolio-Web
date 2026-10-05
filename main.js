@@ -351,7 +351,7 @@ const I18N = {
     phMessage: "Cuéntame sobre el concepto, objetivos, referencias y alcance...",
     btnSubmitText: "Enviar Propuesta · Iniciar Diálogo",
     feedbackTitle: "¡Propuesta preparada correctamente!",
-    feedbackSub: "Haz clic para abrir tu cliente de correo automáticamente o copia el texto si prefieres WhatsApp.",
+    feedbackSub: "Haz clic para abrir tu cliente de correo automáticamente o copia el texto de la propuesta.",
     btnOpenMail: "Abrir en Correo",
     btnCopySummary: "Copiar Mensaje",
     toastCopied: "¡Correo copiado al portapapeles!",
@@ -485,7 +485,7 @@ const I18N = {
     phMessage: "Tell me about the concept, objectives, references, and scope...",
     btnSubmitText: "Submit Proposal · Start Dialogue",
     feedbackTitle: "Proposal prepared successfully!",
-    feedbackSub: "Click to open your email client automatically or copy the text if you prefer WhatsApp.",
+    feedbackSub: "Click to open your email client automatically or copy the proposal text.",
     btnOpenMail: "Open in Email",
     btnCopySummary: "Copy Message",
     toastCopied: "Email copied to clipboard!",
@@ -593,7 +593,6 @@ function updateLightboxLanguage(lang) {
   setT('ui-spec-typo-label', dict.specTypo);
   setT('ui-spec-client-label', dict.specClient);
   setT('ui-lb-inquire-label', dict.inquireSimilar);
-  setT('ui-lb-wa-label', dict.lbWhatsApp);
   setT('ui-lb-share-label', dict.lbShare);
 
   const lb = document.getElementById('lightbox');
@@ -797,8 +796,6 @@ function applyLanguage(lang) {
   setT('ui-ch-email-label', dict.chEmailLabel);
   setT('copy-email-btn', dict.btnCopy);
   setT('mail-email-btn', dict.btnWrite);
-  setT('ui-ch-wa-label', dict.chWaLabel);
-  setT('whatsapp-link-btn', dict.btnOpenChat);
   setT('ui-ch-ig-label', dict.chIgLabel);
   setT('instagram-link-btn', dict.btnViewProfile);
   setT('ui-ch-be-label', dict.chBeLabel);
@@ -874,8 +871,6 @@ const DEFAULT_CONFIG = {
     "location": "Valledupar, Cesar, Colombia",
     "availability": "DISPONIBLE PARA PROYECTOS · Q4 2026 / 2027",
     "email": "wamimcim2@gmail.com",
-    "whatsapp": "+57 316 329 6958",
-    "whatsappMsg": "Hola Wilmar, me gustaría conversar sobre un proyecto editorial / visual.",
     "instagram": "@wilmar.machado",
     "instagramUrl": "https://www.instagram.com/",
     "behance": "behance.net/wilmarmachado",
@@ -1303,14 +1298,7 @@ function applyConfigToUI(cfg) {
   const mailBtn = document.getElementById('mail-email-btn');
   if (mailBtn) mailBtn.href = `mailto:${cfg.profile.email}`;
 
-  const waDisplay = document.getElementById('ui-whatsapp-display');
-  if (waDisplay) waDisplay.textContent = cfg.profile.whatsapp || '+57 (Colombia)';
-  const waBtn = document.getElementById('whatsapp-link-btn');
-  if (waBtn) {
-    const rawNumber = (cfg.profile.whatsapp || '').replace(/[^0-9]/g, '');
-    const encodedMsg = encodeURIComponent(cfg.profile.whatsappMsg || 'Hola Wilmar, me gustaría cotizar un proyecto.');
-    waBtn.href = rawNumber ? `https://wa.me/${rawNumber}?text=${encodedMsg}` : '#';
-  }
+
 
   const igDisplay = document.getElementById('ui-instagram-display');
   if (igDisplay) igDisplay.textContent = cfg.profile.instagram || '@wilmar.machado';
@@ -2467,17 +2455,6 @@ function openLightbox(index) {
     lbClient.textContent = cVal;
   }
 
-  // Populate WhatsApp Direct Inquiry link
-  const waBtn = document.getElementById('lightbox-wa-btn');
-  if (waBtn) {
-    const rawNumber = (cfg.profile.whatsapp || '+573163296958').replace(/[^0-9]/g, '');
-    const currentTitle = isEn ? (item.title_en || item.title) : item.title;
-    const currentPlace = isEn ? (item.place_en || item.place) : item.place;
-    const waText = isEn
-      ? `Hello Wilmar, I am viewing your artwork "${currentTitle}" (${currentPlace}) in the official portfolio and would like to inquire about commissioning or availability.`
-      : `Hola Wilmar, estuve viendo la obra "${currentTitle}" (${currentPlace}) en tu portafolio oficial y me gustaría consultar disponibilidad o cotizar una pieza similar.`;
-    waBtn.href = rawNumber ? `https://wa.me/${rawNumber}?text=${encodeURIComponent(waText)}` : '#';
-  }
 
   // Populate Share Button (Opens Multi-App Share Modal)
   const shareBtn = document.getElementById('lightbox-share-btn');

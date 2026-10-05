@@ -54,8 +54,6 @@
       "location": "Valledupar, Cesar, Colombia",
       "availability": "DISPONIBLE PARA PROYECTOS · Q4 2026 / 2027",
       "email": "wamimcim2@gmail.com",
-      "whatsapp": "+57 316 329 6958",
-      "whatsappMsg": "Hola Wilmar, me gustaría conversar sobre un proyecto editorial / visual.",
       "instagram": "@wilmar.machado",
       "instagramUrl": "https://www.instagram.com/",
       "behance": "behance.net/wilmarmachado",
@@ -948,8 +946,6 @@
   function populatePortfolioForm() {
     const p = appConfig.profile || {};
     setVal('cfg-availability', p.availability);
-    setVal('cfg-whatsapp', p.whatsapp);
-    setVal('cfg-whatsappMsg', p.whatsappMsg);
     setVal('cfg-email', p.email);
     setVal('cfg-instagram', p.instagram);
     setVal('cfg-instagramUrl', p.instagramUrl);
@@ -969,8 +965,6 @@
     triggerHaptic(40);
     appConfig.profile = appConfig.profile || {};
     appConfig.profile.availability = getVal('cfg-availability');
-    appConfig.profile.whatsapp = getVal('cfg-whatsapp');
-    appConfig.profile.whatsappMsg = getVal('cfg-whatsappMsg');
     appConfig.profile.email = getVal('cfg-email');
     appConfig.profile.instagram = getVal('cfg-instagram');
     appConfig.profile.instagramUrl = getVal('cfg-instagramUrl');

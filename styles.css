@@ -3801,18 +3801,7 @@ body.revealed .curatorial-filter-bar {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Lightbox Action Row WhatsApp & Share */
-.channel-btn.lb-whatsapp-btn {
-  background: rgba(37, 211, 102, 0.12);
-  border: 1px solid rgba(37, 211, 102, 0.4);
-  color: #25d366;
-}
-.channel-btn.lb-whatsapp-btn:hover {
-  background: rgba(37, 211, 102, 0.25);
-  border-color: #25d366;
-  box-shadow: 0 0 18px rgba(37, 211, 102, 0.4);
-  color: #fff;
-}
+/* Lightbox Action Row Share */
 
 .channel-btn.lb-share-btn {
   background: rgba(212, 163, 89, 0.12);
