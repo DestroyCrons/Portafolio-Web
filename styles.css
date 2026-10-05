@@ -4270,6 +4270,36 @@ body.revealed .curatorial-filter-bar {
   100% { height: 6px; }
 }
 
+.ambient-music-btn .sound-icon {
+  font-size: 13px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  transition: transform 0.2s ease;
+}
+
+.ambient-music-btn:hover .sound-icon {
+  transform: scale(1.12);
+}
+
+@media (max-width: 900px) {
+  .ambient-music-btn {
+    width: 32px !important;
+    height: 32px !important;
+    padding: 0 !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+  }
+  .ambient-music-btn .nav-btn-text,
+  .ambient-music-btn .audio-equalizer-bars {
+    display: none !important;
+  }
+  .ambient-music-btn .sound-icon {
+    display: inline-block !important;
+    font-size: 14px !important;
+  }
+}
+
 /* ==========================================================================
    NAVIGATION RESPONSIVE LAYOUT (Generous breathing room & mobile separation)
    ========================================================================== */

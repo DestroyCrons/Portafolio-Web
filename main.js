@@ -388,10 +388,10 @@ const I18N = {
     shareMoreApps: "Más Apps",
     ambientSoundOn: "Sonido",
     ambientSoundOff: "Silencio",
-    ambientSoundTipPlaying: "Música ambiental inmersiva activa · Clic para silenciar (M)",
-    ambientSoundTipMuted: "Música ambiental silenciada · Clic para activar (M)",
-    ambientToastOn: "Paisaje sonoro inmersivo activado",
-    ambientToastOff: "Paisaje sonoro silenciado"
+    ambientSoundTipPlaying: "Música Jazz Hop activa · Clic para silenciar (M)",
+    ambientSoundTipMuted: "Música Jazz Hop silenciada · Clic para activar (M)",
+    ambientToastOn: "Música Jazz Hop activada",
+    ambientToastOff: "Música Jazz Hop silenciada"
   },
   en: {
     lang: "EN",
@@ -528,10 +528,10 @@ const I18N = {
     shareMoreApps: "More Apps",
     ambientSoundOn: "Sound",
     ambientSoundOff: "Mute",
-    ambientSoundTipPlaying: "Ambient soundscape active · Click to mute (M)",
-    ambientSoundTipMuted: "Ambient soundscape muted · Click to activate (M)",
-    ambientToastOn: "Immersive soundscape activated",
-    ambientToastOff: "Ambient soundscape muted"
+    ambientSoundTipPlaying: "Jazz Hop music active · Click to mute (M)",
+    ambientSoundTipMuted: "Jazz Hop music muted · Click to activate (M)",
+    ambientToastOn: "Jazz Hop music activated",
+    ambientToastOff: "Jazz Hop music muted"
   }
 };
 
@@ -704,12 +704,8 @@ function applyLanguage(lang) {
   setT('ui-video-hint-text', dict.videoHint);
   setT('ui-video-play-label', dict.videoPlay);
   setT('ui-video-skip-label', dict.videoSkip);
-  const sndBtn = document.getElementById('video-sound-btn');
-  const introVid = document.getElementById('intro-video');
-  if (sndBtn && introVid) {
-    sndBtn.innerHTML = introVid.muted
-      ? '<span class="sound-icon">🔇</span> <span id="ui-video-sound-label">' + dict.videoSoundUnmute + '</span>'
-      : '<span class="sound-icon">🔊</span> <span id="ui-video-sound-label">' + dict.videoSoundMute + '</span>';
+  if (window.AmbientMusicEngine && typeof window.AmbientMusicEngine.updateLang === 'function') {
+    window.AmbientMusicEngine.updateLang();
   }
 
   // Main 3D Sphere Headline & Subtitle (Guaranteed Bilingual Sync)
@@ -1955,17 +1951,13 @@ function layoutSphere() {
     });
   }
 
-  // Sound toggle button inside video topbar
+  // Sound toggle button inside video topbar (Unified with Jazz Hop Engine)
   if (soundBtn) {
     soundBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      introVideo.muted = !introVideo.muted;
-      const d = I18N[currentLang] || I18N.es;
-      const soundLabel = document.getElementById('ui-video-sound-label');
-      if (soundLabel) soundLabel.textContent = introVideo.muted ? d.videoSoundMute : d.videoSoundUnmute;
-      const soundIcon = soundBtn.querySelector('.sound-icon');
-      if (soundIcon) soundIcon.textContent = introVideo.muted ? '🔇' : '🔊';
-      showToast(introVideo.muted ? (currentLang === 'en' ? 'Audio muted' : 'Audio silenciado') : (currentLang === 'en' ? 'Audio unmuted' : 'Audio activado'));
+      if (window.AmbientMusicEngine) {
+        window.AmbientMusicEngine.toggle();
+      }
     });
   }
 
@@ -1978,9 +1970,6 @@ function layoutSphere() {
   });
 
   window.replayVideoIntro = function() {
-    if (window.AmbientMusicEngine && typeof window.AmbientMusicEngine.stop === 'function') {
-      window.AmbientMusicEngine.stop(false);
-    }
     videoEnded = false;
     targetProgress = 0.0;
     currentProgress = 0.0;
@@ -3447,39 +3436,47 @@ const AmbientMusicEngine = (function() {
   let ctx = null;
   let masterGain = null;
   let duckGain = null;
-  let filterNode = null;
-  let reverbNode = null;
   let isInitialized = false;
   let isPlaying = false;
-  let chordTimer = null;
-  let bellTimer = null;
-  let currentChordIndex = 0;
-  let activeVoices = [];
-  let droneNodes = [];
+  let lookaheadTimer = null;
+  let vinylNode = null;
 
-  // D Dorian / Aeolian modal chords (sacred, serene, contemplative)
+  // Tempo & Timing (Classic Chillhop / Jazz Hop Tempo)
+  const BPM = 82;
+  const secondsPerBeat = 60 / BPM; // ~0.7317s
+  const stepTime = secondsPerBeat / 4; // 16th note ~0.1829s
+  const SWING = 0.026; // Chillhop swung 16th delay
+
+  let currentStep = 0; // 0 to 127 (8 bars of 16 steps = 128 steps total)
+  let nextStepTime = 0.0;
+  const scheduleAheadTime = 0.12;
+
+  // 8-Bar Jazz Chord Progression (Lush extended harmonies)
   const CHORDS = [
-    // Dm9: D3, A3, C4, E4, G4
-    [146.83, 220.00, 261.63, 329.63, 392.00],
-    // Bbmaj9#11: Bb2, F3, A3, D4, E4
-    [116.54, 174.61, 220.00, 293.66, 329.63],
-    // Cadd9/G: G2, G3, C4, D4, G4
-    [98.00, 196.00, 261.63, 293.66, 392.00],
-    // Gm9: G2, F3, A3, D4, F4
-    [98.00, 174.61, 220.00, 293.66, 349.23],
-    // Asus4/7: A2, E3, A3, D4, E4
-    [110.00, 164.81, 220.00, 293.66, 329.63],
-    // Dm11: D3, A3, C4, F4, A4
-    [146.83, 220.00, 261.63, 349.23, 440.00]
+    // Bar 0: Dm9 (D3, F3, A3, C4, E4)
+    { name: 'Dm9', freqs: [146.83, 174.61, 220.00, 261.63, 329.63], bass: 73.42 },
+    // Bar 1: G13 (G2, F3, A3, B3, E4)
+    { name: 'G13', freqs: [98.00, 174.61, 220.00, 246.94, 329.63], bass: 49.00 },
+    // Bar 2: Cmaj9 (C3, E3, G3, B3, D4)
+    { name: 'Cmaj9', freqs: [130.81, 164.81, 196.00, 246.94, 293.66], bass: 65.41 },
+    // Bar 3: Am9 (A2, G3, C4, D4, E4)
+    { name: 'Am9', freqs: [110.00, 196.00, 261.63, 293.66, 329.63], bass: 55.00 },
+    // Bar 4: Fmaj9 (F2, E3, A3, C4, G4)
+    { name: 'Fmaj9', freqs: [87.31, 164.81, 220.00, 261.63, 392.00], bass: 43.65 },
+    // Bar 5: Em9 (E2, D3, G3, B3, F#4)
+    { name: 'Em9', freqs: [82.41, 146.83, 196.00, 246.94, 369.99], bass: 41.20 },
+    // Bar 6: Dm9 (D3, F3, A3, C4, E4)
+    { name: 'Dm9', freqs: [146.83, 174.61, 220.00, 261.63, 329.63], bass: 73.42 },
+    // Bar 7: A7alt (A2, G3, C4, Eb4, F4)
+    { name: 'A7alt', freqs: [110.00, 196.00, 261.63, 311.13, 349.23], bass: 55.00 }
   ];
 
-  // Celestial temple bell frequencies (D5, A5, C6, D6, E6)
-  const BELL_FREQS = [587.33, 880.00, 1046.50, 1174.66, 1318.51];
-
-  function createReverbBuffer(audioCtx, duration = 3.6, decay = 2.4) {
-    const rate = audioCtx.sampleRate;
+  // Procedural Convolution Reverb Buffer
+  let reverbNode = null;
+  function createReverb(duration = 2.4, decay = 2.0) {
+    const rate = ctx.sampleRate;
     const length = Math.floor(rate * duration);
-    const impulse = audioCtx.createBuffer(2, length, rate);
+    const impulse = ctx.createBuffer(2, length, rate);
     const left = impulse.getChannelData(0);
     const right = impulse.getChannelData(1);
     for (let i = 0; i < length; i++) {
@@ -3488,8 +3485,13 @@ const AmbientMusicEngine = (function() {
       left[i] = (Math.random() * 2 - 1) * env;
       right[i] = (Math.random() * 2 - 1) * env;
     }
-    return impulse;
+    const conv = ctx.createConvolver();
+    conv.buffer = impulse;
+    return conv;
   }
+
+  // Master lowpass filter (breathing with 3D sphere)
+  let masterFilter = null;
 
   function initAudioContext() {
     if (isInitialized) return true;
@@ -3499,247 +3501,355 @@ const AmbientMusicEngine = (function() {
     try {
       ctx = new AudioCtx();
 
-      // Master Limiter / Compressor to avoid any digital clipping
+      // Master Compressor / Limiter
       const compressor = ctx.createDynamicsCompressor();
-      compressor.threshold.setValueAtTime(-14, ctx.currentTime);
-      compressor.knee.setValueAtTime(24, ctx.currentTime);
-      compressor.ratio.setValueAtTime(6, ctx.currentTime);
-      compressor.attack.setValueAtTime(0.015, ctx.currentTime);
-      compressor.release.setValueAtTime(0.3, ctx.currentTime);
+      compressor.threshold.setValueAtTime(-12, ctx.currentTime);
+      compressor.knee.setValueAtTime(20, ctx.currentTime);
+      compressor.ratio.setValueAtTime(4.5, ctx.currentTime);
+      compressor.attack.setValueAtTime(0.008, ctx.currentTime);
+      compressor.release.setValueAtTime(0.2, ctx.currentTime);
       compressor.connect(ctx.destination);
 
-      // Master Gain for mute/unmute
       masterGain = ctx.createGain();
       masterGain.gain.setValueAtTime(0.0001, ctx.currentTime);
       masterGain.connect(compressor);
 
-      // Duck Gain for Lightbox focusing
       duckGain = ctx.createGain();
       duckGain.gain.setValueAtTime(1.0, ctx.currentTime);
       duckGain.connect(masterGain);
 
-      // Master Breathing Filter (Lowpass)
-      filterNode = ctx.createBiquadFilter();
-      filterNode.type = 'lowpass';
-      filterNode.frequency.setValueAtTime(1150, ctx.currentTime);
-      filterNode.Q.setValueAtTime(1.2, ctx.currentTime);
-      filterNode.connect(duckGain);
+      masterFilter = ctx.createBiquadFilter();
+      masterFilter.type = 'lowpass';
+      masterFilter.frequency.setValueAtTime(2800, ctx.currentTime);
+      masterFilter.Q.setValueAtTime(1.0, ctx.currentTime);
+      masterFilter.connect(duckGain);
 
-      // Cathedral Convolution Reverb
-      reverbNode = ctx.createConvolver();
-      reverbNode.buffer = createReverbBuffer(ctx, 3.8, 2.5);
-
+      reverbNode = createReverb(2.2, 2.0);
       const wetGain = ctx.createGain();
-      wetGain.gain.setValueAtTime(0.55, ctx.currentTime);
+      wetGain.gain.setValueAtTime(0.38, ctx.currentTime);
       reverbNode.connect(wetGain);
       wetGain.connect(duckGain);
 
-      // Start sub-drone
-      startSubDrone();
+      // Start subtle vinyl crackle loop
+      startVinylCrackle();
 
       isInitialized = true;
       return true;
-    } catch (e) {
-      console.warn('AmbientMusicEngine initialization error:', e);
+    } catch(e) {
+      console.warn('JazzHop init error:', e);
       return false;
     }
   }
 
-  function startSubDrone() {
+  // Vinyl Texture Generator
+  function startVinylCrackle() {
     if (!ctx) return;
-    const droneGain = ctx.createGain();
-    droneGain.gain.setValueAtTime(0.055, ctx.currentTime);
+    const bufferSize = ctx.sampleRate * 4;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      const hiss = (Math.random() * 2 - 1) * 0.015;
+      const click = (Math.random() > 0.9996) ? (Math.random() * 2 - 1) * 0.12 : 0;
+      data[i] = hiss + click;
+    }
 
-    const droneFilter = ctx.createBiquadFilter();
-    droneFilter.type = 'lowpass';
-    droneFilter.frequency.setValueAtTime(160, ctx.currentTime);
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.loop = true;
 
-    // Warm sub sine at D2 (73.42 Hz)
-    const osc1 = ctx.createOscillator();
-    osc1.type = 'sine';
-    osc1.frequency.setValueAtTime(73.42, ctx.currentTime);
+    const vFilter = ctx.createBiquadFilter();
+    vFilter.type = 'bandpass';
+    vFilter.frequency.setValueAtTime(1200, ctx.currentTime);
+    vFilter.Q.setValueAtTime(0.8, ctx.currentTime);
 
-    // Triangle sub at D1 (36.71 Hz)
-    const osc2 = ctx.createOscillator();
-    osc2.type = 'triangle';
-    osc2.frequency.setValueAtTime(36.71, ctx.currentTime);
+    const vGain = ctx.createGain();
+    vGain.gain.setValueAtTime(0.022, ctx.currentTime);
 
-    osc1.detune.setValueAtTime(-3, ctx.currentTime);
-    osc2.detune.setValueAtTime(3, ctx.currentTime);
-
-    osc1.connect(droneFilter);
-    osc2.connect(droneFilter);
-    droneFilter.connect(droneGain);
-    droneGain.connect(masterGain);
-
-    osc1.start();
-    osc2.start();
-
-    droneNodes = [osc1, osc2, droneGain, droneFilter];
+    source.connect(vFilter);
+    vFilter.connect(vGain);
+    vGain.connect(duckGain);
+    source.start();
+    vinylNode = source;
   }
 
-  function playChord(chordFreqs) {
-    if (!ctx || !filterNode || !reverbNode) return;
-    const now = ctx.currentTime;
-    const fadeTime = 4.2;
+  // --- INSTRUMENT SYNTHESIS ---
 
-    activeVoices.forEach(voice => {
-      try {
-        voice.gain.gain.cancelScheduledValues(now);
-        voice.gain.gain.setValueAtTime(voice.gain.gain.value, now);
-        voice.gain.gain.linearRampToValueAtTime(0.0001, now + fadeTime);
-        setTimeout(() => {
-          try {
-            voice.oscs.forEach(o => o.stop());
-            voice.gain.disconnect();
-          } catch(e) {}
-        }, fadeTime * 1000 + 100);
-      } catch(e) {}
-    });
-    activeVoices = [];
+  // 1. Kick Drum (Punchy Low-End Hip Hop Kick)
+  function triggerKick(time, vel = 0.75) {
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
 
-    const baseGain = 0.05 / Math.sqrt(chordFreqs.length);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(130, time);
+    osc.frequency.exponentialRampToValueAtTime(42, time + 0.075);
 
-    chordFreqs.forEach((freq, idx) => {
-      const voiceGain = ctx.createGain();
-      voiceGain.gain.setValueAtTime(0.0001, now);
-      voiceGain.gain.linearRampToValueAtTime(baseGain * (1 - idx * 0.1), now + fadeTime);
+    gain.gain.setValueAtTime(vel * 0.75, time);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.28);
 
-      let panner = null;
-      if (ctx.createStereoPanner) {
-        panner = ctx.createStereoPanner();
-        const panValue = ((idx / (chordFreqs.length - 1)) * 1.4 - 0.7);
-        panner.pan.setValueAtTime(panValue, now);
+    osc.connect(gain);
+    gain.connect(masterFilter);
+
+    osc.start(time);
+    osc.stop(time + 0.3);
+  }
+
+  // 2. Snare / Rimshot (Crisp, organic 90s boom-bap / jazz snare)
+  function triggerSnare(time, vel = 0.7) {
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const oscGain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(180, time);
+    osc.frequency.exponentialRampToValueAtTime(115, time + 0.04);
+    oscGain.gain.setValueAtTime(vel * 0.45, time);
+    oscGain.gain.exponentialRampToValueAtTime(0.001, time + 0.12);
+    osc.connect(oscGain);
+    oscGain.connect(masterFilter);
+    osc.start(time);
+    osc.stop(time + 0.15);
+
+    const noiseBuffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.18), ctx.sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < noiseBuffer.length; i++) {
+      output[i] = Math.random() * 2 - 1;
+    }
+    const noiseSource = ctx.createBufferSource();
+    noiseSource.buffer = noiseBuffer;
+
+    const noiseFilter = ctx.createBiquadFilter();
+    noiseFilter.type = 'bandpass';
+    noiseFilter.frequency.setValueAtTime(2200, time);
+    noiseFilter.Q.setValueAtTime(1.8, time);
+
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(vel * 0.55, time);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, time + 0.16);
+
+    noiseSource.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(masterFilter);
+
+    if (reverbNode) {
+      const splashSend = ctx.createGain();
+      splashSend.gain.setValueAtTime(vel * 0.22, time);
+      noiseFilter.connect(splashSend);
+      splashSend.connect(reverbNode);
+    }
+
+    noiseSource.start(time);
+    noiseSource.stop(time + 0.2);
+  }
+
+  // 3. Hi-Hat (Swung, velocity-sensitive jazzy closed/open hat)
+  function triggerHat(time, vel = 0.35, isOpen = false) {
+    if (!ctx) return;
+    const dur = isOpen ? 0.22 : 0.048;
+    const noiseBuffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * dur), ctx.sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < noiseBuffer.length; i++) {
+      output[i] = Math.random() * 2 - 1;
+    }
+    const source = ctx.createBufferSource();
+    source.buffer = noiseBuffer;
+
+    const hp = ctx.createBiquadFilter();
+    hp.type = 'highpass';
+    hp.frequency.setValueAtTime(7500, time);
+
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(vel * 0.38, time);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + dur);
+
+    source.connect(hp);
+    hp.connect(gain);
+    gain.connect(masterFilter);
+
+    source.start(time);
+    source.stop(time + dur + 0.02);
+  }
+
+  // 4. Jazz Rhodes Chords (Warm electric piano with soft tine chime)
+  function triggerRhodesChord(time, freqs, duration = 1.4, vel = 0.5) {
+    if (!ctx) return;
+    const noteGain = (vel * 0.09) / Math.sqrt(freqs.length);
+
+    freqs.forEach((f) => {
+      const oscBody = ctx.createOscillator();
+      oscBody.type = 'sine';
+      oscBody.frequency.setValueAtTime(f, time);
+
+      const oscTine = ctx.createOscillator();
+      oscTine.type = 'sine';
+      oscTine.frequency.setValueAtTime(f * 3, time);
+
+      const tineGain = ctx.createGain();
+      tineGain.gain.setValueAtTime(noteGain * 0.35, time);
+      tineGain.gain.exponentialRampToValueAtTime(0.0001, time + 0.24);
+
+      const vGain = ctx.createGain();
+      vGain.gain.setValueAtTime(0.0001, time);
+      vGain.gain.linearRampToValueAtTime(noteGain, time + 0.025);
+      vGain.gain.exponentialRampToValueAtTime(noteGain * 0.45, time + duration * 0.6);
+      vGain.gain.linearRampToValueAtTime(0.0001, time + duration);
+
+      const toneFilter = ctx.createBiquadFilter();
+      toneFilter.type = 'lowpass';
+      toneFilter.frequency.setValueAtTime(1500, time);
+
+      oscBody.connect(toneFilter);
+      oscTine.connect(tineGain);
+      tineGain.connect(toneFilter);
+      toneFilter.connect(vGain);
+
+      vGain.connect(masterFilter);
+      if (reverbNode) {
+        const revSend = ctx.createGain();
+        revSend.gain.setValueAtTime(0.35, time);
+        vGain.connect(revSend);
+        revSend.connect(reverbNode);
       }
 
-      const oscA = ctx.createOscillator();
-      const oscB = ctx.createOscillator();
-
-      oscA.type = idx % 2 === 0 ? 'sine' : 'triangle';
-      oscB.type = 'sawtooth';
-
-      oscA.frequency.setValueAtTime(freq, now);
-      oscB.frequency.setValueAtTime(freq, now);
-
-      oscA.detune.setValueAtTime(-5, now);
-      oscB.detune.setValueAtTime(5, now);
-
-      const vFilter = ctx.createBiquadFilter();
-      vFilter.type = 'lowpass';
-      vFilter.frequency.setValueAtTime(freq * 3.2, now);
-
-      const oscBGain = ctx.createGain();
-      oscBGain.gain.setValueAtTime(0.18, now);
-
-      oscA.connect(vFilter);
-      oscB.connect(oscBGain);
-      oscBGain.connect(vFilter);
-
-      if (panner) {
-        vFilter.connect(panner);
-        panner.connect(voiceGain);
-      } else {
-        vFilter.connect(voiceGain);
-      }
-
-      voiceGain.connect(filterNode);
-      voiceGain.connect(reverbNode);
-
-      oscA.start(now);
-      oscB.start(now);
-
-      activeVoices.push({
-        gain: voiceGain,
-        oscs: [oscA, oscB]
-      });
+      oscBody.start(time);
+      oscTine.start(time);
+      oscBody.stop(time + duration + 0.05);
+      oscTine.stop(time + 0.3);
     });
   }
 
-  function triggerBell() {
-    if (!ctx || !isPlaying || !reverbNode) return;
-    const now = ctx.currentTime;
-    const freq = BELL_FREQS[Math.floor(Math.random() * BELL_FREQS.length)];
+  // 5. Walking / Melodic Jazz Bass
+  function triggerBass(time, freq, duration = 0.42, vel = 0.65) {
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const sub = ctx.createOscillator();
+    const bFilter = ctx.createBiquadFilter();
+    const bGain = ctx.createGain();
 
-    const bellGain = ctx.createGain();
-    bellGain.gain.setValueAtTime(0.0001, now);
-    bellGain.gain.linearRampToValueAtTime(0.065, now + 0.08);
-    bellGain.gain.exponentialRampToValueAtTime(0.0001, now + 6.5);
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(freq, time);
 
-    const partials = [1.0, 2.756, 5.404];
-    const partialGains = [0.8, 0.35, 0.12];
-    const oscs = [];
+    sub.type = 'sine';
+    sub.frequency.setValueAtTime(freq, time);
 
-    partials.forEach((mult, i) => {
-      const o = ctx.createOscillator();
-      o.type = 'sine';
-      o.frequency.setValueAtTime(freq * mult, now);
+    bFilter.type = 'lowpass';
+    bFilter.frequency.setValueAtTime(340, time);
+    bFilter.frequency.exponentialRampToValueAtTime(180, time + duration);
 
-      const pGain = ctx.createGain();
-      pGain.gain.setValueAtTime(partialGains[i], now);
+    bGain.gain.setValueAtTime(vel * 0.36, time);
+    bGain.gain.exponentialRampToValueAtTime(vel * 0.18, time + duration * 0.7);
+    bGain.gain.linearRampToValueAtTime(0.0001, time + duration);
 
-      o.connect(pGain);
-      pGain.connect(bellGain);
-      o.start(now);
-      o.stop(now + 6.8);
-      oscs.push(o);
-    });
+    osc.connect(bFilter);
+    sub.connect(bFilter);
+    bFilter.connect(bGain);
+    bGain.connect(masterFilter);
 
-    const wetSend = ctx.createGain();
-    wetSend.gain.setValueAtTime(0.75, now);
-    bellGain.connect(wetSend);
-    wetSend.connect(reverbNode);
-
-    const drySend = ctx.createGain();
-    drySend.gain.setValueAtTime(0.25, now);
-    bellGain.connect(drySend);
-    drySend.connect(filterNode);
-
-    setTimeout(() => {
-      try {
-        bellGain.disconnect();
-        wetSend.disconnect();
-        drySend.disconnect();
-      } catch(e) {}
-    }, 7000);
+    osc.start(time);
+    sub.start(time);
+    osc.stop(time + duration + 0.05);
+    sub.stop(time + duration + 0.05);
   }
 
-  function scheduleNextChord() {
-    if (!isPlaying) return;
-    playChord(CHORDS[currentChordIndex]);
-    currentChordIndex = (currentChordIndex + 1) % CHORDS.length;
+  // --- STEP SEQUENCER & LOOKAHEAD SCHEDULER ---
+  function scheduleStep(stepIndex, stepTimePos) {
+    const barIndex = Math.floor(stepIndex / 16) % CHORDS.length;
+    const stepInBar = stepIndex % 16;
+    const chord = CHORDS[barIndex];
 
-    chordTimer = setTimeout(() => {
-      scheduleNextChord();
-    }, 11000);
+    const isSwung = (stepInBar % 2 === 1);
+    const time = stepTimePos + (isSwung ? SWING : 0);
+
+    // Drums
+    if (stepInBar === 0) {
+      triggerKick(time, 0.78);
+    } else if (stepInBar === 6) {
+      triggerKick(time, 0.62);
+    } else if (stepInBar === 10 && (barIndex % 2 === 1)) {
+      triggerKick(time, 0.58);
+    }
+
+    if (stepInBar === 4) {
+      triggerSnare(time, 0.72);
+    } else if (stepInBar === 12) {
+      triggerSnare(time, 0.78);
+    } else if (stepInBar === 14 && barIndex === 7) {
+      triggerSnare(time, 0.28);
+    }
+
+    if (stepInBar % 2 === 0) {
+      const isAccent = (stepInBar === 0 || stepInBar === 8);
+      triggerHat(time, isAccent ? 0.42 : 0.28, false);
+    } else if (stepInBar === 14 && (barIndex % 4 === 3)) {
+      triggerHat(time, 0.38, true);
+    } else {
+      triggerHat(time, 0.18, false);
+    }
+
+    // Jazz Rhodes Chords
+    if (stepInBar === 0) {
+      triggerRhodesChord(time, chord.freqs, stepTime * 5.2, 0.55);
+    } else if (stepInBar === 6) {
+      triggerRhodesChord(time, chord.freqs, stepTime * 3.8, 0.46);
+    } else if (stepInBar === 14) {
+      const nextChord = CHORDS[(barIndex + 1) % CHORDS.length];
+      triggerRhodesChord(time, nextChord.freqs, stepTime * 2.2, 0.42);
+    }
+
+    // Walking Jazz Bass
+    if (stepInBar === 0) {
+      triggerBass(time, chord.bass, stepTime * 3.5, 0.68);
+    } else if (stepInBar === 6) {
+      triggerBass(time, chord.bass * 1.25, stepTime * 2.2, 0.58);
+    } else if (stepInBar === 8) {
+      triggerBass(time, chord.bass * 1.5, stepTime * 3.0, 0.62);
+    } else if (stepInBar === 12) {
+      const nextBass = CHORDS[(barIndex + 1) % CHORDS.length].bass;
+      triggerBass(time, nextBass * 0.94, stepTime * 2.5, 0.54);
+    }
   }
 
-  function scheduleBells() {
-    if (!isPlaying) return;
-    const delay = 14000 + Math.random() * 8000;
-    bellTimer = setTimeout(() => {
-      triggerBell();
-      scheduleBells();
-    }, delay);
+  function schedulerLoop() {
+    if (!isPlaying || !ctx) return;
+    while (nextStepTime < ctx.currentTime + scheduleAheadTime) {
+      scheduleStep(currentStep, nextStepTime);
+      nextStepTime += stepTime;
+      currentStep = (currentStep + 1) % (CHORDS.length * 16);
+    }
+    lookaheadTimer = setTimeout(schedulerLoop, 25);
   }
 
   function updateButtonUI(active) {
     const btn = document.getElementById('ambient-music-btn');
     const label = document.getElementById('ui-ambient-sound-label');
+    const icon = document.getElementById('ui-ambient-sound-icon');
+    const videoBtn = document.getElementById('video-sound-btn');
+    const videoLabel = document.getElementById('ui-video-sound-label');
+    const videoIcon = videoBtn ? videoBtn.querySelector('.sound-icon') : null;
     const dict = I18N[currentLang] || I18N.es;
+
+    const iconStr = active ? '🔊' : '🔇';
+    const textStr = active ? dict.ambientSoundOn : dict.ambientSoundOff;
+    const titleStr = active ? dict.ambientSoundTipPlaying : dict.ambientSoundTipMuted;
+
     if (btn) {
       if (active) {
         btn.classList.add('playing');
         btn.setAttribute('aria-pressed', 'true');
-        btn.title = dict.ambientSoundTipPlaying;
       } else {
         btn.classList.remove('playing');
         btn.setAttribute('aria-pressed', 'false');
-        btn.title = dict.ambientSoundTipMuted;
       }
+      btn.title = titleStr;
     }
-    if (label) {
-      label.textContent = active ? dict.ambientSoundOn : dict.ambientSoundOff;
+    if (label) label.textContent = textStr;
+    if (icon) icon.textContent = iconStr;
+
+    // Keep video topbar sound button in sync
+    if (videoBtn) {
+      videoBtn.title = titleStr;
     }
+    if (videoLabel) videoLabel.textContent = textStr;
+    if (videoIcon) videoIcon.textContent = iconStr;
   }
 
   return {
@@ -3755,12 +3865,11 @@ const AmbientMusicEngine = (function() {
       const now = ctx.currentTime;
       masterGain.gain.cancelScheduledValues(now);
       masterGain.gain.setValueAtTime(masterGain.gain.value, now);
-      masterGain.gain.linearRampToValueAtTime(0.36, now + 3.0);
+      masterGain.gain.linearRampToValueAtTime(0.48, now + 1.2);
 
-      clearTimeout(chordTimer);
-      clearTimeout(bellTimer);
-      scheduleNextChord();
-      scheduleBells();
+      nextStepTime = ctx.currentTime + 0.05;
+      clearTimeout(lookaheadTimer);
+      schedulerLoop();
 
       updateButtonUI(true);
       try {
@@ -3778,10 +3887,9 @@ const AmbientMusicEngine = (function() {
       const now = ctx.currentTime;
       masterGain.gain.cancelScheduledValues(now);
       masterGain.gain.setValueAtTime(masterGain.gain.value, now);
-      masterGain.gain.linearRampToValueAtTime(0.0001, now + 0.8);
+      masterGain.gain.linearRampToValueAtTime(0.0001, now + 0.5);
 
-      clearTimeout(chordTimer);
-      clearTimeout(bellTimer);
+      clearTimeout(lookaheadTimer);
 
       updateButtonUI(false);
       try {
@@ -3806,15 +3914,15 @@ const AmbientMusicEngine = (function() {
       duckGain.gain.cancelScheduledValues(now);
       duckGain.gain.setValueAtTime(duckGain.gain.value, now);
       if (shouldDuck) {
-        duckGain.gain.linearRampToValueAtTime(0.24, now + 1.2);
+        duckGain.gain.linearRampToValueAtTime(0.22, now + 0.8);
       } else {
-        duckGain.gain.linearRampToValueAtTime(1.0, now + 1.4);
+        duckGain.gain.linearRampToValueAtTime(1.0, now + 1.0);
       }
     },
     modulate: function(speed) {
-      if (!ctx || !filterNode || !isPlaying) return;
-      const targetFreq = Math.min(2400, 1150 + speed * 420);
-      filterNode.frequency.setTargetAtTime(targetFreq, ctx.currentTime, 0.35);
+      if (!ctx || !masterFilter || !isPlaying) return;
+      const targetFreq = Math.min(3800, 2400 + speed * 600);
+      masterFilter.frequency.setTargetAtTime(targetFreq, ctx.currentTime, 0.3);
     },
     updateLang: function() {
       updateButtonUI(isPlaying);
@@ -3826,8 +3934,17 @@ window.AmbientMusicEngine = AmbientMusicEngine;
 
 function initAmbientMusic() {
   const btn = document.getElementById('ambient-music-btn');
+  const videoBtn = document.getElementById('video-sound-btn');
+
   if (btn) {
     btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      AmbientMusicEngine.toggle();
+    });
+  }
+
+  if (videoBtn) {
+    videoBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       AmbientMusicEngine.toggle();
     });
@@ -3844,39 +3961,38 @@ function initAmbientMusic() {
     }
   });
 
-  // Check saved state: default is enabled, unless explicitly set to muted
+  // Check saved state: default is ENABLED / PLAYING, unless explicitly set to muted
   let isMutedPref = false;
   try {
-    isMutedPref = localStorage.getItem('wilmar_ambient_music') === 'muted';
+    isMutedPref = (localStorage.getItem('wilmar_ambient_music') === 'muted');
   } catch(e) {}
 
   if (!isMutedPref) {
-    // When user enters archive, initiate soundscape smoothly
-    window.addEventListener('enter-archive', () => {
-      try {
-        if (localStorage.getItem('wilmar_ambient_music') !== 'muted') {
-          AmbientMusicEngine.start(false);
-        }
-      } catch(e) {}
-    });
+    // Enabled predeterminadamente! Set UI to active state immediately
+    AmbientMusicEngine.updateLang();
+    const btnEl = document.getElementById('ambient-music-btn');
+    if (btnEl) btnEl.classList.add('playing');
 
-    // Interaction fallback unlock for autoplay policy
+    // Attempt starting immediately
+    AmbientMusicEngine.start(false);
+
+    // Global interaction unlocker for browser autoplay policy
     const unlockAudioOnGesture = () => {
-      const videoStage = document.getElementById('video-stage');
-      const isVideoVisible = videoStage && videoStage.style.display !== 'none';
-      if (!isVideoVisible) {
-        try {
-          if (localStorage.getItem('wilmar_ambient_music') !== 'muted' && !AmbientMusicEngine.isActive) {
-            AmbientMusicEngine.start(false);
-          }
-        } catch(e) {}
+      if (localStorage.getItem('wilmar_ambient_music') !== 'muted') {
+        AmbientMusicEngine.start(false);
       }
       window.removeEventListener('pointerdown', unlockAudioOnGesture);
       window.removeEventListener('touchstart', unlockAudioOnGesture);
+      window.removeEventListener('scroll', unlockAudioOnGesture);
+      window.removeEventListener('wheel', unlockAudioOnGesture);
+      window.removeEventListener('keydown', unlockAudioOnGesture);
     };
 
-    window.addEventListener('pointerdown', unlockAudioOnGesture, { once: true });
-    window.addEventListener('touchstart', unlockAudioOnGesture, { once: true });
+    window.addEventListener('pointerdown', unlockAudioOnGesture, { passive: true, once: true });
+    window.addEventListener('touchstart', unlockAudioOnGesture, { passive: true, once: true });
+    window.addEventListener('scroll', unlockAudioOnGesture, { passive: true, once: true });
+    window.addEventListener('wheel', unlockAudioOnGesture, { passive: true, once: true });
+    window.addEventListener('keydown', unlockAudioOnGesture, { passive: true, once: true });
   } else {
     AmbientMusicEngine.updateLang();
   }
