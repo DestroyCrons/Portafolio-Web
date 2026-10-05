@@ -1681,6 +1681,7 @@ var AmbientMusicEngine = (function() {
   let isVideoPausedByUser = false;
   let isDucked = false;
   let isFadingIn = false;
+  let wasPlayingBeforeBackground = false;
   let fadeAnimId = null;
 
   function getAudioElement() {
@@ -1922,6 +1923,27 @@ var AmbientMusicEngine = (function() {
       const target = isDucked ? DUCK_VOLUME : TARGET_VOLUME;
       fadeTo(target, isDucked ? 500 : 750);
     },
+    pauseBackground: function() {
+      const el = getAudioElement();
+      if (!el) return;
+      // Track if audio was actively playing before leaving app or turning off screen
+      wasPlayingBeforeBackground = isPlaying && !el.paused;
+      if (wasPlayingBeforeBackground) {
+        isFadingIn = false;
+        try {
+          el.pause();
+        } catch(e) {}
+      }
+    },
+    resumeForeground: function() {
+      const el = getAudioElement();
+      if (!el) return;
+      // Only resume automatically if it was actively playing and not muted by user
+      if (wasPlayingBeforeBackground && localStorage.getItem('wilmar_ambient_music') !== 'muted') {
+        wasPlayingBeforeBackground = false;
+        this.start(false);
+      }
+    },
     modulate: function(speed) {
       // Maintained for API compatibility
     },
@@ -1990,6 +2012,42 @@ function initAmbientMusic() {
       AmbientMusicEngine.start(false);
     }
   });
+
+  // Background, App Switch & Phone Screen Lock Controller:
+  // Automatically stops music and video when user leaves page, switches apps, or locks/turns off phone
+  const handleVisibilityChange = () => {
+    if (document.hidden || document.visibilityState === 'hidden') {
+      // User locked phone screen, minimized browser, or switched to another app
+      AmbientMusicEngine.pauseBackground();
+      const introVid = document.getElementById('intro-video');
+      if (introVid && !introVid.paused) {
+        introVid.setAttribute('data-paused-by-bg', 'true');
+        introVid.pause();
+      }
+    } else if (!document.hidden && document.visibilityState === 'visible') {
+      // User returned to website or unlocked phone screen
+      AmbientMusicEngine.resumeForeground();
+      const introVid = document.getElementById('intro-video');
+      if (introVid && introVid.getAttribute('data-paused-by-bg') === 'true') {
+        introVid.removeAttribute('data-paused-by-bg');
+        introVid.play().catch(() => {});
+      }
+    }
+  };
+
+  document.addEventListener('visibilitychange', handleVisibilityChange, false);
+  window.addEventListener('pagehide', () => AmbientMusicEngine.pauseBackground(), false);
+  window.addEventListener('pageshow', () => {
+    if (!document.hidden && document.visibilityState === 'visible') {
+      AmbientMusicEngine.resumeForeground();
+    }
+  }, false);
+  window.addEventListener('freeze', () => AmbientMusicEngine.pauseBackground(), false);
+  window.addEventListener('resume', () => {
+    if (!document.hidden && document.visibilityState === 'visible') {
+      AmbientMusicEngine.resumeForeground();
+    }
+  }, false);
 }
 
 /* ==========================================================================
