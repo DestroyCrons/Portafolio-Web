@@ -484,14 +484,14 @@ input, textarea, select, button {
 
 .panel-header-sticky {
   position: sticky;
-  top: var(--header-height);
-  background: rgba(6, 6, 8, 0.94);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  padding: 8px 0 10px;
-  margin-bottom: 12px;
+  top: 0;
+  background: rgba(6, 6, 8, 0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 10px 0 12px;
+  margin-bottom: 14px;
   border-bottom: 1px solid var(--border-subtle);
-  z-index: 10;
+  z-index: 25;
 }
 
 .panel-header-row {
@@ -1018,7 +1018,7 @@ input, textarea, select, button {
   -webkit-backdrop-filter: blur(20px);
   border-top: 1px solid var(--border-subtle);
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   z-index: 100;
 }
 
@@ -1234,4 +1234,336 @@ input, textarea, select, button {
   opacity: 1;
   visibility: visible;
   transform: translateX(-50%) translateY(0);
+}
+
+/* ==========================================================================
+   5. INQUIRIES & ORDERS INBOX (DIAGRAMMING & CARDS)
+   ========================================================================== */
+.header-badge-dot {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff4757;
+  border: 1.5px solid var(--bg-elevated);
+  box-shadow: 0 0 8px #ff4757;
+  animation: pulseDot 2s infinite;
+}
+
+@keyframes pulseDot {
+  0% { transform: scale(0.9); opacity: 0.9; }
+  50% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 12px #ff4757; }
+  100% { transform: scale(0.9); opacity: 0.9; }
+}
+
+.nav-tab-icon-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tab-badge-num {
+  position: absolute;
+  top: -4px;
+  right: -9px;
+  background: #ff4757;
+  color: #ffffff;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  border-radius: 10px;
+  padding: 1px 4px;
+  min-width: 14px;
+  text-align: center;
+  line-height: 12px;
+  box-shadow: 0 0 8px rgba(255, 71, 87, 0.6);
+}
+
+.inquiries-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.inquiry-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  transition: border-color 0.25s ease, transform 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.inquiry-card.unread {
+  border-color: rgba(212, 163, 89, 0.6);
+  background: linear-gradient(145deg, rgba(26, 23, 17, 0.95) 0%, rgba(14, 14, 20, 0.96) 100%);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), 0 0 16px rgba(212, 163, 89, 0.14);
+}
+
+.inquiry-card.unread::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 3.5px;
+  background: linear-gradient(180deg, var(--gold-primary), #3ecf8e);
+}
+
+.inquiry-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.inquiry-client-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.inquiry-client-name {
+  font-family: var(--font-display);
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--fg-primary);
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.inquiry-client-email {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--gold-light);
+  text-decoration: none;
+  word-break: break-all;
+  margin-top: 2px;
+}
+
+.inquiry-badge-status {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 3px 7px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.inquiry-badge-status.new {
+  background: rgba(62, 207, 142, 0.18);
+  border: 1px solid rgba(62, 207, 142, 0.4);
+  color: #3ecf8e;
+}
+
+.inquiry-badge-status.contacted {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--border-subtle);
+  color: var(--fg-secondary);
+}
+
+.inquiry-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.inquiry-pill {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--fg-secondary);
+}
+
+.inquiry-pill.service {
+  color: var(--gold-primary);
+  border-color: rgba(212, 163, 89, 0.3);
+  background: rgba(212, 163, 89, 0.08);
+  font-weight: 600;
+}
+
+.inquiry-pill.budget {
+  color: #3ecf8e;
+  border-color: rgba(62, 207, 142, 0.25);
+  background: rgba(62, 207, 142, 0.06);
+}
+
+.inquiry-pill.date {
+  color: var(--fg-tertiary);
+  margin-left: auto;
+}
+
+.inquiry-message-box {
+  background: rgba(10, 10, 14, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+
+.inquiry-message-text {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--fg-primary);
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.inquiry-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.inquiry-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 11px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  min-height: 32px;
+  touch-action: manipulation;
+  transition: all 0.2s;
+}
+
+.inquiry-btn.reply {
+  background: linear-gradient(135deg, var(--gold-primary) 0%, #a47b33 100%);
+  color: #060608;
+  border: none;
+}
+
+.inquiry-btn.toggle-status {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-gold);
+  color: var(--gold-light);
+}
+
+.inquiry-btn.copy {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--fg-secondary);
+}
+
+.inquiry-btn.delete {
+  background: none;
+  border: 1px solid rgba(224, 79, 79, 0.3);
+  color: #ff9191;
+  padding: 6px 9px;
+}
+
+/* ==========================================================================
+   6. RESPONSIVE MOBILE DIAGRAMMING OVERHAUL (< 640px & < 390px)
+   ========================================================================== */
+@media (max-width: 640px) {
+  html {
+    font-size: 13.5px;
+  }
+
+  .tab-panel {
+    padding: 10px 12px 34px !important;
+    max-width: 100% !important;
+  }
+
+  .panel-header-sticky {
+    padding: 8px 0 10px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .panel-title {
+    font-size: 16px !important;
+  }
+
+  .work-item-card {
+    padding: 10px !important;
+    gap: 10px !important;
+  }
+
+  .work-thumb-box {
+    width: 60px !important;
+    height: 80px !important;
+  }
+
+  .work-title-text {
+    font-size: 13.5px !important;
+  }
+
+  .work-card-actions {
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+  }
+
+  .settings-card {
+    padding: 14px 12px !important;
+    border-radius: 14px !important;
+  }
+
+  .card-title {
+    font-size: 14px !important;
+  }
+
+  .app-bottom-nav {
+    height: calc(56px + var(--safe-bottom)) !important;
+  }
+
+  .nav-tab-label {
+    font-size: 9px !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .app-header {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+
+  .header-app-name {
+    font-size: 10px !important;
+    max-width: 130px !important;
+  }
+
+  .app-monogram {
+    font-size: 10px !important;
+    padding: 2px 5px !important;
+  }
+
+  .header-actions {
+    gap: 4px !important;
+  }
+
+  .header-icon-btn {
+    width: 31px !important;
+    height: 31px !important;
+  }
+
+  .nav-tab-label {
+    font-size: 8.5px !important;
+  }
+
+  .inquiry-btn {
+    padding: 5px 9px !important;
+    font-size: 10px !important;
+  }
 }

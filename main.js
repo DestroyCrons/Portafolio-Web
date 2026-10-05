@@ -2828,6 +2828,46 @@ Presupuesto: ${budget}
 Mensaje:
 ${message}`;
 
+      // Automatically register order into Studio Master Console Inbox
+      const newInquiry = {
+        id: 'ped_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+        timestamp: new Date().toISOString(),
+        dateFormatted: new Intl.DateTimeFormat('es-CO', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        }).format(new Date()),
+        name: name,
+        email: email,
+        service: service,
+        budget: budget || (currentLang === 'en' ? 'To be agreed' : 'A convenir'),
+        message: message,
+        status: 'unread',
+        read: false
+      };
+
+      try {
+        const storedOrders = JSON.parse(localStorage.getItem('wm_orders_inbox') || '[]');
+        storedOrders.unshift(newInquiry);
+        localStorage.setItem('wm_orders_inbox', JSON.stringify(storedOrders));
+
+        if (typeof BroadcastChannel !== 'undefined') {
+          const bc = new BroadcastChannel('wm_orders_channel');
+          bc.postMessage({ type: 'NEW_ORDER', order: newInquiry });
+          bc.close();
+        }
+
+        if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length) {
+          try {
+            firebase.firestore().collection('inquiries').add(newInquiry).catch(e => console.warn(e));
+          } catch(e) {}
+        }
+      } catch (err) {
+        console.warn('Could not store order locally:', err);
+      }
+
       if (feedbackBox) {
         feedbackBox.classList.add('success');
         const dict = I18N[currentLang] || I18N.es;

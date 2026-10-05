@@ -542,6 +542,7 @@
     showToast(welcomeMsg || "Consola Desbloqueada");
 
     // Populate data into UI
+    renderInquiriesList();
     renderWorksList();
     populatePortfolioForm();
     populateStyleForm();
@@ -557,14 +558,18 @@
     showToast("Consola bloqueada por seguridad");
   }
 
-  // Auto-lock when tab goes into background (switching apps on mobile)
+  // Graceful auto-lock after 5 minutes in background (prevents accidental lockout while switching apps)
+  let backgroundTimestamp = 0;
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') {
-      const appShell = document.getElementById('app-shell');
-      if (appShell && !appShell.classList.contains('hidden')) {
-        // Return to locked state
+      backgroundTimestamp = Date.now();
+    } else if (document.visibilityState === 'visible') {
+      if (backgroundTimestamp && (Date.now() - backgroundTimestamp > 5 * 60 * 1000)) {
         lockAppShell();
       }
+      backgroundTimestamp = 0;
+      updateInquiriesBadge();
+      renderInquiriesList();
     }
   });
 
@@ -642,6 +647,274 @@
       dot.classList.add('offline');
       text.textContent = "Almacenamiento Local";
     }
+  }
+
+  /* ==========================================================================
+     5.5 INQUIRIES & ORDERS CONTROLLER (NOTIFICATIONS & LIVE INBOX)
+     ========================================================================== */
+  let currentInquiryFilter = 'all';
+
+  function getStoredInquiries() {
+    try {
+      return JSON.parse(localStorage.getItem('wm_orders_inbox') || '[]');
+    } catch(e) {
+      return [];
+    }
+  }
+
+  function saveStoredInquiries(orders) {
+    try {
+      localStorage.setItem('wm_orders_inbox', JSON.stringify(orders));
+      updateInquiriesBadge();
+    } catch(e) {}
+  }
+
+  function playOrderNotificationChime() {
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+      osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15); // A5
+      gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.45);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.5);
+    } catch(e) {}
+  }
+
+  function triggerOrderAlert(order) {
+    triggerHaptic([50, 70, 50]);
+    playOrderNotificationChime();
+    showToast(`🔔 ¡Nuevo pedido de ${order.name}!`);
+
+    if ('Notification' in window && Notification.permission === 'granted') {
+      try {
+        new Notification(`Nuevo Pedido: ${order.name}`, {
+          body: `${order.service} · ${order.budget}\n"${(order.message || '').slice(0, 90)}..."`,
+          icon: 'icons/icon-192.svg'
+        });
+      } catch(e) {}
+    }
+  }
+
+  function updateInquiriesBadge() {
+    const orders = getStoredInquiries();
+    const unreadCount = orders.filter(o => o.status === 'unread' || !o.read).length;
+    const totalCount = orders.length;
+
+    const badge = document.getElementById('badge-inquiries-count');
+    const dot = document.getElementById('header-unread-dot');
+    const totalEl = document.getElementById('inquiries-total-count');
+    const countAllEl = document.getElementById('inquiry-count-all');
+    const countUnreadEl = document.getElementById('inquiry-count-unread');
+    const countContactedEl = document.getElementById('inquiry-count-contacted');
+
+    if (badge) {
+      if (unreadCount > 0) {
+        badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+        badge.style.display = 'inline-block';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+
+    if (dot) {
+      dot.style.display = unreadCount > 0 ? 'block' : 'none';
+    }
+
+    if (totalEl) totalEl.textContent = totalCount;
+    if (countAllEl) countAllEl.textContent = totalCount;
+    if (countUnreadEl) countUnreadEl.textContent = unreadCount;
+    if (countContactedEl) countContactedEl.textContent = orders.filter(o => o.status === 'contacted').length;
+  }
+
+  function renderInquiriesList() {
+    const listEl = document.getElementById('inquiries-list');
+    if (!listEl) return;
+
+    updateInquiriesBadge();
+    const orders = getStoredInquiries();
+
+    const filtered = orders.filter(o => {
+      if (currentInquiryFilter === 'unread') return o.status === 'unread' || !o.read;
+      if (currentInquiryFilter === 'contacted') return o.status === 'contacted';
+      return true;
+    });
+
+    if (filtered.length === 0) {
+      listEl.innerHTML = `
+        <div style="text-align: center; padding: 48px 16px; color: var(--fg-secondary);">
+          <div style="font-size: 38px; margin-bottom: 12px; opacity: 0.7;">📭</div>
+          <h3 style="font-family: var(--font-display); font-size: 16px; color: var(--fg-primary); margin-bottom: 6px;">Bandeja al día</h3>
+          <p style="font-size: 12px; line-height: 1.45; max-width: 320px; margin: 0 auto; color: var(--fg-tertiary);">
+            Cuando un cliente envíe una propuesta o cotización desde el formulario de contacto, aparecerá aquí en tiempo real con sus datos y presupuesto.
+          </p>
+          <button type="button" class="admin-btn-ghost" id="btn-create-sample-order" style="margin-top: 16px; font-size: 11px; display: inline-flex; align-items: center; gap: 6px;">
+            <span>+ Generar Pedido de Demostración</span>
+          </button>
+        </div>
+      `;
+      const btnSample = document.getElementById('btn-create-sample-order');
+      if (btnSample) {
+        btnSample.onclick = () => {
+          const sample = {
+            id: 'ped_demo_' + Date.now(),
+            timestamp: new Date().toISOString(),
+            dateFormatted: new Intl.DateTimeFormat('es-CO', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            }).format(new Date()),
+            name: 'Galería & Editorial Meridiano',
+            email: 'curaduria@editorialmeridiano.com',
+            service: 'Diseño Editorial & Maquetación',
+            budget: '$1,200 - $2,500 USD',
+            message: 'Hola Wilmar, nos ha impresionado tu dirección visual y dominio del claroscuro. Deseamos contratar la dirección de arte y diseño de portada para un libro de ensayo visual de 240 páginas.',
+            status: 'unread',
+            read: false
+          };
+          const cur = getStoredInquiries();
+          cur.unshift(sample);
+          saveStoredInquiries(cur);
+          triggerOrderAlert(sample);
+          renderInquiriesList();
+        };
+      }
+      return;
+    }
+
+    listEl.innerHTML = '';
+    filtered.forEach((order) => {
+      const isUnread = order.status === 'unread' || !order.read;
+      const card = document.createElement('div');
+      card.className = `inquiry-card ${isUnread ? 'unread' : ''}`;
+
+      const replySubject = encodeURIComponent(`Respuesta a tu propuesta de proyecto [${order.service}] — Wilmar Machado`);
+      const replyBody = encodeURIComponent(`Hola ${order.name},
+
+Gracias por ponerte en contacto y compartir tu visión para este proyecto de ${order.service}.
+
+He revisado tu propuesta con atención:
+"${order.message}"
+
+Con gusto podemos agendar una llamada o continuar por este medio para definir detalles y cronograma.
+
+Un cordial saludo,
+Wilmar Machado
+Diseño Gráfico & Arte Sacro
+Valledupar · Colombia`);
+
+      const mailtoUrl = `mailto:${encodeURIComponent(order.email)}?subject=${replySubject}&body=${replyBody}`;
+
+      card.innerHTML = `
+        <div class="inquiry-card-header">
+          <div class="inquiry-client-info">
+            <span class="inquiry-client-name">${escapeHtml(order.name)}</span>
+            <a href="mailto:${escapeHtml(order.email)}" class="inquiry-client-email">${escapeHtml(order.email)}</a>
+          </div>
+          <span class="inquiry-badge-status ${isUnread ? 'new' : 'contacted'}">
+            ${isUnread ? '● NUEVO' : 'ATENDIDO'}
+          </span>
+        </div>
+
+        <div class="inquiry-meta-row">
+          <span class="inquiry-pill service">${escapeHtml(order.service || 'Diseño Visual')}</span>
+          <span class="inquiry-pill budget">${escapeHtml(order.budget || 'A convenir')}</span>
+          <span class="inquiry-pill date">${escapeHtml(order.dateFormatted || 'Reciente')}</span>
+        </div>
+
+        <div class="inquiry-message-box">
+          <p class="inquiry-message-text">${escapeHtml(order.message || 'Sin mensaje adicional.')}</p>
+        </div>
+
+        <div class="inquiry-actions-row">
+          <button type="button" class="inquiry-btn copy" data-id="${order.id}" title="Copiar resumen">
+            <span>📋 Copiar</span>
+          </button>
+          <button type="button" class="inquiry-btn toggle-status" data-id="${order.id}">
+            <span>${isUnread ? '✓ Marcar Atendido' : '↺ Marcar Nuevo'}</span>
+          </button>
+          <a href="${mailtoUrl}" class="inquiry-btn reply">
+            <span>✉ Responder</span>
+          </a>
+          <button type="button" class="inquiry-btn delete" data-id="${order.id}" title="Eliminar propuesta">
+            <span>✕</span>
+          </button>
+        </div>
+      `;
+
+      const copyBtn = card.querySelector('.inquiry-btn.copy');
+      if (copyBtn) {
+        copyBtn.addEventListener('click', () => {
+          triggerHaptic(15);
+          const summary = `Cliente: ${order.name} (${order.email})\nDisciplina: ${order.service}\nPresupuesto: ${order.budget}\nMensaje:\n${order.message}`;
+          navigator.clipboard.writeText(summary).then(() => {
+            showToast('✓ Resumen copiado al portapapeles');
+          });
+        });
+      }
+
+      const toggleBtn = card.querySelector('.inquiry-btn.toggle-status');
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+          triggerHaptic(20);
+          toggleInquiryStatus(order.id);
+        });
+      }
+
+      const delBtn = card.querySelector('.inquiry-btn.delete');
+      if (delBtn) {
+        delBtn.addEventListener('click', () => {
+          triggerHaptic(30);
+          if (confirm(`¿Eliminar la propuesta de ${order.name}?`)) {
+            deleteInquiry(order.id);
+          }
+        });
+      }
+
+      listEl.appendChild(card);
+    });
+  }
+
+  function toggleInquiryStatus(id) {
+    const orders = getStoredInquiries();
+    const target = orders.find(o => o.id === id);
+    if (!target) return;
+    if (target.status === 'unread' || !target.read) {
+      target.status = 'contacted';
+      target.read = true;
+      showToast('Propuesta marcada como atendida');
+    } else {
+      target.status = 'unread';
+      target.read = false;
+      showToast('Propuesta marcada como nueva');
+    }
+    saveStoredInquiries(orders);
+    renderInquiriesList();
+  }
+
+  function deleteInquiry(id) {
+    let orders = getStoredInquiries();
+    orders = orders.filter(o => o.id !== id);
+    saveStoredInquiries(orders);
+    renderInquiriesList();
+    showToast('Propuesta eliminada de la bandeja');
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
   }
 
   /* ==========================================================================
@@ -1329,6 +1602,87 @@
     if (btnFactory) {
       btnFactory.addEventListener('click', factoryReset);
     }
+
+    // Inquiries / Orders Filter Chips
+    const inquiryChips = document.querySelectorAll('[data-inquiry-filter]');
+    inquiryChips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        triggerHaptic(15);
+        inquiryChips.forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        currentInquiryFilter = chip.getAttribute('data-inquiry-filter') || 'all';
+        renderInquiriesList();
+      });
+    });
+
+    // Header Bell Button: Quick jump to Inquiries Tab
+    const btnHeaderInquiries = document.getElementById('btn-header-inquiries');
+    if (btnHeaderInquiries) {
+      btnHeaderInquiries.addEventListener('click', () => {
+        triggerHaptic(20);
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        const inqTab = document.getElementById('nav-tab-inquiries');
+        if (inqTab) inqTab.classList.add('active');
+
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        const inqPanel = document.getElementById('tab-inquiries');
+        if (inqPanel) inqPanel.classList.add('active');
+
+        renderInquiriesList();
+      });
+    }
+
+    // Request Web Push Notifications for incoming orders
+    const btnReqNotif = document.getElementById('btn-request-notifications');
+    if (btnReqNotif) {
+      if ('Notification' in window && Notification.permission === 'granted') {
+        btnReqNotif.innerHTML = '<span>✓ Avisos Activos</span>';
+        btnReqNotif.style.opacity = '0.7';
+      }
+      btnReqNotif.addEventListener('click', async () => {
+        triggerHaptic(20);
+        if ('Notification' in window) {
+          try {
+            const permission = await Notification.requestPermission();
+            if (permission === 'granted') {
+              showToast('✓ Notificaciones activadas para nuevos pedidos');
+              btnReqNotif.innerHTML = '<span>✓ Avisos Activos</span>';
+              btnReqNotif.style.opacity = '0.7';
+              new Notification('Consola Wilmar Machado', {
+                body: 'Avisos configurados correctamente. Recibirás una notificación cuando un cliente envíe una propuesta.',
+                icon: 'icons/icon-192.svg'
+              });
+            } else {
+              showToast('Permiso de notificaciones denegado en el navegador');
+            }
+          } catch(e) {
+            showToast('No se pudieron activar las notificaciones');
+          }
+        } else {
+          showToast('Tu navegador móvil no soporta notificaciones de sistema');
+        }
+      });
+    }
+
+    // Cross-tab real-time sync for orders
+    if (typeof BroadcastChannel !== 'undefined') {
+      try {
+        const bc = new BroadcastChannel('wm_orders_channel');
+        bc.onmessage = (event) => {
+          if (event.data && event.data.type === 'NEW_ORDER') {
+            triggerOrderAlert(event.data.order);
+            renderInquiriesList();
+          }
+        };
+      } catch(e) {}
+    }
+
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'wm_orders_inbox') {
+        updateInquiriesBadge();
+        renderInquiriesList();
+      }
+    });
   }
 
   /* ==========================================================================
@@ -1338,6 +1692,7 @@
     appConfig = loadLocalConfig();
     initFirebaseIfConfigured();
     initEvents();
+    updateInquiriesBadge();
     await checkBiometricSupport();
 
     // Register Service Worker for PWA
