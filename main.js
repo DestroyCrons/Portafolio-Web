@@ -3466,28 +3466,36 @@ window.addEventListener('hashchange', handleUrlHash);
     handleUrlHash();
   }
 
-  // Connect to Cloud Firestore if configured
+  // Live Cloud Synchronization with Supabase Database (public.portfolio_data)
   try {
-    const fbSaved = localStorage.getItem('wilmar_firebase_config_v1');
-    if (fbSaved && window.firebase) {
-      const fbConfig = JSON.parse(fbSaved);
-      if (fbConfig.apiKey && fbConfig.projectId) {
-        let app = firebase.apps.length ? firebase.app() : firebase.initializeApp(fbConfig);
-        const db = app.firestore();
-        db.collection('settings').doc('portfolio').onSnapshot((doc) => {
-          if (doc.exists) {
-            const cloudCfg = doc.data();
-            if (cloudCfg && cloudCfg.projects) {
-              STATE.config = cloudCfg;
-              applyConfigToUI(cloudCfg);
-              localStorage.setItem('wilmar_portfolio_config_v3', JSON.stringify(cloudCfg));
-            }
-          }
-        }, (err) => console.warn('Public cloud listener note:', err));
+    const SB_URL = 'https://kigexuraqzhplvacghcq.supabase.co';
+    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpZ2V4dXJhcXpocGx2YWNnaGNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA5MTE4NjcsImV4cCI6MjEwNjQ4Nzg2N30.JI69bv1oBpv0_11J3XRyv7FI8obkXzqDdQWMeF_kgA0';
+
+    fetch(`${SB_URL}/rest/v1/portfolio_data?id=eq.current&select=*`, {
+      headers: {
+        'apikey': SB_KEY,
+        'Authorization': `Bearer ${SB_KEY}`
       }
-    }
+    })
+    .then(res => res.json())
+    .then(rows => {
+      if (rows && rows.length > 0 && rows[0].profile) {
+        const row = rows[0];
+        const cloudCfg = {
+          profile: { ...(STATE.config?.profile || {}), ...(row.profile || {}) },
+          style: { ...(STATE.config?.style || {}), ...(row.theme || {}) },
+          projects: (row.projects && row.projects.length > 0) ? row.projects : (STATE.config?.projects || [])
+        };
+        STATE.config = cloudCfg;
+        if (typeof applyConfigToUI === 'function') {
+          applyConfigToUI(cloudCfg);
+        }
+        localStorage.setItem('wilmar_portfolio_config_v3', JSON.stringify(cloudCfg));
+      }
+    })
+    .catch(err => console.warn('Supabase portfolio_data sync note:', err));
   } catch(e) {
-    console.warn('Cloud listener init error:', e);
+    console.warn('Supabase cloud sync init error:', e);
   }
 
   // Triple-click on brand logo to access Admin Console

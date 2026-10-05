@@ -19,14 +19,8 @@
 
 <link rel="stylesheet" href="admin.css">
 
-<!-- Supabase Client for Cloud Database & Realtime Sync -->
+<!-- Supabase Client for Cloud Database, Auth & Realtime Sync -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<!-- Firebase Compat Libraries for Direct Zero-Bundler Cloud Integration -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 </head>
 <body class="admin-body">
 
@@ -67,7 +61,7 @@
       <div class="auth-field">
         <div class="auth-label-row">
           <label for="auth-input-password" class="auth-label">Contraseña</label>
-          <button type="button" class="auth-forgot-link" id="btn-forgot-password" tabindex="-1">¿Ayuda con clave?</button>
+          <button type="button" class="auth-forgot-link" id="btn-forgot-password" tabindex="-1">¿Olvidaste tu contraseña?</button>
         </div>
         <div class="auth-input-wrap">
           <svg class="auth-field-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -131,7 +125,7 @@
         <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
         <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
       </svg>
-      <span>Conexión protegida &middot; Cifrado criptográfico SHA-256</span>
+      <span>Conexión protegida &middot; Supabase Cloud Auth &middot; JWT Cifrado</span>
     </div>
   </div>
 </div>
@@ -153,6 +147,10 @@
       </div>
     </div>
     <div class="header-actions">
+      <div class="header-user-pill" id="header-user-pill" title="Sesión activa · Supabase Cloud Auth">
+        <span class="user-status-dot"></span>
+        <span class="user-email-chip" id="header-user-email">wamimcim2@gmail.com</span>
+      </div>
       <button type="button" class="header-icon-btn badge-btn" id="btn-header-inquiries" title="Bandeja de Pedidos & Propuestas">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
@@ -171,6 +169,13 @@
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
           <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      </button>
+      <button type="button" class="header-icon-btn btn-logout-action" id="btn-logout-session" title="Cerrar Sesión Oficial">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
         </svg>
       </button>
     </div>
@@ -464,55 +469,95 @@
           </div>
         </div>
 
-        <!-- 2. Google Account Whitelist -->
+        <!-- 2. Supabase Auth & Master Password Change -->
         <div class="settings-card">
           <div class="card-badge-row">
-            <span class="card-mini-badge">GOOGLE OAUTH 2.0</span>
+            <span class="card-mini-badge gold">SUPABASE AUTH &middot; CUENTA MAESTRA</span>
           </div>
-          <h3 class="card-title">Cuenta Autorizada</h3>
-          <p class="card-desc">Únicamente esta cuenta de Google puede administrar el portafolio</p>
+          <h3 class="card-title">Seguridad & Contraseña de Acceso</h3>
+          <p class="card-desc">Gestiona tus credenciales oficiales de acceso a la consola de autor</p>
 
-          <div class="form-group">
-            <label class="form-label" for="cfg-ownerEmail">Correo de Administrador</label>
-            <input type="email" id="cfg-ownerEmail" class="admin-input" value="wamimcim2@gmail.com">
+          <!-- Current account identity summary -->
+          <div class="account-identity-box">
+            <div class="account-avatar">WM</div>
+            <div class="account-meta">
+              <span class="account-name">Wilmar Machado</span>
+              <span class="account-email" id="account-display-email">wamimcim2@gmail.com</span>
+              <span class="account-status">
+                <span class="status-live-dot"></span>
+                <span>Sesión Activa &middot; Supabase Cloud Auth</span>
+              </span>
+            </div>
           </div>
-          <span class="field-hint">Cualquier otra cuenta de Google que intente ingresar será rechazada de inmediato.</span>
+
+          <!-- Password change form -->
+          <form id="form-change-password" class="change-password-form">
+            <h4 class="subcard-title">Actualizar Contraseña de Acceso</h4>
+
+            <div class="form-group">
+              <label class="form-label" for="input-current-pass">Contraseña Actual *</label>
+              <input type="password" id="input-current-pass" class="admin-input" required placeholder="Introduce tu clave actual" autocomplete="current-password">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="input-new-pass">Nueva Contraseña *</label>
+              <input type="password" id="input-new-pass" class="admin-input" required placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+              <!-- Live strength indicator -->
+              <div class="pass-strength-meter">
+                <div class="strength-track">
+                  <div class="strength-bar" id="pass-strength-bar"></div>
+                </div>
+                <span class="strength-label" id="pass-strength-label">Ingresa tu nueva clave</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="input-confirm-pass">Confirmar Nueva Contraseña *</label>
+              <input type="password" id="input-confirm-pass" class="admin-input" required placeholder="Repite la nueva contraseña" autocomplete="new-password">
+            </div>
+
+            <button type="submit" class="action-btn-gold w-full" id="btn-submit-change-pass">
+              <span id="btn-change-pass-text">Guardar Nueva Contraseña en la Nube</span>
+              <span class="auth-btn-spinner hidden" id="change-pass-spinner"></span>
+            </button>
+          </form>
+
+          <div id="change-pass-alert" class="auth-alert hidden"></div>
         </div>
 
-        <!-- 3. Firebase Cloud Configuration -->
+        <!-- 3. Supabase Cloud Database & Instant Live Sync -->
         <div class="settings-card">
           <div class="card-badge-row">
-            <span class="card-mini-badge" id="badge-cloud-status">SINCRONIZACIÓN EN LA NUBE</span>
+            <span class="card-mini-badge" id="badge-cloud-status">SUPABASE CLOUD POSTGRESQL</span>
           </div>
-          <h3 class="card-title">Conexión Firebase (Cloud Firestore)</h3>
-          <p class="card-desc">Permite que tus cambios se publiquen automáticamente en la web sin tener que subir archivos.</p>
+          <h3 class="card-title">Base de Datos & Sincronización en la Nube</h3>
+          <p class="card-desc">Servidor de producción con replicación global en tiempo real</p>
 
-          <div class="form-group">
-            <label class="form-label" for="cfg-firebase-apiKey">API Key</label>
-            <input type="text" id="cfg-firebase-apiKey" class="admin-input font-mono" placeholder="AIzaSy...">
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="cfg-firebase-projectId">Project ID</label>
-            <input type="text" id="cfg-firebase-projectId" class="admin-input font-mono" placeholder="wilmar-machado-portfolio">
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="cfg-firebase-authDomain">Auth Domain</label>
-            <input type="text" id="cfg-firebase-authDomain" class="admin-input font-mono" placeholder="wilmar-machado-portfolio.firebaseapp.com">
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="cfg-firebase-storageBucket">Storage Bucket</label>
-            <input type="text" id="cfg-firebase-storageBucket" class="admin-input font-mono" placeholder="wilmar-machado-portfolio.appspot.com">
+          <div class="cloud-telemetry-box">
+            <div class="telemetry-row">
+              <span class="telemetry-label">Servidor Cloud</span>
+              <span class="telemetry-val font-mono">kigexuraqzhplvacghcq.supabase.co</span>
+            </div>
+            <div class="telemetry-row">
+              <span class="telemetry-label">Tabla Catálogo</span>
+              <span class="telemetry-val font-mono">public.portfolio_data (Live)</span>
+            </div>
+            <div class="telemetry-row">
+              <span class="telemetry-label">Tabla Pedidos</span>
+              <span class="telemetry-val font-mono">public.inquiries (Realtime WebSocket)</span>
+            </div>
+            <div class="telemetry-row">
+              <span class="telemetry-label">Estado de Nube</span>
+              <span class="telemetry-val text-success" id="telemetry-cloud-status">&#9679; Conectado & Operativo</span>
+            </div>
           </div>
 
           <div class="card-actions-col">
-            <button type="button" class="action-btn-gold" id="btn-save-firebase-config">
-              <span>Guardar & Conectar Firebase</span>
+            <button type="button" class="action-btn-gold" id="btn-sync-supabase">
+              <span>&#9729; Sincronizar Todo a la Nube Ahora</span>
             </button>
-            <button type="button" class="admin-btn-ghost" id="btn-test-cloud-sync">
-              <span>Probar Sincronización en la Nube</span>
+            <button type="button" class="admin-btn-ghost" id="btn-fetch-supabase">
+              <span>&#8635; Recargar Datos desde la Nube</span>
             </button>
           </div>
         </div>
@@ -740,6 +785,54 @@
         <button type="button" class="admin-btn-danger" id="btn-delete-artwork">Eliminar Obra del Catálogo</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- ==========================================================================
+     3.5 RECOVERY MODAL: OFFICIAL PASSWORD RESET VIA SUPABASE AUTH
+     ========================================================================== -->
+<div id="modal-recovery" class="artwork-modal recovery-modal" role="dialog" aria-modal="true" aria-labelledby="recovery-modal-title">
+  <div class="artwork-modal-dialog recovery-modal-dialog">
+    <div class="modal-top-bar">
+      <button type="button" class="modal-close-btn" id="btn-close-recovery-modal" aria-label="Cerrar">Cerrar</button>
+      <div class="modal-title-text" id="recovery-modal-title">Recuperar Acceso</div>
+      <div style="width: 48px;"></div>
+    </div>
+
+    <div class="modal-scroll-form">
+      <div class="recovery-intro-card">
+        <div class="recovery-icon-badge">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
+        <p class="recovery-text">
+          Se enviará un correo oficial de restablecimiento con un enlace seguro a tu dirección de autor registrada en Supabase Auth.
+        </p>
+      </div>
+
+      <form id="form-recovery" class="recovery-form">
+        <div class="form-group">
+          <label class="form-label" for="recovery-input-email">Correo de Administrador</label>
+          <input type="email" id="recovery-input-email" class="admin-input" required value="wamimcim2@gmail.com" readonly>
+        </div>
+
+        <button type="submit" class="action-btn-gold w-full" id="btn-submit-recovery">
+          <span id="btn-recovery-text">Enviar Correo de Restablecimiento</span>
+          <span class="auth-btn-spinner hidden" id="recovery-spinner"></span>
+        </button>
+      </form>
+
+      <div id="recovery-alert" class="auth-alert hidden"></div>
+
+      <div class="recovery-offline-card">
+        <h5 class="offline-title">&#128272; ¿Sin acceso a internet o en modo avión?</h5>
+        <p class="offline-desc">
+          Puedes ingresar en cualquier momento usando el sensor biométrico registrado (Touch ID / Face ID) o la clave maestra de seguridad offline de autor.
+        </p>
+      </div>
+    </div>
   </div>
 </div>
 

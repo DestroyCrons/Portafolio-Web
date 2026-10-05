@@ -1721,3 +1721,294 @@ input, textarea, select, button {
     font-size: 10px !important;
   }
 }
+
+/* ==========================================================================
+   6. ENTERPRISE AUTHENTICATION & CLOUD TELEMETRY CURATION
+   ========================================================================== */
+
+/* Header User Profile Chip */
+.header-user-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(212, 163, 89, 0.08);
+  border: 1px solid rgba(212, 163, 89, 0.28);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--fg-secondary);
+  transition: all 0.2s ease;
+  max-width: 170px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.header-user-pill:hover {
+  background: rgba(212, 163, 89, 0.14);
+  border-color: rgba(212, 163, 89, 0.45);
+}
+
+.user-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #3dd68c;
+  box-shadow: 0 0 6px rgba(61, 214, 140, 0.7);
+  flex-shrink: 0;
+}
+
+.user-email-chip {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn-logout-action {
+  color: #ff6b6b !important;
+  border-color: rgba(255, 107, 107, 0.25) !important;
+}
+
+.btn-logout-action:hover {
+  background: rgba(255, 107, 107, 0.12) !important;
+  border-color: #ff6b6b !important;
+  color: #ff8585 !important;
+}
+
+/* Account Identity Summary in Tab 4 */
+.account-identity-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-gold);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+
+.account-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(212, 163, 89, 0.25), rgba(154, 110, 46, 0.4));
+  border: 1px solid var(--gold-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gold-light);
+  flex-shrink: 0;
+}
+
+.account-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.account-name {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--fg-primary);
+}
+
+.account-email {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9.5px;
+  color: #3dd68c;
+  margin-top: 2px;
+}
+
+.status-live-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #3dd68c;
+  box-shadow: 0 0 5px #3dd68c;
+}
+
+/* Subcard titles */
+.subcard-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--gold-primary);
+  text-transform: uppercase;
+  margin: 14px 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(212, 163, 89, 0.15);
+}
+
+/* Password Strength Meter */
+.pass-strength-meter {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.strength-track {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.strength-bar {
+  height: 100%;
+  width: 0%;
+  background: #ff5252;
+  border-radius: 2px;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.strength-bar.weak {
+  width: 25%;
+  background: #ff5252;
+}
+
+.strength-bar.fair {
+  width: 50%;
+  background: #ffb84d;
+}
+
+.strength-bar.good {
+  width: 75%;
+  background: #3dd68c;
+}
+
+.strength-bar.strong {
+  width: 100%;
+  background: #d4a359;
+  box-shadow: 0 0 6px rgba(212, 163, 89, 0.6);
+}
+
+.strength-label {
+  font-size: 9.5px;
+  font-family: var(--font-mono);
+  color: var(--fg-tertiary);
+}
+
+/* Cloud Telemetry Box */
+.cloud-telemetry-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+
+.telemetry-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 11px;
+}
+
+.telemetry-label {
+  color: var(--fg-tertiary);
+  flex-shrink: 0;
+}
+
+.telemetry-val {
+  color: var(--fg-secondary);
+  font-size: 11px;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.text-success {
+  color: #3dd68c !important;
+}
+
+/* Recovery Modal Specializations */
+.recovery-modal-dialog {
+  max-width: 480px !important;
+  height: auto !important;
+  max-height: 86dvh !important;
+  border-radius: 20px 20px 0 0;
+}
+
+.recovery-intro-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(212, 163, 89, 0.06);
+  border: 1px solid rgba(212, 163, 89, 0.22);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+}
+
+.recovery-icon-badge {
+  color: var(--gold-primary);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.recovery-text {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--fg-secondary);
+  margin: 0;
+}
+
+.recovery-offline-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-top: 14px;
+}
+
+.offline-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--fg-primary);
+  margin: 0 0 4px 0;
+}
+
+.offline-desc {
+  font-size: 10.5px;
+  color: var(--fg-tertiary);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.w-full {
+  width: 100% !important;
+}
+
+@media (max-width: 480px) {
+  .header-user-pill {
+    max-width: 80px;
+    padding: 3px 6px;
+  }
+}

@@ -8,14 +8,31 @@
 
   // Master Constants
   const STORAGE_KEY = 'wilmar_portfolio_config_v3';
-  const FIREBASE_KEY = 'wilmar_firebase_config_v1';
   const BIO_CRED_KEY = 'wilmar_biometric_cred_id';
   const OWNER_EMAIL_DEFAULT = 'wamimcim2@gmail.com';
   const SB_URL = 'https://kigexuraqzhplvacghcq.supabase.co';
   const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpZ2V4dXJhcXpocGx2YWNnaGNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA5MTE4NjcsImV4cCI6MjEwNjQ4Nzg2N30.JI69bv1oBpv0_11J3XRyv7FI8obkXzqDdQWMeF_kgA0';
   const SESSION_TOKEN_KEY = 'wm_admin_session_token_v1';
-  // Hashed admin pass (SHA-256) - Never exposed in plaintext
+  // Hashed admin pass (SHA-256) - Fallback for offline access
   const MASTER_BACKUP_HASH = '9723f7d2f440d29d038c38275d5aea00492072dc5c7334ddb9d57d918a74e3e9';
+
+  let sbClient = null;
+  function getSupabaseClient() {
+    if (!sbClient && window.supabase) {
+      try {
+        sbClient = window.supabase.createClient(SB_URL, SB_KEY, {
+          auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: true
+          }
+        });
+      } catch(e) {
+        console.warn('Supabase client init note:', e);
+      }
+    }
+    return sbClient;
+  }
 
   async function sha256(message) {
     const msgBuffer = new TextEncoder().encode(message);
@@ -269,11 +286,8 @@
   // State Management
   let appConfig = null;
   let currentFilter = 'all';
-  let isCloudConnected = false;
-  let firebaseApp = null;
-  let firestoreDb = null;
-  let firebaseAuth = null;
-  let firebaseStorage = null;
+  let isCloudConnected = true;
+  let currentAdminEmail = OWNER_EMAIL_DEFAULT;
 
   /* ==========================================================================
      1. STORAGE & CONFIG MANAGER
@@ -496,6 +510,14 @@
     const btnSubmit = document.getElementById('btn-auth-submit');
     const btnBioUnlock = document.getElementById('btn-biometric-unlock');
 
+    // Recovery Modal Elements
+    const modalRecovery = document.getElementById('modal-recovery');
+    const btnCloseRecovery = document.getElementById('btn-close-recovery-modal');
+    const formRecovery = document.getElementById('form-recovery');
+    const recoveryEmailInput = document.getElementById('recovery-input-email');
+    const recoverySpinner = document.getElementById('recovery-spinner');
+    const recoveryAlert = document.getElementById('recovery-alert');
+
     // Restore remembered email if exists
     const rememberedEmail = localStorage.getItem('wm_admin_remembered_email');
     if (rememberedEmail && emailInput) {
@@ -517,11 +539,65 @@
       });
     }
 
-    // Forgot / Help Password Guidance
-    if (forgotBtn) {
+    // Official Password Recovery Modal
+    if (forgotBtn && modalRecovery) {
       forgotBtn.addEventListener('click', () => {
         triggerHaptic(15);
-        showAuthAlert("Clave predeterminada de autor: 'wilmar2026'. Puedes modificarla en Ajustes > Seguridad una vez dentro.", "success");
+        if (recoveryAlert) recoveryAlert.classList.add('hidden');
+        if (recoveryEmailInput) recoveryEmailInput.value = getOwnerEmail();
+        modalRecovery.classList.add('active');
+        modalRecovery.classList.remove('hidden');
+      });
+    }
+
+    if (btnCloseRecovery && modalRecovery) {
+      btnCloseRecovery.addEventListener('click', () => {
+        triggerHaptic(10);
+        modalRecovery.classList.remove('active');
+        setTimeout(() => modalRecovery.classList.add('hidden'), 200);
+      });
+    }
+
+    if (formRecovery) {
+      formRecovery.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        triggerHaptic(20);
+        const email = recoveryEmailInput ? recoveryEmailInput.value.trim().toLowerCase() : getOwnerEmail();
+        if (recoverySpinner) recoverySpinner.classList.remove('hidden');
+
+        try {
+          const client = getSupabaseClient();
+          if (client) {
+            const { error } = await client.auth.resetPasswordForEmail(email);
+            if (error) {
+              if (recoveryAlert) {
+                recoveryAlert.textContent = `Error: ${error.message}`;
+                recoveryAlert.className = 'auth-alert error';
+                recoveryAlert.classList.remove('hidden');
+              }
+            } else {
+              if (recoveryAlert) {
+                recoveryAlert.textContent = `✓ Se ha enviado el enlace oficial de restablecimiento a ${email}. Revisa tu bandeja de entrada o spam.`;
+                recoveryAlert.className = 'auth-alert success';
+                recoveryAlert.classList.remove('hidden');
+              }
+            }
+          } else {
+            if (recoveryAlert) {
+              recoveryAlert.textContent = "Servicio de autenticación no disponible temporalmente.";
+              recoveryAlert.className = 'auth-alert error';
+              recoveryAlert.classList.remove('hidden');
+            }
+          }
+        } catch(err) {
+          if (recoveryAlert) {
+            recoveryAlert.textContent = `Error de conexión: ${err.message}`;
+            recoveryAlert.className = 'auth-alert error';
+            recoveryAlert.classList.remove('hidden');
+          }
+        } finally {
+          if (recoverySpinner) recoverySpinner.classList.add('hidden');
+        }
       });
     }
 
@@ -543,29 +619,79 @@
           return;
         }
 
+        const authorizedEmail = getOwnerEmail();
+        // Strict authorized email verification
+        if (email && email !== authorizedEmail) {
+          triggerHaptic([60, 60, 60]);
+          showAuthAlert("Acceso denegado: Esta cuenta de correo no está autorizada para administrar el portafolio.", "error");
+          return;
+        }
+
         if (spinner) spinner.classList.remove('hidden');
         if (btnSubmit) btnSubmit.disabled = true;
 
         try {
-          const hashed = await sha256(password);
-          const isCorrect = (hashed === MASTER_BACKUP_HASH);
+          let loggedIn = false;
+          let authErrorMsg = null;
+          const client = getSupabaseClient();
 
-          if (isCorrect) {
-            triggerHaptic([40, 60, 40]);
-            if (rememberCheckbox && rememberCheckbox.checked) {
+          // 1. Primary: Real Supabase Cloud Authentication
+          if (client && navigator.onLine) {
+            try {
+              const { data, error } = await client.auth.signInWithPassword({
+                email: authorizedEmail,
+                password: password
+              });
+
+              if (!error && data && data.user) {
+                loggedIn = true;
+                const token = data.session ? data.session.access_token : '';
+                const sessionPayload = {
+                  user: authorizedEmail,
+                  token: token,
+                  provider: 'supabase',
+                  expires: Date.now() + (30 * 24 * 60 * 60 * 1000)
+                };
+                localStorage.setItem(SESSION_TOKEN_KEY, JSON.stringify(sessionPayload));
+                if (rememberCheckbox && rememberCheckbox.checked) {
+                  localStorage.setItem('wm_admin_remembered_email', authorizedEmail);
+                }
+              } else if (error) {
+                authErrorMsg = error.message;
+              }
+            } catch (netErr) {
+              console.warn('Supabase Cloud Auth network error, falling back to local cryptographic verification:', netErr);
+            }
+          }
+
+          // 2. Secondary: Offline Cryptographic Fallback (SHA-256)
+          if (!loggedIn) {
+            const hashed = await sha256(password);
+            const customHash = localStorage.getItem('wm_admin_custom_hash');
+            const expectedHash = customHash || MASTER_BACKUP_HASH;
+
+            if (hashed === expectedHash) {
+              loggedIn = true;
               const sessionPayload = {
-                user: email || 'wilmar',
+                user: authorizedEmail,
                 hash: hashed,
-                expires: Date.now() + (30 * 24 * 60 * 60 * 1000) // 30 days
+                provider: 'offline_sha256',
+                expires: Date.now() + (30 * 24 * 60 * 60 * 1000)
               };
               localStorage.setItem(SESSION_TOKEN_KEY, JSON.stringify(sessionPayload));
-              if (email) localStorage.setItem('wm_admin_remembered_email', email);
+              if (rememberCheckbox && rememberCheckbox.checked) {
+                localStorage.setItem('wm_admin_remembered_email', authorizedEmail);
+              }
             }
+          }
 
+          if (loggedIn) {
+            triggerHaptic([40, 60, 40]);
+            currentAdminEmail = authorizedEmail;
             unlockAppShell("Bienvenido, Wilmar Machado");
           } else {
             triggerHaptic([60, 60, 60]);
-            showAuthAlert("Credenciales incorrectas. Verifica tu contraseña.", "error");
+            showAuthAlert(authErrorMsg || "Credenciales incorrectas. Verifica tu contraseña.", "error");
           }
         } catch(err) {
           console.error('Auth verification error:', err);
@@ -583,7 +709,8 @@
       const raw = localStorage.getItem(SESSION_TOKEN_KEY);
       if (raw) {
         const session = JSON.parse(raw);
-        if (session && session.hash === MASTER_BACKUP_HASH && session.expires > Date.now()) {
+        if (session && session.expires > Date.now()) {
+          if (session.user) currentAdminEmail = session.user;
           unlockAppShell("Sesión Restaurada");
           return true;
         } else {
@@ -606,10 +733,17 @@
     if (authScreen) authScreen.classList.add('hidden');
     if (appShell) appShell.classList.remove('hidden');
 
+    const email = getOwnerEmail();
+    const headerEmail = document.getElementById('header-user-email');
+    if (headerEmail) headerEmail.textContent = email;
+    const tabEmail = document.getElementById('account-display-email');
+    if (tabEmail) tabEmail.textContent = email;
+
     showToast(welcomeMsg || "Consola Desbloqueada");
 
     // Populate data into UI
     fetchCloudInquiries(true);
+    fetchCloudPortfolioData(false);
     renderWorksList();
     populatePortfolioForm();
     populateStyleForm();
@@ -625,6 +759,25 @@
     if (appShell) appShell.classList.add('hidden');
     if (authScreen) authScreen.classList.remove('hidden');
     showToast("Consola bloqueada por seguridad");
+  }
+
+  async function logoutAppShell() {
+    triggerHaptic([30, 40]);
+    try {
+      const client = getSupabaseClient();
+      if (client) {
+        await client.auth.signOut();
+      }
+    } catch(e) {
+      console.warn('SignOut note:', e);
+    }
+    localStorage.removeItem(SESSION_TOKEN_KEY);
+    const authScreen = document.getElementById('screen-auth');
+    const appShell = document.getElementById('app-shell');
+    if (appShell) appShell.classList.add('hidden');
+    if (authScreen) authScreen.classList.remove('hidden');
+    showAuthAlert("Has cerrado sesión de forma segura.", "success");
+    showToast("Sesión cerrada");
   }
 
   // Graceful auto-lock after 5 minutes in background (prevents accidental lockout while switching apps)
@@ -643,65 +796,94 @@
   });
 
   /* ==========================================================================
-     5. FIREBASE CLOUD SYNC
+     5. SUPABASE CLOUD SYNC & DATABASE ENGINE
      ========================================================================== */
-  function initFirebaseIfConfigured() {
+  async function fetchCloudPortfolioData(showNotification) {
     try {
-      const savedConfig = localStorage.getItem(FIREBASE_KEY);
-      if (savedConfig) {
-        const config = JSON.parse(savedConfig);
-        if (config.apiKey && config.projectId) {
-          if (!firebase.apps.length) {
-            firebaseApp = firebase.initializeApp(config);
-          } else {
-            firebaseApp = firebase.app();
-          }
-          firestoreDb = firebase.firestore();
-          firebaseAuth = firebase.auth();
-          try { firebaseStorage = firebase.storage(); } catch(e){}
+      const res = await fetch(`${SB_URL}/rest/v1/portfolio_data?id=eq.current&select=*`, {
+        headers: {
+          'apikey': SB_KEY,
+          'Authorization': `Bearer ${SB_KEY}`
+        }
+      });
 
-          isCloudConnected = true;
+      if (res.ok) {
+        const rows = await res.json();
+        if (rows && rows.length > 0 && rows[0].profile) {
+          const row = rows[0];
+          if (row.projects && row.projects.length > 0) {
+            appConfig.projects = row.projects;
+          }
+          if (row.profile && Object.keys(row.profile).length > 0) {
+            appConfig.profile = { ...appConfig.profile, ...row.profile };
+          }
+          if (row.theme && Object.keys(row.theme).length > 0) {
+            appConfig.style = { ...appConfig.style, ...row.theme };
+          }
+          saveLocalConfig(appConfig);
+          renderWorksList();
+          populatePortfolioForm();
+          populateStyleForm();
           updateSyncIndicator(true);
 
-          // Listen to real-time changes from Firestore
-          firestoreDb.collection('settings').doc('portfolio').onSnapshot((doc) => {
-            if (doc.exists) {
-              const cloudData = doc.data();
-              if (cloudData && cloudData.projects) {
-                appConfig = { ...appConfig, ...cloudData };
-                saveLocalConfig(appConfig);
-                renderWorksList();
-                populatePortfolioForm();
-              }
-            }
-          }, (err) => {
-            console.warn('Firestore snapshot error:', err);
-          });
+          const lastSyncEl = document.getElementById('telemetry-last-sync');
+          if (lastSyncEl && row.updated_at) {
+            lastSyncEl.textContent = new Date(row.updated_at).toLocaleTimeString();
+          }
+
+          if (showNotification) {
+            showToast('✓ Datos de Supabase Cloud cargados exitosamente');
+          }
+          return true;
         }
       }
-    } catch (e) {
-      console.warn('Firebase init note:', e);
-      updateSyncIndicator(false);
+    } catch(err) {
+      console.warn('Error fetching Supabase portfolio_data:', err);
     }
+    return false;
   }
 
   async function saveConfigToCloudAndLocal(cfg) {
     // 1. Always save local immediately
     saveLocalConfig(cfg);
     appConfig = cfg;
-    updateSyncIndicator(isCloudConnected);
 
-    // 2. If Firestore is active, push to Cloud
-    if (isCloudConnected && firestoreDb) {
-      try {
-        await firestoreDb.collection('settings').doc('portfolio').set(cfg, { merge: true });
-        showToast("¡Cambios publicados en la Nube y Portafolio!");
-      } catch (err) {
-        console.warn('Error saving to Firestore:', err);
-        showToast("Guardado localmente (sin conexión a la nube)");
+    // 2. Direct Cloud Sync to Supabase PostgreSQL table 'portfolio_data'
+    try {
+      const payload = {
+        id: 'current',
+        profile: cfg.profile || {},
+        theme: cfg.style || { accent: '#d4a359', sphereRadius: 950, rotationSpeed: 0.11 },
+        projects: cfg.projects || [],
+        updated_at: new Date().toISOString()
+      };
+
+      const res = await fetch(`${SB_URL}/rest/v1/portfolio_data?on_conflict=id`, {
+        method: 'POST',
+        headers: {
+          'apikey': SB_KEY,
+          'Authorization': `Bearer ${SB_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates,return=representation'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        isCloudConnected = true;
+        updateSyncIndicator(true);
+        const lastSyncEl = document.getElementById('telemetry-last-sync');
+        if (lastSyncEl) lastSyncEl.textContent = new Date().toLocaleTimeString();
+        showToast("¡Cambios publicados en Supabase Cloud!");
+      } else {
+        console.warn('Supabase portfolio_data sync status:', res.status);
+        updateSyncIndicator(false);
+        showToast("Guardado local (sincronización con la nube pendiente)");
       }
-    } else {
-      showToast("Cambios guardados localmente");
+    } catch (err) {
+      console.warn('Error saving to Supabase portfolio_data:', err);
+      updateSyncIndicator(false);
+      showToast("Guardado local (modo sin conexión)");
     }
   }
 
@@ -1546,41 +1728,183 @@ Valledupar · Colombia`);
   }
 
   /* ==========================================================================
-     10. TAB 4: NUBE & SEGURIDAD
+     10. TAB 4: NUBE & SEGURIDAD (SUPABASE AUTH & DATABASE)
      ========================================================================== */
-  function populateSecurityForm() {
-    const ownerEmailInput = document.getElementById('cfg-ownerEmail');
-    if (ownerEmailInput) ownerEmailInput.value = getOwnerEmail();
+  let securityTabInitialized = false;
 
-    try {
-      const savedFirebase = localStorage.getItem(FIREBASE_KEY);
-      if (savedFirebase) {
-        const fb = JSON.parse(savedFirebase);
-        setVal('cfg-firebase-apiKey', fb.apiKey);
-        setVal('cfg-firebase-projectId', fb.projectId);
-        setVal('cfg-firebase-authDomain', fb.authDomain);
-        setVal('cfg-firebase-storageBucket', fb.storageBucket);
-      }
-    } catch(e) {}
+  function populateSecurityForm() {
+    const ownerEmail = getOwnerEmail();
+    const displayEmail = document.getElementById('account-display-email');
+    if (displayEmail) displayEmail.textContent = ownerEmail;
+    const headerEmail = document.getElementById('header-user-email');
+    if (headerEmail) headerEmail.textContent = ownerEmail;
+
+    initSecurityTabListeners();
   }
 
-  function saveFirebaseConfig() {
-    triggerHaptic(40);
-    const fb = {
-      apiKey: getVal('cfg-firebase-apiKey'),
-      projectId: getVal('cfg-firebase-projectId'),
-      authDomain: getVal('cfg-firebase-authDomain'),
-      storageBucket: getVal('cfg-firebase-storageBucket')
-    };
+  function initSecurityTabListeners() {
+    if (securityTabInitialized) return;
+    securityTabInitialized = true;
 
-    if (!fb.apiKey || !fb.projectId) {
-      showToast('Ingresa al menos API Key y Project ID de Firebase');
-      return;
+    // 1. Password Strength Meter
+    const newPassInput = document.getElementById('input-new-pass');
+    const strengthBar = document.getElementById('pass-strength-bar');
+    const strengthLabel = document.getElementById('pass-strength-label');
+
+    if (newPassInput && strengthBar && strengthLabel) {
+      newPassInput.addEventListener('input', () => {
+        const val = newPassInput.value;
+        if (!val) {
+          strengthBar.className = 'strength-bar';
+          strengthLabel.textContent = 'Ingresa tu nueva clave';
+          return;
+        }
+
+        let score = 0;
+        if (val.length >= 6) score++;
+        if (val.length >= 9) score++;
+        if (/[A-Z]/.test(val) && /[a-z]/.test(val)) score++;
+        if (/\d/.test(val)) score++;
+        if (/[^A-Za-z0-9]/.test(val)) score++;
+
+        if (score <= 1) {
+          strengthBar.className = 'strength-bar weak';
+          strengthLabel.textContent = 'Débil (mínimo 6 caracteres)';
+        } else if (score === 2 || score === 3) {
+          strengthBar.className = 'strength-bar fair';
+          strengthLabel.textContent = 'Aceptable (agrega números o símbolos)';
+        } else if (score === 4) {
+          strengthBar.className = 'strength-bar good';
+          strengthLabel.textContent = 'Buena (segura para producción)';
+        } else {
+          strengthBar.className = 'strength-bar strong';
+          strengthLabel.textContent = 'Excelente (máxima seguridad)';
+        }
+      });
     }
 
-    localStorage.setItem(FIREBASE_KEY, JSON.stringify(fb));
-    showToast('Configuración Firebase guardada');
-    initFirebaseIfConfigured();
+    // 2. Change Password Form Submit
+    const formChangePass = document.getElementById('form-change-password');
+    const inputCurrent = document.getElementById('input-current-pass');
+    const inputConfirm = document.getElementById('input-confirm-pass');
+    const changeSpinner = document.getElementById('change-pass-spinner');
+    const changeAlert = document.getElementById('change-pass-alert');
+    const btnSubmitChange = document.getElementById('btn-submit-change-pass');
+
+    if (formChangePass) {
+      formChangePass.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        triggerHaptic(20);
+
+        const currentPass = inputCurrent ? inputCurrent.value : '';
+        const newPass = newPassInput ? newPassInput.value : '';
+        const confirmPass = inputConfirm ? inputConfirm.value : '';
+
+        function setAlert(msg, type) {
+          if (!changeAlert) return;
+          changeAlert.textContent = msg;
+          changeAlert.className = `auth-alert ${type}`;
+          changeAlert.classList.remove('hidden');
+        }
+
+        if (newPass.length < 6) {
+          setAlert('La nueva contraseña debe tener al menos 6 caracteres.', 'error');
+          return;
+        }
+
+        if (newPass !== confirmPass) {
+          setAlert('Las contraseñas nuevas no coinciden.', 'error');
+          return;
+        }
+
+        if (newPass === currentPass) {
+          setAlert('La nueva contraseña debe ser diferente a la actual.', 'error');
+          return;
+        }
+
+        // Verify current password against local hash or master hash
+        const currentHash = await sha256(currentPass);
+        const storedCustomHash = localStorage.getItem('wm_admin_custom_hash');
+        const expectedCurrentHash = storedCustomHash || MASTER_BACKUP_HASH;
+
+        if (currentHash !== expectedCurrentHash) {
+          setAlert('La contraseña actual ingresada es incorrecta.', 'error');
+          return;
+        }
+
+        if (changeSpinner) changeSpinner.classList.remove('hidden');
+        if (btnSubmitChange) btnSubmitChange.disabled = true;
+
+        try {
+          const client = getSupabaseClient();
+          let cloudUpdated = false;
+
+          if (client && navigator.onLine) {
+            try {
+              const { error } = await client.auth.updateUser({ password: newPass });
+              if (error) {
+                console.warn('Supabase updateUser error:', error.message);
+              } else {
+                cloudUpdated = true;
+              }
+            } catch(e) {
+              console.warn('Supabase updateUser call issue:', e);
+            }
+          }
+
+          // Always update local cryptographic hash
+          const newHash = await sha256(newPass);
+          localStorage.setItem('wm_admin_custom_hash', newHash);
+
+          // Update active session hash
+          const rawSession = localStorage.getItem(SESSION_TOKEN_KEY);
+          if (rawSession) {
+            try {
+              const sess = JSON.parse(rawSession);
+              sess.hash = newHash;
+              localStorage.setItem(SESSION_TOKEN_KEY, JSON.stringify(sess));
+            } catch(e) {}
+          }
+
+          triggerHaptic([40, 80, 40]);
+          const successMsg = cloudUpdated
+            ? '✓ Contraseña actualizada correctamente en Supabase Cloud y en este dispositivo.'
+            : '✓ Contraseña actualizada en este dispositivo.';
+          setAlert(successMsg, 'success');
+          showToast('Contraseña de acceso actualizada');
+
+          if (inputCurrent) inputCurrent.value = '';
+          if (newPassInput) newPassInput.value = '';
+          if (inputConfirm) inputConfirm.value = '';
+          if (strengthBar) strengthBar.className = 'strength-bar';
+          if (strengthLabel) strengthLabel.textContent = 'Ingresa tu nueva clave';
+        } catch(err) {
+          setAlert('Error al actualizar contraseña: ' + err.message, 'error');
+        } finally {
+          if (changeSpinner) changeSpinner.classList.add('hidden');
+          if (btnSubmitChange) btnSubmitChange.disabled = false;
+        }
+      });
+    }
+
+    // 3. Supabase Cloud Sync Buttons
+    const btnSyncSupabase = document.getElementById('btn-sync-supabase');
+    if (btnSyncSupabase) {
+      btnSyncSupabase.addEventListener('click', async () => {
+        triggerHaptic(25);
+        showToast('Sincronizando con Supabase Cloud...');
+        await saveConfigToCloudAndLocal(appConfig);
+      });
+    }
+
+    const btnFetchSupabase = document.getElementById('btn-fetch-supabase');
+    if (btnFetchSupabase) {
+      btnFetchSupabase.addEventListener('click', async () => {
+        triggerHaptic(20);
+        showToast('Descargando datos de Supabase Cloud...');
+        await fetchCloudPortfolioData(true);
+      });
+    }
   }
 
   // Backup JSON Export & Import
@@ -1832,21 +2156,10 @@ Valledupar · Colombia`);
       btnTestBio.addEventListener('click', authenticateWithBiometrics);
     }
 
-    // Save Firebase configuration button
-    const btnSaveFb = document.getElementById('btn-save-firebase-config');
-    if (btnSaveFb) {
-      btnSaveFb.addEventListener('click', saveFirebaseConfig);
-    }
-
-    const btnTestSync = document.getElementById('btn-test-cloud-sync');
-    if (btnTestSync) {
-      btnTestSync.addEventListener('click', () => {
-        if (isCloudConnected) {
-          showToast('✓ Conexión en la nube verificada correctamente');
-        } else {
-          showToast('Configura tus credenciales de Firebase para sincronizar en la nube');
-        }
-      });
+    // Logout session button
+    const btnLogout = document.getElementById('btn-logout-session');
+    if (btnLogout) {
+      btnLogout.addEventListener('click', logoutAppShell);
     }
 
     // Export & Import backup buttons
@@ -1905,8 +2218,9 @@ Valledupar · Colombia`);
       btnEnablePhoneAlerts.addEventListener('click', requestPushPermissions);
     }
 
-    // Enterprise Auth listeners
+    // Enterprise Auth & Security Tab listeners
     initEnterpriseAuth();
+    initSecurityTabListeners();
 
     // Cross-tab real-time sync for orders
     if (typeof BroadcastChannel !== 'undefined') {
@@ -1931,13 +2245,15 @@ Valledupar · Colombia`);
     // Supabase Realtime Subscription for instantaneous delivery
     if (window.supabase) {
       try {
-        const sbClient = window.supabase.createClient(SB_URL, SB_KEY);
-        sbClient
-          .channel('public:inquiries')
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'inquiries' }, () => {
-            fetchCloudInquiries(false);
-          })
-          .subscribe();
+        const client = getSupabaseClient();
+        if (client) {
+          client
+            .channel('public:inquiries')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'inquiries' }, () => {
+              fetchCloudInquiries(false);
+            })
+            .subscribe();
+        }
       } catch(e) {
         console.warn('Supabase Realtime subscription note:', e);
       }
@@ -1954,11 +2270,13 @@ Valledupar · Colombia`);
      ========================================================================== */
   async function init() {
     appConfig = loadLocalConfig();
-    initFirebaseIfConfigured();
     initEvents();
     updateInquiriesBadge();
     updateNotificationsUI();
     await checkBiometricSupport();
+
+    // Try fetching fresh cloud configuration from Supabase
+    fetchCloudPortfolioData(false);
 
     // Register Service Worker for dedicated PWA
     if ('serviceWorker' in navigator) {
