@@ -385,7 +385,13 @@ const I18N = {
     shareModalBadge: "DIFUSIÓN CULTURAL",
     shareLinkLabel: "Enlace Directo a la Obra:",
     shareBtnCopy: "Copiar",
-    shareMoreApps: "Más Apps"
+    shareMoreApps: "Más Apps",
+    ambientSoundOn: "Sonido",
+    ambientSoundOff: "Silencio",
+    ambientSoundTipPlaying: "Música ambiental inmersiva activa · Clic para silenciar (M)",
+    ambientSoundTipMuted: "Música ambiental silenciada · Clic para activar (M)",
+    ambientToastOn: "Paisaje sonoro inmersivo activado",
+    ambientToastOff: "Paisaje sonoro silenciado"
   },
   en: {
     lang: "EN",
@@ -519,7 +525,13 @@ const I18N = {
     shareModalBadge: "CULTURAL DISSEMINATION",
     shareLinkLabel: "Direct Link to Artwork:",
     shareBtnCopy: "Copy",
-    shareMoreApps: "More Apps"
+    shareMoreApps: "More Apps",
+    ambientSoundOn: "Sound",
+    ambientSoundOff: "Mute",
+    ambientSoundTipPlaying: "Ambient soundscape active · Click to mute (M)",
+    ambientSoundTipMuted: "Ambient soundscape muted · Click to activate (M)",
+    ambientToastOn: "Immersive soundscape activated",
+    ambientToastOff: "Ambient soundscape muted"
   }
 };
 
@@ -658,6 +670,15 @@ function applyLanguage(lang) {
   setT('ui-console-nav-label', dict.console);
   setT('ui-nav-search-label', dict.searchBtn);
   setT('ui-nav-focus-label', dict.focusMode);
+  if (window.AmbientMusicEngine && typeof window.AmbientMusicEngine.updateLang === 'function') {
+    window.AmbientMusicEngine.updateLang();
+  } else {
+    const ambLabel = document.getElementById('ui-ambient-sound-label');
+    const ambBtn = document.getElementById('ambient-music-btn');
+    const isPlay = ambBtn && ambBtn.classList.contains('playing');
+    if (ambLabel) ambLabel.textContent = isPlay ? dict.ambientSoundOn : dict.ambientSoundOff;
+    if (ambBtn) ambBtn.title = isPlay ? dict.ambientSoundTipPlaying : dict.ambientSoundTipMuted;
+  }
   setPh('spotlight-search-input', dict.searchPlaceholder);
   setT('ui-spotlight-hint', dict.spotlightHint);
   setT('ui-share-title', dict.shareModalTitle);
@@ -1957,6 +1978,9 @@ function layoutSphere() {
   });
 
   window.replayVideoIntro = function() {
+    if (window.AmbientMusicEngine && typeof window.AmbientMusicEngine.stop === 'function') {
+      window.AmbientMusicEngine.stop(false);
+    }
     videoEnded = false;
     targetProgress = 0.0;
     currentProgress = 0.0;
@@ -2191,6 +2215,11 @@ function layoutSphere() {
       }
     }
 
+    if (window.AmbientMusicEngine && window.AmbientMusicEngine.isActive) {
+      const motion = Math.abs(STATE.velX) + Math.abs(STATE.velY);
+      window.AmbientMusicEngine.modulate(motion);
+    }
+
     STATE.yaw += (STATE.targetYaw - STATE.yaw) * 0.08;
     STATE.pitch += (STATE.targetPitch - STATE.pitch) * 0.08;
     STATE.dollyZ += (STATE.targetDollyZ - STATE.dollyZ) * 0.08;
@@ -2398,6 +2427,10 @@ function openLightbox(index) {
   const item = items[index];
   const N = items.length;
 
+  if (window.AmbientMusicEngine && typeof window.AmbientMusicEngine.duck === 'function') {
+    window.AmbientMusicEngine.duck(true);
+  }
+
   const lightbox = document.getElementById('lightbox');
   const lightboxImg = document.getElementById('lightbox-img');
   const lightboxIndex = document.getElementById('lightbox-index');
@@ -2520,6 +2553,11 @@ function closeLightbox() {
   const lightbox = document.getElementById('lightbox');
   if (lightbox) lightbox.classList.remove('active');
   setLightboxProcessMode('final');
+
+  if (window.AmbientMusicEngine && typeof window.AmbientMusicEngine.duck === 'function') {
+    window.AmbientMusicEngine.duck(false);
+  }
+
   try {
     if (window.location.hash.startsWith('#obra-')) {
       history.replaceState(null, '', window.location.pathname + window.location.search);
@@ -3014,6 +3052,7 @@ window.addEventListener('hashchange', handleUrlHash);
   if (typeof initFocusMode === 'function') initFocusMode();
   if (typeof initOrbitControl === 'function') initOrbitControl();
   if (typeof initShareModal === 'function') initShareModal();
+  if (typeof initAmbientMusic === 'function') initAmbientMusic();
   if (window.location.hash) {
     handleUrlHash();
   }
@@ -3398,6 +3437,449 @@ function openShareModal(index) {
   }
 
   modal.classList.add('active');
+}
+
+/* ==========================================================================
+   AMBIENT MUSIC ENGINE (Zero-Download Web Audio Soundscape)
+   Procedural Cathedral Harmonics, D Dorian Celestial Chords & Bell Rings
+   ========================================================================== */
+const AmbientMusicEngine = (function() {
+  let ctx = null;
+  let masterGain = null;
+  let duckGain = null;
+  let filterNode = null;
+  let reverbNode = null;
+  let isInitialized = false;
+  let isPlaying = false;
+  let chordTimer = null;
+  let bellTimer = null;
+  let currentChordIndex = 0;
+  let activeVoices = [];
+  let droneNodes = [];
+
+  // D Dorian / Aeolian modal chords (sacred, serene, contemplative)
+  const CHORDS = [
+    // Dm9: D3, A3, C4, E4, G4
+    [146.83, 220.00, 261.63, 329.63, 392.00],
+    // Bbmaj9#11: Bb2, F3, A3, D4, E4
+    [116.54, 174.61, 220.00, 293.66, 329.63],
+    // Cadd9/G: G2, G3, C4, D4, G4
+    [98.00, 196.00, 261.63, 293.66, 392.00],
+    // Gm9: G2, F3, A3, D4, F4
+    [98.00, 174.61, 220.00, 293.66, 349.23],
+    // Asus4/7: A2, E3, A3, D4, E4
+    [110.00, 164.81, 220.00, 293.66, 329.63],
+    // Dm11: D3, A3, C4, F4, A4
+    [146.83, 220.00, 261.63, 349.23, 440.00]
+  ];
+
+  // Celestial temple bell frequencies (D5, A5, C6, D6, E6)
+  const BELL_FREQS = [587.33, 880.00, 1046.50, 1174.66, 1318.51];
+
+  function createReverbBuffer(audioCtx, duration = 3.6, decay = 2.4) {
+    const rate = audioCtx.sampleRate;
+    const length = Math.floor(rate * duration);
+    const impulse = audioCtx.createBuffer(2, length, rate);
+    const left = impulse.getChannelData(0);
+    const right = impulse.getChannelData(1);
+    for (let i = 0; i < length; i++) {
+      const n = i / length;
+      const env = Math.pow(1 - n, decay);
+      left[i] = (Math.random() * 2 - 1) * env;
+      right[i] = (Math.random() * 2 - 1) * env;
+    }
+    return impulse;
+  }
+
+  function initAudioContext() {
+    if (isInitialized) return true;
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return false;
+
+    try {
+      ctx = new AudioCtx();
+
+      // Master Limiter / Compressor to avoid any digital clipping
+      const compressor = ctx.createDynamicsCompressor();
+      compressor.threshold.setValueAtTime(-14, ctx.currentTime);
+      compressor.knee.setValueAtTime(24, ctx.currentTime);
+      compressor.ratio.setValueAtTime(6, ctx.currentTime);
+      compressor.attack.setValueAtTime(0.015, ctx.currentTime);
+      compressor.release.setValueAtTime(0.3, ctx.currentTime);
+      compressor.connect(ctx.destination);
+
+      // Master Gain for mute/unmute
+      masterGain = ctx.createGain();
+      masterGain.gain.setValueAtTime(0.0001, ctx.currentTime);
+      masterGain.connect(compressor);
+
+      // Duck Gain for Lightbox focusing
+      duckGain = ctx.createGain();
+      duckGain.gain.setValueAtTime(1.0, ctx.currentTime);
+      duckGain.connect(masterGain);
+
+      // Master Breathing Filter (Lowpass)
+      filterNode = ctx.createBiquadFilter();
+      filterNode.type = 'lowpass';
+      filterNode.frequency.setValueAtTime(1150, ctx.currentTime);
+      filterNode.Q.setValueAtTime(1.2, ctx.currentTime);
+      filterNode.connect(duckGain);
+
+      // Cathedral Convolution Reverb
+      reverbNode = ctx.createConvolver();
+      reverbNode.buffer = createReverbBuffer(ctx, 3.8, 2.5);
+
+      const wetGain = ctx.createGain();
+      wetGain.gain.setValueAtTime(0.55, ctx.currentTime);
+      reverbNode.connect(wetGain);
+      wetGain.connect(duckGain);
+
+      // Start sub-drone
+      startSubDrone();
+
+      isInitialized = true;
+      return true;
+    } catch (e) {
+      console.warn('AmbientMusicEngine initialization error:', e);
+      return false;
+    }
+  }
+
+  function startSubDrone() {
+    if (!ctx) return;
+    const droneGain = ctx.createGain();
+    droneGain.gain.setValueAtTime(0.055, ctx.currentTime);
+
+    const droneFilter = ctx.createBiquadFilter();
+    droneFilter.type = 'lowpass';
+    droneFilter.frequency.setValueAtTime(160, ctx.currentTime);
+
+    // Warm sub sine at D2 (73.42 Hz)
+    const osc1 = ctx.createOscillator();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(73.42, ctx.currentTime);
+
+    // Triangle sub at D1 (36.71 Hz)
+    const osc2 = ctx.createOscillator();
+    osc2.type = 'triangle';
+    osc2.frequency.setValueAtTime(36.71, ctx.currentTime);
+
+    osc1.detune.setValueAtTime(-3, ctx.currentTime);
+    osc2.detune.setValueAtTime(3, ctx.currentTime);
+
+    osc1.connect(droneFilter);
+    osc2.connect(droneFilter);
+    droneFilter.connect(droneGain);
+    droneGain.connect(masterGain);
+
+    osc1.start();
+    osc2.start();
+
+    droneNodes = [osc1, osc2, droneGain, droneFilter];
+  }
+
+  function playChord(chordFreqs) {
+    if (!ctx || !filterNode || !reverbNode) return;
+    const now = ctx.currentTime;
+    const fadeTime = 4.2;
+
+    activeVoices.forEach(voice => {
+      try {
+        voice.gain.gain.cancelScheduledValues(now);
+        voice.gain.gain.setValueAtTime(voice.gain.gain.value, now);
+        voice.gain.gain.linearRampToValueAtTime(0.0001, now + fadeTime);
+        setTimeout(() => {
+          try {
+            voice.oscs.forEach(o => o.stop());
+            voice.gain.disconnect();
+          } catch(e) {}
+        }, fadeTime * 1000 + 100);
+      } catch(e) {}
+    });
+    activeVoices = [];
+
+    const baseGain = 0.05 / Math.sqrt(chordFreqs.length);
+
+    chordFreqs.forEach((freq, idx) => {
+      const voiceGain = ctx.createGain();
+      voiceGain.gain.setValueAtTime(0.0001, now);
+      voiceGain.gain.linearRampToValueAtTime(baseGain * (1 - idx * 0.1), now + fadeTime);
+
+      let panner = null;
+      if (ctx.createStereoPanner) {
+        panner = ctx.createStereoPanner();
+        const panValue = ((idx / (chordFreqs.length - 1)) * 1.4 - 0.7);
+        panner.pan.setValueAtTime(panValue, now);
+      }
+
+      const oscA = ctx.createOscillator();
+      const oscB = ctx.createOscillator();
+
+      oscA.type = idx % 2 === 0 ? 'sine' : 'triangle';
+      oscB.type = 'sawtooth';
+
+      oscA.frequency.setValueAtTime(freq, now);
+      oscB.frequency.setValueAtTime(freq, now);
+
+      oscA.detune.setValueAtTime(-5, now);
+      oscB.detune.setValueAtTime(5, now);
+
+      const vFilter = ctx.createBiquadFilter();
+      vFilter.type = 'lowpass';
+      vFilter.frequency.setValueAtTime(freq * 3.2, now);
+
+      const oscBGain = ctx.createGain();
+      oscBGain.gain.setValueAtTime(0.18, now);
+
+      oscA.connect(vFilter);
+      oscB.connect(oscBGain);
+      oscBGain.connect(vFilter);
+
+      if (panner) {
+        vFilter.connect(panner);
+        panner.connect(voiceGain);
+      } else {
+        vFilter.connect(voiceGain);
+      }
+
+      voiceGain.connect(filterNode);
+      voiceGain.connect(reverbNode);
+
+      oscA.start(now);
+      oscB.start(now);
+
+      activeVoices.push({
+        gain: voiceGain,
+        oscs: [oscA, oscB]
+      });
+    });
+  }
+
+  function triggerBell() {
+    if (!ctx || !isPlaying || !reverbNode) return;
+    const now = ctx.currentTime;
+    const freq = BELL_FREQS[Math.floor(Math.random() * BELL_FREQS.length)];
+
+    const bellGain = ctx.createGain();
+    bellGain.gain.setValueAtTime(0.0001, now);
+    bellGain.gain.linearRampToValueAtTime(0.065, now + 0.08);
+    bellGain.gain.exponentialRampToValueAtTime(0.0001, now + 6.5);
+
+    const partials = [1.0, 2.756, 5.404];
+    const partialGains = [0.8, 0.35, 0.12];
+    const oscs = [];
+
+    partials.forEach((mult, i) => {
+      const o = ctx.createOscillator();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(freq * mult, now);
+
+      const pGain = ctx.createGain();
+      pGain.gain.setValueAtTime(partialGains[i], now);
+
+      o.connect(pGain);
+      pGain.connect(bellGain);
+      o.start(now);
+      o.stop(now + 6.8);
+      oscs.push(o);
+    });
+
+    const wetSend = ctx.createGain();
+    wetSend.gain.setValueAtTime(0.75, now);
+    bellGain.connect(wetSend);
+    wetSend.connect(reverbNode);
+
+    const drySend = ctx.createGain();
+    drySend.gain.setValueAtTime(0.25, now);
+    bellGain.connect(drySend);
+    drySend.connect(filterNode);
+
+    setTimeout(() => {
+      try {
+        bellGain.disconnect();
+        wetSend.disconnect();
+        drySend.disconnect();
+      } catch(e) {}
+    }, 7000);
+  }
+
+  function scheduleNextChord() {
+    if (!isPlaying) return;
+    playChord(CHORDS[currentChordIndex]);
+    currentChordIndex = (currentChordIndex + 1) % CHORDS.length;
+
+    chordTimer = setTimeout(() => {
+      scheduleNextChord();
+    }, 11000);
+  }
+
+  function scheduleBells() {
+    if (!isPlaying) return;
+    const delay = 14000 + Math.random() * 8000;
+    bellTimer = setTimeout(() => {
+      triggerBell();
+      scheduleBells();
+    }, delay);
+  }
+
+  function updateButtonUI(active) {
+    const btn = document.getElementById('ambient-music-btn');
+    const label = document.getElementById('ui-ambient-sound-label');
+    const dict = I18N[currentLang] || I18N.es;
+    if (btn) {
+      if (active) {
+        btn.classList.add('playing');
+        btn.setAttribute('aria-pressed', 'true');
+        btn.title = dict.ambientSoundTipPlaying;
+      } else {
+        btn.classList.remove('playing');
+        btn.setAttribute('aria-pressed', 'false');
+        btn.title = dict.ambientSoundTipMuted;
+      }
+    }
+    if (label) {
+      label.textContent = active ? dict.ambientSoundOn : dict.ambientSoundOff;
+    }
+  }
+
+  return {
+    get isActive() {
+      return isPlaying;
+    },
+    start: function(showNotice = false) {
+      if (!initAudioContext()) return;
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+      isPlaying = true;
+      const now = ctx.currentTime;
+      masterGain.gain.cancelScheduledValues(now);
+      masterGain.gain.setValueAtTime(masterGain.gain.value, now);
+      masterGain.gain.linearRampToValueAtTime(0.36, now + 3.0);
+
+      clearTimeout(chordTimer);
+      clearTimeout(bellTimer);
+      scheduleNextChord();
+      scheduleBells();
+
+      updateButtonUI(true);
+      try {
+        localStorage.setItem('wilmar_ambient_music', 'enabled');
+      } catch(e) {}
+
+      if (showNotice) {
+        const dict = I18N[currentLang] || I18N.es;
+        showToast(dict.ambientToastOn);
+      }
+    },
+    stop: function(showNotice = false) {
+      if (!ctx || !masterGain) return;
+      isPlaying = false;
+      const now = ctx.currentTime;
+      masterGain.gain.cancelScheduledValues(now);
+      masterGain.gain.setValueAtTime(masterGain.gain.value, now);
+      masterGain.gain.linearRampToValueAtTime(0.0001, now + 0.8);
+
+      clearTimeout(chordTimer);
+      clearTimeout(bellTimer);
+
+      updateButtonUI(false);
+      try {
+        localStorage.setItem('wilmar_ambient_music', 'muted');
+      } catch(e) {}
+
+      if (showNotice) {
+        const dict = I18N[currentLang] || I18N.es;
+        showToast(dict.ambientToastOff);
+      }
+    },
+    toggle: function() {
+      if (isPlaying) {
+        this.stop(true);
+      } else {
+        this.start(true);
+      }
+    },
+    duck: function(shouldDuck) {
+      if (!ctx || !duckGain) return;
+      const now = ctx.currentTime;
+      duckGain.gain.cancelScheduledValues(now);
+      duckGain.gain.setValueAtTime(duckGain.gain.value, now);
+      if (shouldDuck) {
+        duckGain.gain.linearRampToValueAtTime(0.24, now + 1.2);
+      } else {
+        duckGain.gain.linearRampToValueAtTime(1.0, now + 1.4);
+      }
+    },
+    modulate: function(speed) {
+      if (!ctx || !filterNode || !isPlaying) return;
+      const targetFreq = Math.min(2400, 1150 + speed * 420);
+      filterNode.frequency.setTargetAtTime(targetFreq, ctx.currentTime, 0.35);
+    },
+    updateLang: function() {
+      updateButtonUI(isPlaying);
+    }
+  };
+})();
+
+window.AmbientMusicEngine = AmbientMusicEngine;
+
+function initAmbientMusic() {
+  const btn = document.getElementById('ambient-music-btn');
+  if (btn) {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      AmbientMusicEngine.toggle();
+    });
+  }
+
+  // Keyboard shortcut: Press M to toggle ambient music
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'm' || e.key === 'M') {
+      const activeEl = document.activeElement;
+      if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable)) {
+        return;
+      }
+      AmbientMusicEngine.toggle();
+    }
+  });
+
+  // Check saved state: default is enabled, unless explicitly set to muted
+  let isMutedPref = false;
+  try {
+    isMutedPref = localStorage.getItem('wilmar_ambient_music') === 'muted';
+  } catch(e) {}
+
+  if (!isMutedPref) {
+    // When user enters archive, initiate soundscape smoothly
+    window.addEventListener('enter-archive', () => {
+      try {
+        if (localStorage.getItem('wilmar_ambient_music') !== 'muted') {
+          AmbientMusicEngine.start(false);
+        }
+      } catch(e) {}
+    });
+
+    // Interaction fallback unlock for autoplay policy
+    const unlockAudioOnGesture = () => {
+      const videoStage = document.getElementById('video-stage');
+      const isVideoVisible = videoStage && videoStage.style.display !== 'none';
+      if (!isVideoVisible) {
+        try {
+          if (localStorage.getItem('wilmar_ambient_music') !== 'muted' && !AmbientMusicEngine.isActive) {
+            AmbientMusicEngine.start(false);
+          }
+        } catch(e) {}
+      }
+      window.removeEventListener('pointerdown', unlockAudioOnGesture);
+      window.removeEventListener('touchstart', unlockAudioOnGesture);
+    };
+
+    window.addEventListener('pointerdown', unlockAudioOnGesture, { once: true });
+    window.addEventListener('touchstart', unlockAudioOnGesture, { once: true });
+  } else {
+    AmbientMusicEngine.updateLang();
+  }
 }
 
 /* ==========================================================================

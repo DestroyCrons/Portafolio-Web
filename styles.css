@@ -4201,6 +4201,75 @@ body.revealed .curatorial-filter-bar {
   stroke: currentColor;
 }
 
+/* Ambient Music Generator Button & Golden Equalizer Bars */
+.ambient-music-btn {
+  position: relative;
+  overflow: hidden;
+  gap: 7px !important;
+}
+
+.audio-equalizer-bars {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  width: 13px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.audio-equalizer-bars .bar {
+  width: 2px;
+  border-radius: 1px;
+  background: var(--fg-muted);
+  height: 3px;
+  transition: height 0.25s ease, background-color 0.25s ease;
+}
+
+.ambient-music-btn.playing {
+  border-color: rgba(212, 163, 89, 0.45);
+  color: var(--accent);
+  background: rgba(212, 163, 89, 0.12);
+  box-shadow: 0 0 12px rgba(212, 163, 89, 0.2);
+}
+
+.ambient-music-btn.playing .audio-equalizer-bars .bar {
+  background: var(--accent);
+}
+
+.ambient-music-btn.playing .bar-1 {
+  animation: eqBounce1 0.85s ease-in-out infinite alternate;
+}
+.ambient-music-btn.playing .bar-2 {
+  animation: eqBounce2 1.2s ease-in-out infinite alternate;
+}
+.ambient-music-btn.playing .bar-3 {
+  animation: eqBounce3 0.75s ease-in-out infinite alternate;
+}
+.ambient-music-btn.playing .bar-4 {
+  animation: eqBounce4 1.05s ease-in-out infinite alternate;
+}
+
+@keyframes eqBounce1 {
+  0% { height: 2px; }
+  50% { height: 9px; }
+  100% { height: 4px; }
+}
+@keyframes eqBounce2 {
+  0% { height: 5px; }
+  50% { height: 12px; }
+  100% { height: 7px; }
+}
+@keyframes eqBounce3 {
+  0% { height: 2px; }
+  50% { height: 10px; }
+  100% { height: 3px; }
+}
+@keyframes eqBounce4 {
+  0% { height: 4px; }
+  50% { height: 11px; }
+  100% { height: 6px; }
+}
+
 /* ==========================================================================
    NAVIGATION RESPONSIVE LAYOUT (Generous breathing room & mobile separation)
    ========================================================================== */
