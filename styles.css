@@ -1353,33 +1353,41 @@ body.revealed #headline {
 .grid-header {
   max-width: 1300px;
   margin: 0 auto 40px;
-  border-bottom: 1px solid var(--fg-tertiary);
-  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 24px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 6px;
+}
+
+.grid-header-inner,
+.grid-header > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
 }
 
 .grid-header h2 {
   font-family: var(--font-display);
-  font-size: clamp(22px, 3.8vw, 36px);
-  font-weight: 800;
+  font-size: clamp(22px, 3.4vw, 36px);
+  font-weight: 400;
   font-style: normal;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
   text-transform: uppercase;
   white-space: nowrap;
-  line-height: 1.15;
-  margin: 0;
+  line-height: 1.25;
+  margin: 0 0 14px 0 !important;
 }
 
 .grid-header p {
   font-family: var(--font-mono);
-  font-size: clamp(10px, 1.2vw, 11px);
-  letter-spacing: 0.2em;
+  font-size: clamp(10.5px, 1.1vw, 12px);
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--accent);
-  margin: 0;
+  margin: 0 !important;
+  line-height: 1.4;
 }
 
 .grid-container {
@@ -4391,25 +4399,30 @@ body.revealed .curatorial-filter-bar {
 
   .grid-header {
     margin: 0 0 24px !important;
-    padding-bottom: 14px !important;
+    padding-bottom: 16px !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: flex-start !important;
-    gap: 4px !important;
+  }
+
+  .grid-header-inner,
+  .grid-header > div {
+    gap: 10px !important;
   }
 
   .grid-header h2 {
     font-size: clamp(19px, 5.8vw, 24px) !important;
     white-space: nowrap !important;
     letter-spacing: 0.01em !important;
-    margin: 0 !important;
-    line-height: 1.15 !important;
+    margin: 0 0 10px 0 !important;
+    line-height: 1.25 !important;
   }
 
   .grid-header p {
     font-size: 9.5px !important;
-    letter-spacing: 0.12em !important;
+    letter-spacing: 0.14em !important;
     margin: 0 !important;
+    line-height: 1.4 !important;
   }
 
   .nav-actions {
@@ -4496,11 +4509,15 @@ body.revealed .curatorial-filter-bar {
   .grid-header h2 {
     font-size: clamp(17px, 5.2vw, 21px) !important;
     white-space: nowrap !important;
+    margin: 0 0 8px 0 !important;
+    line-height: 1.25 !important;
   }
 
   .grid-header p {
     font-size: 8.5px !important;
-    letter-spacing: 0.10em !important;
+    letter-spacing: 0.12em !important;
+    margin: 0 !important;
+    line-height: 1.4 !important;
   }
 
   /* On narrow phones, hide focus toggle to give maximum breathing room between brand and language switcher */
