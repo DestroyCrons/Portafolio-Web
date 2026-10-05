@@ -1141,7 +1141,7 @@ const DEFAULT_CONFIG = {
     "showVideoIntro": true
   },
   "styles": {
-    "fontSerif": "Unbounded, -apple-system, sans-serif",
+    "fontSerif": "Dela Gothic One, -apple-system, sans-serif",
     "fontSans": "Plus Jakarta Sans, -apple-system, sans-serif",
     "fontMono": "Azeret Mono, monospace",
     "accentColor": "#c8a96e",
@@ -2905,7 +2905,7 @@ function openLightbox(index) {
     lbMedium.textContent = mVal;
   }
   if (lbTypo) {
-    lbTypo.textContent = item.typography || 'Unbounded & Azeret Mono Custom';
+    lbTypo.textContent = item.typography || 'Dela Gothic One & Azeret Mono Custom';
   }
   if (lbClient) {
     const cVal = isEn ? (item.client_en || OfflineTranslator.toEn(item.client || "Author's Collection")) : (item.client || 'Colección Autoral');
