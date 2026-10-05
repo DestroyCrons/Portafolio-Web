@@ -1668,6 +1668,250 @@ function layoutSphere() {
 }
 
 /* ==========================================================================
+   AMBIENT MUSIC ENGINE — JAZZ HOP SOUNDTRACK (Midnight_Blueprint.mp3)
+   High-Fidelity Audio Playback, Video Synchronization & Sustained Navigation
+   ========================================================================== */
+var AmbientMusicEngine = (function() {
+  const AUDIO_SRC = 'Midnight_Blueprint.mp3';
+  const TARGET_VOLUME = 0.88; // Noticeably boosted, punchy & rich
+  const DUCK_VOLUME = 0.28;   // Subtle volume during lightbox inspection
+  
+  let audioEl = null;
+  let isPlaying = false;
+  let isVideoPausedByUser = false;
+  let isDucked = false;
+
+  function getAudioElement() {
+    if (!audioEl) {
+      audioEl = document.getElementById('ambient-audio-track');
+      if (!audioEl) {
+        audioEl = document.createElement('audio');
+        audioEl.id = 'ambient-audio-track';
+        audioEl.src = AUDIO_SRC;
+        audioEl.loop = true;
+        audioEl.preload = 'auto';
+        document.body.appendChild(audioEl);
+      }
+      audioEl.loop = true;
+      if (!audioEl.src || !audioEl.src.includes('.mp3')) {
+        audioEl.src = AUDIO_SRC;
+      }
+    }
+    return audioEl;
+  }
+
+  function setAudioVolume(vol) {
+    const el = getAudioElement();
+    if (!el) return;
+    try {
+      el.volume = Math.max(0, Math.min(1, vol));
+    } catch(e) {}
+  }
+
+  function updateButtonUI(active) {
+    const btn = document.getElementById('ambient-music-btn');
+    const label = document.getElementById('ui-ambient-sound-label');
+    const icon = document.getElementById('ui-ambient-sound-icon');
+    const videoBtn = document.getElementById('video-sound-btn');
+    const videoLabel = document.getElementById('ui-video-sound-label');
+    const videoIcon = videoBtn ? videoBtn.querySelector('.sound-icon') : null;
+    const dict = I18N[currentLang] || I18N.es;
+
+    const iconStr = active ? '🔊' : '🔇';
+    const textStr = active ? dict.ambientSoundOn : dict.ambientSoundOff;
+    const titleStr = active ? dict.ambientSoundTipPlaying : dict.ambientSoundTipMuted;
+
+    if (btn) {
+      if (active) {
+        btn.classList.add('playing');
+        btn.setAttribute('aria-pressed', 'true');
+      } else {
+        btn.classList.remove('playing');
+        btn.setAttribute('aria-pressed', 'false');
+      }
+      btn.title = titleStr;
+    }
+    if (label) label.textContent = textStr;
+    if (icon) icon.textContent = iconStr;
+
+    // Keep video topbar sound button in sync
+    if (videoBtn) {
+      if (active) {
+        videoBtn.classList.add('playing');
+        videoBtn.setAttribute('aria-pressed', 'true');
+      } else {
+        videoBtn.classList.remove('playing');
+        videoBtn.setAttribute('aria-pressed', 'false');
+      }
+      videoBtn.title = titleStr;
+    }
+    if (videoLabel) videoLabel.textContent = textStr;
+    if (videoIcon) videoIcon.textContent = iconStr;
+  }
+
+  return {
+    get isActive() {
+      return isPlaying;
+    },
+    start: function(showNotice = false) {
+      const el = getAudioElement();
+      if (!el) return;
+      isVideoPausedByUser = false;
+      isPlaying = true;
+      try {
+        localStorage.setItem('wilmar_ambient_music', 'enabled');
+      } catch(e) {}
+
+      updateButtonUI(true);
+
+      const targetVol = isDucked ? DUCK_VOLUME : TARGET_VOLUME;
+      el.muted = false;
+      setAudioVolume(targetVol);
+
+      const playPromise = el.play();
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          el.muted = false;
+          setAudioVolume(targetVol);
+        }).catch(err => {
+          console.warn('Audio waiting for user gesture unlock:', err);
+          const resumeOnTouch = () => {
+            if (isPlaying) {
+              el.muted = false;
+              setAudioVolume(targetVol);
+              el.play().catch(() => {});
+            }
+          };
+          window.addEventListener('pointerdown', resumeOnTouch, { once: true, passive: true });
+          window.addEventListener('click', resumeOnTouch, { once: true, passive: true });
+          window.addEventListener('touchstart', resumeOnTouch, { once: true, passive: true });
+          window.addEventListener('keydown', resumeOnTouch, { once: true, passive: true });
+          window.addEventListener('scroll', resumeOnTouch, { once: true, passive: true });
+          window.addEventListener('wheel', resumeOnTouch, { once: true, passive: true });
+        });
+      }
+
+      if (showNotice) {
+        const dict = I18N[currentLang] || I18N.es;
+        showToast(dict.ambientToastOn);
+      }
+    },
+    pauseVideoSync: function() {
+      const el = getAudioElement();
+      if (!el) return;
+      isVideoPausedByUser = true;
+      try {
+        el.pause();
+      } catch(e) {}
+    },
+    stop: function(showNotice = false) {
+      const el = getAudioElement();
+      isPlaying = false;
+      isVideoPausedByUser = false;
+      try {
+        localStorage.setItem('wilmar_ambient_music', 'muted');
+      } catch(e) {}
+
+      updateButtonUI(false);
+
+      if (el) {
+        try {
+          el.pause();
+        } catch(e) {}
+      }
+
+      if (showNotice) {
+        const dict = I18N[currentLang] || I18N.es;
+        showToast(dict.ambientToastOff);
+      }
+    },
+    toggle: function() {
+      const el = getAudioElement();
+      if (isPlaying && el && !el.paused) {
+        this.stop(true);
+      } else {
+        this.start(true);
+      }
+    },
+    duck: function(shouldDuck) {
+      isDucked = !!shouldDuck;
+      if (!isPlaying) return;
+      const el = getAudioElement();
+      if (!el) return;
+      const target = isDucked ? DUCK_VOLUME : TARGET_VOLUME;
+      setAudioVolume(target);
+    },
+    modulate: function(speed) {
+      // Maintained for API compatibility
+    },
+    updateLang: function() {
+      updateButtonUI(isPlaying);
+    }
+  };
+})();
+
+window.AmbientMusicEngine = AmbientMusicEngine;
+
+function initAmbientMusic() {
+  const btn = document.getElementById('ambient-music-btn');
+  const videoBtn = document.getElementById('video-sound-btn');
+
+  if (btn) {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      AmbientMusicEngine.toggle();
+    });
+  }
+
+  if (videoBtn) {
+    videoBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      AmbientMusicEngine.toggle();
+    });
+  }
+
+  // Keyboard shortcut: Press M to toggle ambient music
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'm' || e.key === 'M') {
+      const activeEl = document.activeElement;
+      if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable)) {
+        return;
+      }
+      AmbientMusicEngine.toggle();
+    }
+  });
+
+  // Ensure UI is active by default
+  AmbientMusicEngine.updateLang();
+  const btnEl = document.getElementById('ambient-music-btn');
+  if (btnEl) btnEl.classList.add('playing');
+  const vBtn = document.getElementById('video-sound-btn');
+  if (vBtn) vBtn.classList.add('playing');
+
+  // Global user interaction listener: starts music on ANY first user gesture
+  // (click, tap, scroll, key), unless the user has explicitly muted the sound
+  const tryStartAudioOnUserGesture = () => {
+    if (localStorage.getItem('wilmar_ambient_music') !== 'muted') {
+      AmbientMusicEngine.start(false);
+    }
+  };
+
+  window.addEventListener('pointerdown', tryStartAudioOnUserGesture, { passive: true, once: true });
+  window.addEventListener('click', tryStartAudioOnUserGesture, { passive: true, once: true });
+  window.addEventListener('touchstart', tryStartAudioOnUserGesture, { passive: true, once: true });
+  window.addEventListener('keydown', tryStartAudioOnUserGesture, { passive: true, once: true });
+  window.addEventListener('scroll', tryStartAudioOnUserGesture, { passive: true, once: true });
+  window.addEventListener('wheel', tryStartAudioOnUserGesture, { passive: true, once: true });
+
+  // When entering archive (video finished, skipped, or direct navigation), ensure music plays sustained!
+  window.addEventListener('enter-archive', () => {
+    if (localStorage.getItem('wilmar_ambient_music') !== 'muted') {
+      AmbientMusicEngine.start(false);
+    }
+  });
+}
+
+/* ==========================================================================
    VIDEO PARALLAX INTRO CONTROLLER (HIGH FLUIDITY & ZERO LAG)
    ========================================================================== */
 (function() {
@@ -3455,250 +3699,6 @@ function openShareModal(index) {
   }
 
   modal.classList.add('active');
-}
-
-/* ==========================================================================
-   AMBIENT MUSIC ENGINE — JAZZ HOP SOUNDTRACK (Midnight_Blueprint.mp3)
-   High-Fidelity Audio Playback, Video Synchronization & Sustained Navigation
-   ========================================================================== */
-const AmbientMusicEngine = (function() {
-  const AUDIO_SRC = 'Midnight_Blueprint.mp3';
-  const TARGET_VOLUME = 0.88; // Noticeably boosted, punchy & rich
-  const DUCK_VOLUME = 0.28;   // Subtle volume during lightbox inspection
-  
-  let audioEl = null;
-  let isPlaying = false;
-  let isVideoPausedByUser = false;
-  let isDucked = false;
-
-  function getAudioElement() {
-    if (!audioEl) {
-      audioEl = document.getElementById('ambient-audio-track');
-      if (!audioEl) {
-        audioEl = document.createElement('audio');
-        audioEl.id = 'ambient-audio-track';
-        audioEl.src = AUDIO_SRC;
-        audioEl.loop = true;
-        audioEl.preload = 'auto';
-        document.body.appendChild(audioEl);
-      }
-      audioEl.loop = true;
-      if (!audioEl.src || !audioEl.src.includes('.mp3')) {
-        audioEl.src = AUDIO_SRC;
-      }
-    }
-    return audioEl;
-  }
-
-  function setAudioVolume(vol) {
-    const el = getAudioElement();
-    if (!el) return;
-    try {
-      el.volume = Math.max(0, Math.min(1, vol));
-    } catch(e) {}
-  }
-
-  function updateButtonUI(active) {
-    const btn = document.getElementById('ambient-music-btn');
-    const label = document.getElementById('ui-ambient-sound-label');
-    const icon = document.getElementById('ui-ambient-sound-icon');
-    const videoBtn = document.getElementById('video-sound-btn');
-    const videoLabel = document.getElementById('ui-video-sound-label');
-    const videoIcon = videoBtn ? videoBtn.querySelector('.sound-icon') : null;
-    const dict = I18N[currentLang] || I18N.es;
-
-    const iconStr = active ? '🔊' : '🔇';
-    const textStr = active ? dict.ambientSoundOn : dict.ambientSoundOff;
-    const titleStr = active ? dict.ambientSoundTipPlaying : dict.ambientSoundTipMuted;
-
-    if (btn) {
-      if (active) {
-        btn.classList.add('playing');
-        btn.setAttribute('aria-pressed', 'true');
-      } else {
-        btn.classList.remove('playing');
-        btn.setAttribute('aria-pressed', 'false');
-      }
-      btn.title = titleStr;
-    }
-    if (label) label.textContent = textStr;
-    if (icon) icon.textContent = iconStr;
-
-    // Keep video topbar sound button in sync
-    if (videoBtn) {
-      if (active) {
-        videoBtn.classList.add('playing');
-        videoBtn.setAttribute('aria-pressed', 'true');
-      } else {
-        videoBtn.classList.remove('playing');
-        videoBtn.setAttribute('aria-pressed', 'false');
-      }
-      videoBtn.title = titleStr;
-    }
-    if (videoLabel) videoLabel.textContent = textStr;
-    if (videoIcon) videoIcon.textContent = iconStr;
-  }
-
-  return {
-    get isActive() {
-      return isPlaying;
-    },
-    start: function(showNotice = false) {
-      const el = getAudioElement();
-      if (!el) return;
-      isVideoPausedByUser = false;
-      isPlaying = true;
-      try {
-        localStorage.setItem('wilmar_ambient_music', 'enabled');
-      } catch(e) {}
-
-      updateButtonUI(true);
-
-      const targetVol = isDucked ? DUCK_VOLUME : TARGET_VOLUME;
-      el.muted = false;
-      setAudioVolume(targetVol);
-
-      const playPromise = el.play();
-      if (playPromise !== undefined) {
-        playPromise.then(() => {
-          el.muted = false;
-          setAudioVolume(targetVol);
-        }).catch(err => {
-          console.warn('Audio waiting for user gesture unlock:', err);
-          const resumeOnTouch = () => {
-            if (isPlaying) {
-              el.muted = false;
-              setAudioVolume(targetVol);
-              el.play().catch(() => {});
-            }
-          };
-          window.addEventListener('pointerdown', resumeOnTouch, { once: true, passive: true });
-          window.addEventListener('click', resumeOnTouch, { once: true, passive: true });
-          window.addEventListener('touchstart', resumeOnTouch, { once: true, passive: true });
-          window.addEventListener('keydown', resumeOnTouch, { once: true, passive: true });
-          window.addEventListener('scroll', resumeOnTouch, { once: true, passive: true });
-          window.addEventListener('wheel', resumeOnTouch, { once: true, passive: true });
-        });
-      }
-
-      if (showNotice) {
-        const dict = I18N[currentLang] || I18N.es;
-        showToast(dict.ambientToastOn);
-      }
-    },
-    pauseVideoSync: function() {
-      const el = getAudioElement();
-      if (!el) return;
-      isVideoPausedByUser = true;
-      try {
-        el.pause();
-      } catch(e) {}
-    },
-    stop: function(showNotice = false) {
-      const el = getAudioElement();
-      isPlaying = false;
-      isVideoPausedByUser = false;
-      try {
-        localStorage.setItem('wilmar_ambient_music', 'muted');
-      } catch(e) {}
-
-      updateButtonUI(false);
-
-      if (el) {
-        try {
-          el.pause();
-        } catch(e) {}
-      }
-
-      if (showNotice) {
-        const dict = I18N[currentLang] || I18N.es;
-        showToast(dict.ambientToastOff);
-      }
-    },
-    toggle: function() {
-      const el = getAudioElement();
-      if (isPlaying && el && !el.paused) {
-        this.stop(true);
-      } else {
-        this.start(true);
-      }
-    },
-    duck: function(shouldDuck) {
-      isDucked = !!shouldDuck;
-      if (!isPlaying) return;
-      const el = getAudioElement();
-      if (!el) return;
-      const target = isDucked ? DUCK_VOLUME : TARGET_VOLUME;
-      setAudioVolume(target);
-    },
-    modulate: function(speed) {
-      // Maintained for API compatibility
-    },
-    updateLang: function() {
-      updateButtonUI(isPlaying);
-    }
-  };
-})();
-
-window.AmbientMusicEngine = AmbientMusicEngine;
-
-function initAmbientMusic() {
-  const btn = document.getElementById('ambient-music-btn');
-  const videoBtn = document.getElementById('video-sound-btn');
-
-  if (btn) {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      AmbientMusicEngine.toggle();
-    });
-  }
-
-  if (videoBtn) {
-    videoBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      AmbientMusicEngine.toggle();
-    });
-  }
-
-  // Keyboard shortcut: Press M to toggle ambient music
-  window.addEventListener('keydown', (e) => {
-    if (e.key === 'm' || e.key === 'M') {
-      const activeEl = document.activeElement;
-      if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable)) {
-        return;
-      }
-      AmbientMusicEngine.toggle();
-    }
-  });
-
-  // Ensure UI is active by default
-  AmbientMusicEngine.updateLang();
-  const btnEl = document.getElementById('ambient-music-btn');
-  if (btnEl) btnEl.classList.add('playing');
-  const vBtn = document.getElementById('video-sound-btn');
-  if (vBtn) vBtn.classList.add('playing');
-
-  // Global user interaction listener: starts music on ANY first user gesture
-  // (click, tap, scroll, key), unless the user has explicitly muted the sound
-  const tryStartAudioOnUserGesture = () => {
-    if (localStorage.getItem('wilmar_ambient_music') !== 'muted') {
-      AmbientMusicEngine.start(false);
-    }
-  };
-
-  window.addEventListener('pointerdown', tryStartAudioOnUserGesture, { passive: true, once: true });
-  window.addEventListener('click', tryStartAudioOnUserGesture, { passive: true, once: true });
-  window.addEventListener('touchstart', tryStartAudioOnUserGesture, { passive: true, once: true });
-  window.addEventListener('keydown', tryStartAudioOnUserGesture, { passive: true, once: true });
-  window.addEventListener('scroll', tryStartAudioOnUserGesture, { passive: true, once: true });
-  window.addEventListener('wheel', tryStartAudioOnUserGesture, { passive: true, once: true });
-
-  // When entering archive (video finished, skipped, or direct navigation), ensure music plays sustained!
-  window.addEventListener('enter-archive', () => {
-    if (localStorage.getItem('wilmar_ambient_music') !== 'muted') {
-      AmbientMusicEngine.start(false);
-    }
-  });
 }
 
 /* ==========================================================================
