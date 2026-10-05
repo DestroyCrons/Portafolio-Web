@@ -20,6 +20,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
+<link rel="preload" as="image" href="video_poster.jpg">
 <style>
   /* Critical Instant Preloader Shield */
   body.loading { overflow: hidden !important; height: 100vh !important; background: #050508; }
@@ -111,7 +112,7 @@
       <div class="video-corner-mark top-right" aria-hidden="true"></div>
       <div class="video-corner-mark bottom-left" aria-hidden="true"></div>
       <div class="video-corner-mark bottom-right" aria-hidden="true"></div>
-      <video id="intro-video" playsinline muted preload="auto" src="video.mp4" aria-label="Video interactivo de presentación" controlsList="nodownload nofullscreen noremoteplayback" disablePictureInPicture draggable="false" oncontextmenu="return false;">
+      <video id="intro-video" poster="video_poster.jpg" playsinline muted preload="auto" src="video.mp4" aria-label="Video interactivo de presentación" controlsList="nodownload nofullscreen noremoteplayback" disablePictureInPicture draggable="false" oncontextmenu="return false;">
         <source src="video.mp4" type="video/mp4">
       </video>
       <div class="video-vignette"></div>
@@ -137,6 +138,9 @@
     </div>
   </div>
 </section>
+
+<!-- AMBIENT JAZZ HOP SOUNDTRACK (Midnight_Blueprint.mp3) -->
+<audio id="ambient-audio-track" preload="auto" loop src="Midnight_Blueprint.mp3"></audio>
 
 <!-- SCROLL TRACK, VEIL & DYNAMIC PORTAL FLARE -->
 <div id="scroll-track"></div>

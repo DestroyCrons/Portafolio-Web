@@ -1875,7 +1875,7 @@ function layoutSphere() {
 
   let isAutoPlaying = false;
 
-  // Toggle play / pause on click
+  // Toggle play / pause on click (Synchronized with Ambient Jazz Hop Soundtrack)
   function startOrPauseVideo() {
     if (videoEnded) return;
     if (introVideo.paused) {
@@ -1888,11 +1888,17 @@ function layoutSphere() {
       if (playOverlay) playOverlay.classList.add('hidden');
       isAutoPlaying = true;
       introVideo.play().catch(err => console.warn('Play notice:', err));
+      if (window.AmbientMusicEngine && localStorage.getItem('wilmar_ambient_music') !== 'muted') {
+        window.AmbientMusicEngine.start(false);
+      }
     } else {
       isAutoPlaying = false;
       introVideo.pause();
       const playOverlay = document.getElementById('video-play-overlay');
       if (playOverlay) playOverlay.classList.remove('hidden');
+      if (window.AmbientMusicEngine) {
+        window.AmbientMusicEngine.pauseVideoSync();
+      }
     }
   }
 
@@ -1908,6 +1914,9 @@ function layoutSphere() {
     hideGreeting();
     const playOverlay = document.getElementById('video-play-overlay');
     if (playOverlay) playOverlay.classList.add('hidden');
+    if (window.AmbientMusicEngine && localStorage.getItem('wilmar_ambient_music') !== 'muted') {
+      window.AmbientMusicEngine.start(false);
+    }
   });
 
   introVideo.addEventListener('pause', () => {
@@ -1915,6 +1924,9 @@ function layoutSphere() {
     const playOverlay = document.getElementById('video-play-overlay');
     if (playOverlay) playOverlay.classList.remove('hidden');
     if (currentProgress <= 0.008 && !videoEnded) showGreeting();
+    if (!videoEnded && window.AmbientMusicEngine) {
+      window.AmbientMusicEngine.pauseVideoSync();
+    }
   });
 
   // Clicking on video frame toggles play/pause (never skipping unintentionally)
@@ -2008,6 +2020,11 @@ function layoutSphere() {
     if (videoEnded) return;
     videoEnded = true;
     introVideo.pause();
+
+    // Sustain music playback smoothly throughout navigation!
+    if (window.AmbientMusicEngine && localStorage.getItem('wilmar_ambient_music') !== 'muted') {
+      window.AmbientMusicEngine.start(false);
+    }
 
     const videoStage = document.getElementById('video-stage');
     const veil = document.getElementById('veil');
@@ -3429,393 +3446,67 @@ function openShareModal(index) {
 }
 
 /* ==========================================================================
-   AMBIENT MUSIC ENGINE (Zero-Download Web Audio Soundscape)
-   Procedural Cathedral Harmonics, D Dorian Celestial Chords & Bell Rings
+   AMBIENT MUSIC ENGINE — JAZZ HOP SOUNDTRACK (Midnight_Blueprint.mp3)
+   High-Fidelity Audio Playback, Video Synchronization & Sustained Navigation
    ========================================================================== */
 const AmbientMusicEngine = (function() {
-  let ctx = null;
-  let masterGain = null;
-  let duckGain = null;
-  let isInitialized = false;
+  const AUDIO_SRC = 'Midnight_Blueprint.mp3';
+  const TARGET_VOLUME = 0.88; // Noticeably louder and punchy as requested
+  const DUCK_VOLUME = 0.28;   // Subtle volume during lightbox inspection
+  
+  let audioEl = null;
   let isPlaying = false;
-  let lookaheadTimer = null;
-  let vinylNode = null;
+  let isVideoPausedByUser = false;
+  let isDucked = false;
+  let fadeInterval = null;
 
-  // Tempo & Timing (Classic Chillhop / Jazz Hop Tempo)
-  const BPM = 82;
-  const secondsPerBeat = 60 / BPM; // ~0.7317s
-  const stepTime = secondsPerBeat / 4; // 16th note ~0.1829s
-  const SWING = 0.026; // Chillhop swung 16th delay
-
-  let currentStep = 0; // 0 to 127 (8 bars of 16 steps = 128 steps total)
-  let nextStepTime = 0.0;
-  const scheduleAheadTime = 0.12;
-
-  // 8-Bar Jazz Chord Progression (Lush extended harmonies)
-  const CHORDS = [
-    // Bar 0: Dm9 (D3, F3, A3, C4, E4)
-    { name: 'Dm9', freqs: [146.83, 174.61, 220.00, 261.63, 329.63], bass: 73.42 },
-    // Bar 1: G13 (G2, F3, A3, B3, E4)
-    { name: 'G13', freqs: [98.00, 174.61, 220.00, 246.94, 329.63], bass: 49.00 },
-    // Bar 2: Cmaj9 (C3, E3, G3, B3, D4)
-    { name: 'Cmaj9', freqs: [130.81, 164.81, 196.00, 246.94, 293.66], bass: 65.41 },
-    // Bar 3: Am9 (A2, G3, C4, D4, E4)
-    { name: 'Am9', freqs: [110.00, 196.00, 261.63, 293.66, 329.63], bass: 55.00 },
-    // Bar 4: Fmaj9 (F2, E3, A3, C4, G4)
-    { name: 'Fmaj9', freqs: [87.31, 164.81, 220.00, 261.63, 392.00], bass: 43.65 },
-    // Bar 5: Em9 (E2, D3, G3, B3, F#4)
-    { name: 'Em9', freqs: [82.41, 146.83, 196.00, 246.94, 369.99], bass: 41.20 },
-    // Bar 6: Dm9 (D3, F3, A3, C4, E4)
-    { name: 'Dm9', freqs: [146.83, 174.61, 220.00, 261.63, 329.63], bass: 73.42 },
-    // Bar 7: A7alt (A2, G3, C4, Eb4, F4)
-    { name: 'A7alt', freqs: [110.00, 196.00, 261.63, 311.13, 349.23], bass: 55.00 }
-  ];
-
-  // Procedural Convolution Reverb Buffer
-  let reverbNode = null;
-  function createReverb(duration = 2.4, decay = 2.0) {
-    const rate = ctx.sampleRate;
-    const length = Math.floor(rate * duration);
-    const impulse = ctx.createBuffer(2, length, rate);
-    const left = impulse.getChannelData(0);
-    const right = impulse.getChannelData(1);
-    for (let i = 0; i < length; i++) {
-      const n = i / length;
-      const env = Math.pow(1 - n, decay);
-      left[i] = (Math.random() * 2 - 1) * env;
-      right[i] = (Math.random() * 2 - 1) * env;
-    }
-    const conv = ctx.createConvolver();
-    conv.buffer = impulse;
-    return conv;
-  }
-
-  // Master lowpass filter (breathing with 3D sphere)
-  let masterFilter = null;
-
-  function initAudioContext() {
-    if (isInitialized) return true;
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (!AudioCtx) return false;
-
-    try {
-      ctx = new AudioCtx();
-
-      // Master Compressor / Limiter
-      const compressor = ctx.createDynamicsCompressor();
-      compressor.threshold.setValueAtTime(-12, ctx.currentTime);
-      compressor.knee.setValueAtTime(20, ctx.currentTime);
-      compressor.ratio.setValueAtTime(4.5, ctx.currentTime);
-      compressor.attack.setValueAtTime(0.008, ctx.currentTime);
-      compressor.release.setValueAtTime(0.2, ctx.currentTime);
-      compressor.connect(ctx.destination);
-
-      masterGain = ctx.createGain();
-      masterGain.gain.setValueAtTime(0.0001, ctx.currentTime);
-      masterGain.connect(compressor);
-
-      duckGain = ctx.createGain();
-      duckGain.gain.setValueAtTime(1.0, ctx.currentTime);
-      duckGain.connect(masterGain);
-
-      masterFilter = ctx.createBiquadFilter();
-      masterFilter.type = 'lowpass';
-      masterFilter.frequency.setValueAtTime(2800, ctx.currentTime);
-      masterFilter.Q.setValueAtTime(1.0, ctx.currentTime);
-      masterFilter.connect(duckGain);
-
-      reverbNode = createReverb(2.2, 2.0);
-      const wetGain = ctx.createGain();
-      wetGain.gain.setValueAtTime(0.38, ctx.currentTime);
-      reverbNode.connect(wetGain);
-      wetGain.connect(duckGain);
-
-      // Start subtle vinyl crackle loop
-      startVinylCrackle();
-
-      isInitialized = true;
-      return true;
-    } catch(e) {
-      console.warn('JazzHop init error:', e);
-      return false;
-    }
-  }
-
-  // Vinyl Texture Generator
-  function startVinylCrackle() {
-    if (!ctx) return;
-    const bufferSize = ctx.sampleRate * 4;
-    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      const hiss = (Math.random() * 2 - 1) * 0.015;
-      const click = (Math.random() > 0.9996) ? (Math.random() * 2 - 1) * 0.12 : 0;
-      data[i] = hiss + click;
-    }
-
-    const source = ctx.createBufferSource();
-    source.buffer = buffer;
-    source.loop = true;
-
-    const vFilter = ctx.createBiquadFilter();
-    vFilter.type = 'bandpass';
-    vFilter.frequency.setValueAtTime(1200, ctx.currentTime);
-    vFilter.Q.setValueAtTime(0.8, ctx.currentTime);
-
-    const vGain = ctx.createGain();
-    vGain.gain.setValueAtTime(0.022, ctx.currentTime);
-
-    source.connect(vFilter);
-    vFilter.connect(vGain);
-    vGain.connect(duckGain);
-    source.start();
-    vinylNode = source;
-  }
-
-  // --- INSTRUMENT SYNTHESIS ---
-
-  // 1. Kick Drum (Punchy Low-End Hip Hop Kick)
-  function triggerKick(time, vel = 0.75) {
-    if (!ctx) return;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(130, time);
-    osc.frequency.exponentialRampToValueAtTime(42, time + 0.075);
-
-    gain.gain.setValueAtTime(vel * 0.75, time);
-    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.28);
-
-    osc.connect(gain);
-    gain.connect(masterFilter);
-
-    osc.start(time);
-    osc.stop(time + 0.3);
-  }
-
-  // 2. Snare / Rimshot (Crisp, organic 90s boom-bap / jazz snare)
-  function triggerSnare(time, vel = 0.7) {
-    if (!ctx) return;
-    const osc = ctx.createOscillator();
-    const oscGain = ctx.createGain();
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(180, time);
-    osc.frequency.exponentialRampToValueAtTime(115, time + 0.04);
-    oscGain.gain.setValueAtTime(vel * 0.45, time);
-    oscGain.gain.exponentialRampToValueAtTime(0.001, time + 0.12);
-    osc.connect(oscGain);
-    oscGain.connect(masterFilter);
-    osc.start(time);
-    osc.stop(time + 0.15);
-
-    const noiseBuffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.18), ctx.sampleRate);
-    const output = noiseBuffer.getChannelData(0);
-    for (let i = 0; i < noiseBuffer.length; i++) {
-      output[i] = Math.random() * 2 - 1;
-    }
-    const noiseSource = ctx.createBufferSource();
-    noiseSource.buffer = noiseBuffer;
-
-    const noiseFilter = ctx.createBiquadFilter();
-    noiseFilter.type = 'bandpass';
-    noiseFilter.frequency.setValueAtTime(2200, time);
-    noiseFilter.Q.setValueAtTime(1.8, time);
-
-    const noiseGain = ctx.createGain();
-    noiseGain.gain.setValueAtTime(vel * 0.55, time);
-    noiseGain.gain.exponentialRampToValueAtTime(0.001, time + 0.16);
-
-    noiseSource.connect(noiseFilter);
-    noiseFilter.connect(noiseGain);
-    noiseGain.connect(masterFilter);
-
-    if (reverbNode) {
-      const splashSend = ctx.createGain();
-      splashSend.gain.setValueAtTime(vel * 0.22, time);
-      noiseFilter.connect(splashSend);
-      splashSend.connect(reverbNode);
-    }
-
-    noiseSource.start(time);
-    noiseSource.stop(time + 0.2);
-  }
-
-  // 3. Hi-Hat (Swung, velocity-sensitive jazzy closed/open hat)
-  function triggerHat(time, vel = 0.35, isOpen = false) {
-    if (!ctx) return;
-    const dur = isOpen ? 0.22 : 0.048;
-    const noiseBuffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * dur), ctx.sampleRate);
-    const output = noiseBuffer.getChannelData(0);
-    for (let i = 0; i < noiseBuffer.length; i++) {
-      output[i] = Math.random() * 2 - 1;
-    }
-    const source = ctx.createBufferSource();
-    source.buffer = noiseBuffer;
-
-    const hp = ctx.createBiquadFilter();
-    hp.type = 'highpass';
-    hp.frequency.setValueAtTime(7500, time);
-
-    const gain = ctx.createGain();
-    gain.gain.setValueAtTime(vel * 0.38, time);
-    gain.gain.exponentialRampToValueAtTime(0.001, time + dur);
-
-    source.connect(hp);
-    hp.connect(gain);
-    gain.connect(masterFilter);
-
-    source.start(time);
-    source.stop(time + dur + 0.02);
-  }
-
-  // 4. Jazz Rhodes Chords (Warm electric piano with soft tine chime)
-  function triggerRhodesChord(time, freqs, duration = 1.4, vel = 0.5) {
-    if (!ctx) return;
-    const noteGain = (vel * 0.09) / Math.sqrt(freqs.length);
-
-    freqs.forEach((f) => {
-      const oscBody = ctx.createOscillator();
-      oscBody.type = 'sine';
-      oscBody.frequency.setValueAtTime(f, time);
-
-      const oscTine = ctx.createOscillator();
-      oscTine.type = 'sine';
-      oscTine.frequency.setValueAtTime(f * 3, time);
-
-      const tineGain = ctx.createGain();
-      tineGain.gain.setValueAtTime(noteGain * 0.35, time);
-      tineGain.gain.exponentialRampToValueAtTime(0.0001, time + 0.24);
-
-      const vGain = ctx.createGain();
-      vGain.gain.setValueAtTime(0.0001, time);
-      vGain.gain.linearRampToValueAtTime(noteGain, time + 0.025);
-      vGain.gain.exponentialRampToValueAtTime(noteGain * 0.45, time + duration * 0.6);
-      vGain.gain.linearRampToValueAtTime(0.0001, time + duration);
-
-      const toneFilter = ctx.createBiquadFilter();
-      toneFilter.type = 'lowpass';
-      toneFilter.frequency.setValueAtTime(1500, time);
-
-      oscBody.connect(toneFilter);
-      oscTine.connect(tineGain);
-      tineGain.connect(toneFilter);
-      toneFilter.connect(vGain);
-
-      vGain.connect(masterFilter);
-      if (reverbNode) {
-        const revSend = ctx.createGain();
-        revSend.gain.setValueAtTime(0.35, time);
-        vGain.connect(revSend);
-        revSend.connect(reverbNode);
+  function getAudioElement() {
+    if (!audioEl) {
+      audioEl = document.getElementById('ambient-audio-track');
+      if (!audioEl) {
+        audioEl = document.createElement('audio');
+        audioEl.id = 'ambient-audio-track';
+        audioEl.src = AUDIO_SRC;
+        audioEl.loop = true;
+        audioEl.preload = 'auto';
+        document.body.appendChild(audioEl);
       }
-
-      oscBody.start(time);
-      oscTine.start(time);
-      oscBody.stop(time + duration + 0.05);
-      oscTine.stop(time + 0.3);
-    });
+      audioEl.loop = true;
+      if (!audioEl.src || !audioEl.src.includes('.mp3')) {
+        audioEl.src = AUDIO_SRC;
+      }
+    }
+    return audioEl;
   }
 
-  // 5. Walking / Melodic Jazz Bass
-  function triggerBass(time, freq, duration = 0.42, vel = 0.65) {
-    if (!ctx) return;
-    const osc = ctx.createOscillator();
-    const sub = ctx.createOscillator();
-    const bFilter = ctx.createBiquadFilter();
-    const bGain = ctx.createGain();
-
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(freq, time);
-
-    sub.type = 'sine';
-    sub.frequency.setValueAtTime(freq, time);
-
-    bFilter.type = 'lowpass';
-    bFilter.frequency.setValueAtTime(340, time);
-    bFilter.frequency.exponentialRampToValueAtTime(180, time + duration);
-
-    bGain.gain.setValueAtTime(vel * 0.36, time);
-    bGain.gain.exponentialRampToValueAtTime(vel * 0.18, time + duration * 0.7);
-    bGain.gain.linearRampToValueAtTime(0.0001, time + duration);
-
-    osc.connect(bFilter);
-    sub.connect(bFilter);
-    bFilter.connect(bGain);
-    bGain.connect(masterFilter);
-
-    osc.start(time);
-    sub.start(time);
-    osc.stop(time + duration + 0.05);
-    sub.stop(time + duration + 0.05);
-  }
-
-  // --- STEP SEQUENCER & LOOKAHEAD SCHEDULER ---
-  function scheduleStep(stepIndex, stepTimePos) {
-    const barIndex = Math.floor(stepIndex / 16) % CHORDS.length;
-    const stepInBar = stepIndex % 16;
-    const chord = CHORDS[barIndex];
-
-    const isSwung = (stepInBar % 2 === 1);
-    const time = stepTimePos + (isSwung ? SWING : 0);
-
-    // Drums
-    if (stepInBar === 0) {
-      triggerKick(time, 0.78);
-    } else if (stepInBar === 6) {
-      triggerKick(time, 0.62);
-    } else if (stepInBar === 10 && (barIndex % 2 === 1)) {
-      triggerKick(time, 0.58);
+  function fadeVolume(targetVol, durationMs = 380, callback = null) {
+    const el = getAudioElement();
+    if (!el) return;
+    if (fadeInterval) {
+      clearInterval(fadeInterval);
+      fadeInterval = null;
     }
-
-    if (stepInBar === 4) {
-      triggerSnare(time, 0.72);
-    } else if (stepInBar === 12) {
-      triggerSnare(time, 0.78);
-    } else if (stepInBar === 14 && barIndex === 7) {
-      triggerSnare(time, 0.28);
+    const startVol = (typeof el.volume === 'number' && !isNaN(el.volume)) ? el.volume : 0;
+    const diff = targetVol - startVol;
+    if (Math.abs(diff) < 0.02) {
+      el.volume = Math.max(0, Math.min(1, targetVol));
+      if (callback) callback();
+      return;
     }
-
-    if (stepInBar % 2 === 0) {
-      const isAccent = (stepInBar === 0 || stepInBar === 8);
-      triggerHat(time, isAccent ? 0.42 : 0.28, false);
-    } else if (stepInBar === 14 && (barIndex % 4 === 3)) {
-      triggerHat(time, 0.38, true);
-    } else {
-      triggerHat(time, 0.18, false);
-    }
-
-    // Jazz Rhodes Chords
-    if (stepInBar === 0) {
-      triggerRhodesChord(time, chord.freqs, stepTime * 5.2, 0.55);
-    } else if (stepInBar === 6) {
-      triggerRhodesChord(time, chord.freqs, stepTime * 3.8, 0.46);
-    } else if (stepInBar === 14) {
-      const nextChord = CHORDS[(barIndex + 1) % CHORDS.length];
-      triggerRhodesChord(time, nextChord.freqs, stepTime * 2.2, 0.42);
-    }
-
-    // Walking Jazz Bass
-    if (stepInBar === 0) {
-      triggerBass(time, chord.bass, stepTime * 3.5, 0.68);
-    } else if (stepInBar === 6) {
-      triggerBass(time, chord.bass * 1.25, stepTime * 2.2, 0.58);
-    } else if (stepInBar === 8) {
-      triggerBass(time, chord.bass * 1.5, stepTime * 3.0, 0.62);
-    } else if (stepInBar === 12) {
-      const nextBass = CHORDS[(barIndex + 1) % CHORDS.length].bass;
-      triggerBass(time, nextBass * 0.94, stepTime * 2.5, 0.54);
-    }
-  }
-
-  function schedulerLoop() {
-    if (!isPlaying || !ctx) return;
-    while (nextStepTime < ctx.currentTime + scheduleAheadTime) {
-      scheduleStep(currentStep, nextStepTime);
-      nextStepTime += stepTime;
-      currentStep = (currentStep + 1) % (CHORDS.length * 16);
-    }
-    lookaheadTimer = setTimeout(schedulerLoop, 25);
+    const steps = 16;
+    const stepTime = Math.max(10, Math.floor(durationMs / steps));
+    let currentStep = 0;
+    fadeInterval = setInterval(() => {
+      currentStep++;
+      const current = startVol + diff * (currentStep / steps);
+      el.volume = Math.max(0, Math.min(1, current));
+      if (currentStep >= steps) {
+        clearInterval(fadeInterval);
+        fadeInterval = null;
+        el.volume = Math.max(0, Math.min(1, targetVol));
+        if (callback) callback();
+      }
+    }, stepTime);
   }
 
   function updateButtonUI(active) {
@@ -3846,6 +3537,13 @@ const AmbientMusicEngine = (function() {
 
     // Keep video topbar sound button in sync
     if (videoBtn) {
+      if (active) {
+        videoBtn.classList.add('playing');
+        videoBtn.setAttribute('aria-pressed', 'true');
+      } else {
+        videoBtn.classList.remove('playing');
+        videoBtn.setAttribute('aria-pressed', 'false');
+      }
       videoBtn.title = titleStr;
     }
     if (videoLabel) videoLabel.textContent = textStr;
@@ -3857,44 +3555,72 @@ const AmbientMusicEngine = (function() {
       return isPlaying;
     },
     start: function(showNotice = false) {
-      if (!initAudioContext()) return;
-      if (ctx.state === 'suspended') {
-        ctx.resume();
-      }
+      const el = getAudioElement();
+      if (!el) return;
+      isVideoPausedByUser = false;
       isPlaying = true;
-      const now = ctx.currentTime;
-      masterGain.gain.cancelScheduledValues(now);
-      masterGain.gain.setValueAtTime(masterGain.gain.value, now);
-      masterGain.gain.linearRampToValueAtTime(0.48, now + 1.2);
-
-      nextStepTime = ctx.currentTime + 0.05;
-      clearTimeout(lookaheadTimer);
-      schedulerLoop();
-
-      updateButtonUI(true);
       try {
         localStorage.setItem('wilmar_ambient_music', 'enabled');
       } catch(e) {}
+
+      updateButtonUI(true);
+
+      const targetVol = isDucked ? DUCK_VOLUME : TARGET_VOLUME;
+
+      if (el.paused) {
+        el.volume = 0.05;
+        const playPromise = el.play();
+        if (playPromise !== undefined) {
+          playPromise.then(() => {
+            fadeVolume(targetVol, 450);
+          }).catch(err => {
+            console.warn('Audio auto-unlock pending user gesture:', err);
+            const unlockAudio = () => {
+              if (isPlaying) {
+                el.play().then(() => fadeVolume(targetVol, 400)).catch(() => {});
+              }
+              window.removeEventListener('click', unlockAudio);
+              window.removeEventListener('keydown', unlockAudio);
+              window.removeEventListener('touchstart', unlockAudio);
+            };
+            window.addEventListener('click', unlockAudio, { once: true });
+            window.addEventListener('keydown', unlockAudio, { once: true });
+            window.addEventListener('touchstart', unlockAudio, { once: true });
+          });
+        }
+      } else {
+        fadeVolume(targetVol, 300);
+      }
 
       if (showNotice) {
         const dict = I18N[currentLang] || I18N.es;
         showToast(dict.ambientToastOn);
       }
     },
+    pauseVideoSync: function() {
+      // Pauses audio synchronously when user pauses video during the intro stage
+      const el = getAudioElement();
+      if (!el || el.paused) return;
+      isVideoPausedByUser = true;
+      fadeVolume(0, 250, () => {
+        if (isVideoPausedByUser) el.pause();
+      });
+    },
     stop: function(showNotice = false) {
-      if (!ctx || !masterGain) return;
+      const el = getAudioElement();
       isPlaying = false;
-      const now = ctx.currentTime;
-      masterGain.gain.cancelScheduledValues(now);
-      masterGain.gain.setValueAtTime(masterGain.gain.value, now);
-      masterGain.gain.linearRampToValueAtTime(0.0001, now + 0.5);
-
-      clearTimeout(lookaheadTimer);
-
-      updateButtonUI(false);
+      isVideoPausedByUser = false;
       try {
         localStorage.setItem('wilmar_ambient_music', 'muted');
       } catch(e) {}
+
+      updateButtonUI(false);
+
+      if (el && !el.paused) {
+        fadeVolume(0, 300, () => {
+          el.pause();
+        });
+      }
 
       if (showNotice) {
         const dict = I18N[currentLang] || I18N.es;
@@ -3909,20 +3635,15 @@ const AmbientMusicEngine = (function() {
       }
     },
     duck: function(shouldDuck) {
-      if (!ctx || !duckGain) return;
-      const now = ctx.currentTime;
-      duckGain.gain.cancelScheduledValues(now);
-      duckGain.gain.setValueAtTime(duckGain.gain.value, now);
-      if (shouldDuck) {
-        duckGain.gain.linearRampToValueAtTime(0.22, now + 0.8);
-      } else {
-        duckGain.gain.linearRampToValueAtTime(1.0, now + 1.0);
-      }
+      isDucked = !!shouldDuck;
+      if (!isPlaying) return;
+      const el = getAudioElement();
+      if (!el || el.paused) return;
+      const target = isDucked ? DUCK_VOLUME : TARGET_VOLUME;
+      fadeVolume(target, 450);
     },
     modulate: function(speed) {
-      if (!ctx || !masterFilter || !isPlaying) return;
-      const targetFreq = Math.min(3800, 2400 + speed * 600);
-      masterFilter.frequency.setTargetAtTime(targetFreq, ctx.currentTime, 0.3);
+      // Maintained for API compatibility
     },
     updateLang: function() {
       updateButtonUI(isPlaying);
@@ -3961,25 +3682,27 @@ function initAmbientMusic() {
     }
   });
 
-  // Check saved state: default is ENABLED / PLAYING, unless explicitly set to muted
+  // Check saved state: default is ENABLED
   let isMutedPref = false;
   try {
     isMutedPref = (localStorage.getItem('wilmar_ambient_music') === 'muted');
   } catch(e) {}
 
   if (!isMutedPref) {
-    // Enabled predeterminadamente! Set UI to active state immediately
     AmbientMusicEngine.updateLang();
     const btnEl = document.getElementById('ambient-music-btn');
     if (btnEl) btnEl.classList.add('playing');
-
-    // Attempt starting immediately
-    AmbientMusicEngine.start(false);
+    const vBtn = document.getElementById('video-sound-btn');
+    if (vBtn) vBtn.classList.add('playing');
 
     // Global interaction unlocker for browser autoplay policy
     const unlockAudioOnGesture = () => {
       if (localStorage.getItem('wilmar_ambient_music') !== 'muted') {
-        AmbientMusicEngine.start(false);
+        const introVid = document.getElementById('intro-video');
+        const vStage = document.getElementById('video-stage');
+        if (!introVid || !introVid.paused || (vStage && vStage.style.display === 'none')) {
+          AmbientMusicEngine.start(false);
+        }
       }
       window.removeEventListener('pointerdown', unlockAudioOnGesture);
       window.removeEventListener('touchstart', unlockAudioOnGesture);
@@ -3996,6 +3719,13 @@ function initAmbientMusic() {
   } else {
     AmbientMusicEngine.updateLang();
   }
+
+  // When entering archive, sustain and ensure audio continues seamlessly!
+  window.addEventListener('enter-archive', () => {
+    if (localStorage.getItem('wilmar_ambient_music') !== 'muted') {
+      AmbientMusicEngine.start(false);
+    }
+  });
 }
 
 /* ==========================================================================

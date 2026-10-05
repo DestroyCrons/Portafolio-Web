@@ -683,7 +683,7 @@ body.loading {
     0 0 90px rgba(212, 163, 89, 0.22),
     0 0 1px rgba(255, 255, 255, 0.2);
   overflow: hidden;
-  background: #000;
+  background: #060609 url('video_poster.jpg') center center / cover no-repeat;
   z-index: 5;
 }
 
