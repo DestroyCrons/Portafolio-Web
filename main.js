@@ -1141,9 +1141,9 @@ const DEFAULT_CONFIG = {
     "showVideoIntro": true
   },
   "styles": {
-    "fontSerif": "Playfair Display, Georgia, serif",
-    "fontSans": "Inter, -apple-system, sans-serif",
-    "fontMono": "Space Mono, monospace",
+    "fontSerif": "Unbounded, -apple-system, sans-serif",
+    "fontSans": "Plus Jakarta Sans, -apple-system, sans-serif",
+    "fontMono": "Azeret Mono, monospace",
     "accentColor": "#c8a96e",
     "bgDark": "#050507",
     "cardBg": "#0e0e12",
@@ -2905,7 +2905,7 @@ function openLightbox(index) {
     lbMedium.textContent = mVal;
   }
   if (lbTypo) {
-    lbTypo.textContent = item.typography || 'Cormorant Garamond & Cinzel Custom';
+    lbTypo.textContent = item.typography || 'Unbounded & Azeret Mono Custom';
   }
   if (lbClient) {
     const cVal = isEn ? (item.client_en || OfflineTranslator.toEn(item.client || "Author's Collection")) : (item.client || 'Colección Autoral');

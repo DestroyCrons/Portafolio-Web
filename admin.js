@@ -1347,7 +1347,7 @@ Valledupar · Colombia`);
       document.getElementById('edit-role-en').value = 'Graphic Design & Composition';
       document.getElementById('edit-medium').value = 'Técnica Mixta · Fine Art';
       document.getElementById('edit-medium-en').value = 'Mixed Media · Fine Art';
-      document.getElementById('edit-typography').value = 'Cormorant Garamond & Cinzel';
+      document.getElementById('edit-typography').value = 'Unbounded & Azeret Mono';
       document.getElementById('edit-client').value = 'Colección Autoral';
       document.getElementById('edit-client-en').value = "Author's Collection";
       document.getElementById('edit-image-src').value = '';

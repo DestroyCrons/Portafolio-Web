@@ -14,9 +14,15 @@
   --accent-glow: rgba(212, 163, 89, 0.28);
   --border-subtle: rgba(255, 255, 255, 0.09);
   --border-accent: rgba(212, 163, 89, 0.35);
-  --font-serif: "Cormorant Garamond", Georgia, serif;
-  --font-sans: "Cinzel", "Times New Roman", serif;
-  --font-mono: "JetBrains Mono", monospace;
+  
+  /* Curated Avant-Garde Urban & Streetwear Typography System */
+  --font-display: "Unbounded", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-serif: "Unbounded", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-body: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "Azeret Mono", monospace;
+  --font-tech: "Azeret Mono", monospace;
+  
   --ease-cinematic: cubic-bezier(0.16, 1, 0.3, 1);
   --card-w: 260px;
   --card-h: 360px;
@@ -41,12 +47,12 @@
   }
 
   #headline h1 {
-    font-size: clamp(38px, 10vw, 56px) !important;
-    line-height: 1.12 !important;
-    letter-spacing: 0.03em !important;
+    font-size: clamp(28px, 7.5vw, 44px) !important;
+    line-height: 1.1 !important;
+    letter-spacing: -0.02em !important;
   }
   #headline p {
-    font-size: 11px !important;
+    font-size: 10.5px !important;
     letter-spacing: 0.16em !important;
     margin-top: 10px !important;
     max-width: 330px !important;
@@ -150,7 +156,7 @@ html, body {
   height: 100%;
   background: var(--bg-primary);
   color: var(--fg-primary);
-  font-family: var(--font-serif);
+  font-family: var(--font-body);
   overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
@@ -280,10 +286,10 @@ body.loading {
 }
 
 .preloader-title {
-  font-family: var(--font-sans);
-  font-size: clamp(24px, 5.5vw, 32px);
-  font-weight: 500;
-  letter-spacing: 0.14em;
+  font-family: var(--font-display);
+  font-size: clamp(20px, 4.6vw, 28px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
   color: #ffffff;
   text-transform: uppercase;
   margin-bottom: 12px;
@@ -291,9 +297,9 @@ body.loading {
 }
 
 .preloader-status {
-  font-family: var(--font-serif);
-  font-size: 15px;
-  font-style: italic;
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  font-style: normal;
   color: var(--fg-secondary);
   min-height: 24px;
   line-height: 1.45;
@@ -912,11 +918,11 @@ body.loading {
   line-height: 1;
 }
 .video-greeting-text {
-  font-family: var(--font-serif);
-  font-size: clamp(26px, 4.2vh, 42px);
-  font-weight: 300;
-  font-style: italic;
-  letter-spacing: 0.03em;
+  font-family: var(--font-display);
+  font-size: clamp(22px, 3.6vh, 36px);
+  font-weight: 800;
+  font-style: normal;
+  letter-spacing: -0.03em;
   color: var(--fg-primary);
   line-height: 1.15;
   text-shadow: 0 4px 20px rgba(0, 0, 0, 0.95);
@@ -1182,13 +1188,14 @@ body.revealed #headline {
 }
 
 #headline h1 {
-  font-family: var(--font-serif);
-  font-size: clamp(48px, 7.8vw, 108px);
-  font-weight: 300;
-  font-style: italic;
-  letter-spacing: 0.03em;
+  font-family: var(--font-display);
+  font-size: clamp(38px, 6.2vw, 92px);
+  font-weight: 800;
+  font-style: normal;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
   color: var(--fg-primary);
-  line-height: 1.06;
+  line-height: 1.05;
   text-shadow: 0 10px 40px rgba(0, 0, 0, 0.95), 0 2px 14px rgba(0, 0, 0, 0.85);
 }
 
@@ -1300,9 +1307,10 @@ body.revealed #headline {
 }
 
 .card-title {
-  font-family: var(--font-serif);
-  font-size: 17px;
-  font-weight: 400;
+  font-family: var(--font-display);
+  font-size: 14.5px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   line-height: 1.25;
   color: var(--fg-primary);
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
@@ -1353,11 +1361,12 @@ body.revealed #headline {
 }
 
 .grid-header h2 {
-  font-family: var(--font-serif);
-  font-size: clamp(26px, 4.5vw, 40px);
-  font-weight: 300;
-  font-style: italic;
-  letter-spacing: 0.02em;
+  font-family: var(--font-display);
+  font-size: clamp(22px, 3.8vw, 36px);
+  font-weight: 800;
+  font-style: normal;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
   white-space: nowrap;
   line-height: 1.15;
   margin: 0;
@@ -1427,9 +1436,10 @@ body.revealed #headline {
 }
 
 .grid-info .grid-title {
-  font-family: var(--font-serif);
-  font-size: 18px;
-  font-weight: 400;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
   color: var(--fg-primary);
   margin-top: 2px;
 }
@@ -1540,10 +1550,12 @@ body.revealed #headline {
 }
 
 .lightbox-title {
-  font-family: var(--font-serif);
-  font-size: clamp(28px, 3.2vw, 44px);
-  font-weight: 300;
-  font-style: italic;
+  font-family: var(--font-display);
+  font-size: clamp(22px, 2.5vw, 36px);
+  font-weight: 800;
+  font-style: normal;
+  letter-spacing: -0.025em;
+  text-transform: uppercase;
   line-height: 1.15;
   color: var(--fg-primary);
   margin-bottom: 12px;
@@ -1561,10 +1573,11 @@ body.revealed #headline {
 }
 
 .lightbox-note {
-  font-family: var(--font-serif);
-  font-size: 16px;
-  font-weight: 300;
-  line-height: 1.65;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1.75;
   color: #c4bfb6;
   margin-bottom: 28px;
 }
@@ -1702,9 +1715,9 @@ body.revealed #headline {
 
 .brand {
   pointer-events: auto;
-  font-family: var(--font-sans);
-  font-size: 13px;
-  letter-spacing: 0.24em;
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  letter-spacing: 0.10em;
   text-transform: uppercase;
   color: var(--fg-primary);
   text-decoration: none;
@@ -1716,12 +1729,12 @@ body.revealed #headline {
 }
 
 .brand .brand-first {
-  font-weight: 600;
+  font-weight: 800;
   color: var(--fg-primary);
 }
 
 .brand .brand-last {
-  font-weight: 400;
+  font-weight: 500;
   color: var(--accent);
   transition: color 0.25s ease;
 }
@@ -1976,10 +1989,12 @@ body.revealed #headline {
 }
 
 .menu-link {
-  font-family: var(--font-serif);
-  font-size: clamp(32px, 5.2vw, 64px);
-  font-weight: 300;
-  font-style: italic;
+  font-family: var(--font-display);
+  font-size: clamp(24px, 4.2vw, 48px);
+  font-weight: 800;
+  font-style: normal;
+  letter-spacing: -0.025em;
+  text-transform: uppercase;
   color: var(--fg-secondary);
   text-decoration: none;
   transition: color 0.3s ease, transform 0.3s ease;
@@ -2122,10 +2137,12 @@ body.revealed #headline {
 }
 
 .modal-heading {
-  font-family: var(--font-serif);
-  font-size: clamp(32px, 4.5vw, 54px);
-  font-weight: 300;
-  font-style: italic;
+  font-family: var(--font-display);
+  font-size: clamp(24px, 3.6vw, 42px);
+  font-weight: 800;
+  font-style: normal;
+  letter-spacing: -0.025em;
+  text-transform: uppercase;
   color: var(--fg-primary);
   margin-top: 6px;
   line-height: 1.15;
@@ -2244,8 +2261,9 @@ body.revealed #headline {
 }
 
 .channel-val {
-  font-family: var(--font-serif);
-  font-size: 18px;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  letter-spacing: 0.02em;
   color: var(--fg-primary);
   text-decoration: none;
 }
@@ -2318,8 +2336,8 @@ body.revealed #headline {
   border-radius: 4px;
   padding: 12px 16px;
   color: var(--fg-primary);
-  font-family: var(--font-serif);
-  font-size: 16px;
+  font-family: var(--font-body);
+  font-size: 14.5px;
   outline: none;
   transition: border-color 0.2s, background 0.2s;
 }
@@ -2469,11 +2487,12 @@ body.revealed #headline {
    STATEMENT / MANIFIESTO STYLES
    ========================================================================== */
 .statement-hero-quote {
-  font-family: var(--font-serif);
-  font-size: clamp(24px, 3.2vw, 38px);
-  font-style: italic;
-  font-weight: 300;
-  line-height: 1.35;
+  font-family: var(--font-display);
+  font-size: clamp(19px, 2.3vw, 28px);
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.4;
   color: var(--fg-primary);
   border-left: 2px solid var(--accent);
   padding-left: clamp(20px, 3vw, 36px);
@@ -2481,11 +2500,11 @@ body.revealed #headline {
 }
 
 .statement-body-text {
-  font-family: var(--font-serif);
-  font-size: clamp(17px, 1.8vw, 21px);
+  font-family: var(--font-body);
+  font-size: clamp(15px, 1.3vw, 17px);
   line-height: 1.8;
   color: #c4bfb6;
-  font-weight: 300;
+  font-weight: 400;
   max-width: 900px;
   display: flex;
   flex-direction: column;
@@ -2527,24 +2546,25 @@ body.revealed #headline {
 }
 
 .capability-num {
-  font-family: var(--font-sans);
-  font-size: 13px;
-  letter-spacing: 0.2em;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
   color: var(--accent);
 }
 
 .capability-title {
-  font-family: var(--font-serif);
-  font-size: 22px;
-  font-style: italic;
-  font-weight: 400;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: -0.015em;
   color: var(--fg-primary);
 }
 
 .capability-desc {
-  font-family: var(--font-serif);
-  font-size: 15px;
-  line-height: 1.6;
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.65;
   color: var(--fg-secondary);
 }
 
@@ -4663,16 +4683,16 @@ body.focus-mode-active #focus-mode-btn {
   background: transparent;
   border: none;
   color: var(--fg-primary);
-  font-family: var(--font-sans);
-  font-size: 15px;
-  letter-spacing: 0.04em;
+  font-family: var(--font-body);
+  font-size: 14.5px;
+  letter-spacing: 0.02em;
   outline: none;
 }
 
 .spotlight-input::placeholder {
   color: var(--fg-tertiary);
-  font-family: var(--font-serif);
-  font-style: italic;
+  font-family: var(--font-body);
+  font-style: normal;
   font-size: 14px;
 }
 
@@ -4757,10 +4777,11 @@ body.focus-mode-active #focus-mode-btn {
 }
 
 .spotlight-item-title {
-  font-family: var(--font-serif);
-  font-size: 16px;
+  font-family: var(--font-display);
+  font-size: 14.5px;
   color: var(--fg-primary);
-  font-weight: 400;
+  font-weight: 700;
+  letter-spacing: -0.015em;
 }
 
 .spotlight-item-meta {
@@ -4782,8 +4803,8 @@ body.focus-mode-active #focus-mode-btn {
   padding: 30px 20px;
   text-align: center;
   color: var(--fg-tertiary);
-  font-family: var(--font-serif);
-  font-style: italic;
+  font-family: var(--font-body);
+  font-style: normal;
   font-size: 14px;
 }
 
@@ -4870,9 +4891,11 @@ body.focus-mode-active #focus-mode-btn {
 }
 
 .share-title {
-  font-family: var(--font-serif);
-  font-size: 22px;
-  font-weight: 400;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
   color: #fff;
   margin: 4px 0 0;
 }
@@ -4927,8 +4950,10 @@ body.focus-mode-active #focus-mode-btn {
 }
 
 .share-preview-title {
-  font-family: var(--font-serif);
-  font-size: 16px;
+  font-family: var(--font-display);
+  font-size: 14.5px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   color: #fff;
   margin: 0;
   white-space: nowrap;
